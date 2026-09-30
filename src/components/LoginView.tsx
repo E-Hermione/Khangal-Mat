@@ -11,6 +11,8 @@ import {
 import { getOrCreateDeviceId, saveStoredAuth } from '../utils/deviceManager';
 import { accessRequestService } from '../services/accessRequestService';
 import { RegisterModal } from './RegisterModal';
+import { GoogleIcon } from './GoogleIcon';
+import { verifyGmailWithGoogle } from '../services/firebase';
 
 interface LoginViewProps {
   onLoginSuccess: (user: AuthUser) => void;
@@ -66,6 +68,34 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       setIsLoading(false);
       onLoginSuccess(user);
     }, 250);
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const account = await verifyGmailWithGoogle();
+      const validation = accessRequestService.loginWithVerifiedEmail(account.email);
+      if (!validation.valid || !validation.user) {
+        setError(validation.error || 'Нэвтэрч чадсангүй.');
+        return;
+      }
+      const user: AuthUser = {
+        userId: validation.user.userId,
+        phoneNumber: validation.user.phoneNumber,
+        email: validation.user.email,
+        name: validation.user.name,
+        role: validation.user.role,
+        loggedInAt: new Date().toISOString(),
+        deviceId: getOrCreateDeviceId(),
+      };
+      saveStoredAuth(user);
+      onLoginSuccess(user);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google-ээр нэвтэрч чадсангүй.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAutoLogin = (loginId: string, pass: string) => {
@@ -172,6 +202,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             </button>
           </form>
 
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            className="mt-3 w-full py-2.5 px-4 bg-white border border-stone-300 hover:bg-stone-50 text-stone-800 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <GoogleIcon className="w-4 h-4" />
+            <span>Google-ээр нэвтрэх</span>
+          </button>
+
           {/* Register Button */}
           <div className="mt-6 pt-5 border-t border-stone-200 text-center">
             <button
@@ -183,7 +223,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <span>Шинээр бүртгүүлэх</span>
             </button>
             <p className="text-[11px] text-stone-400 mt-2">
-              Овог нэр, утас, анги, сургуулиа оруулаад шууд нэвтэрнэ
+              Gmail-ээ баталгаажуулж, утас, анги, сургуулиа оруулаад шууд нэвтэрнэ
             </p>
           </div>
         </div>

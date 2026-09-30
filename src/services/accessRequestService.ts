@@ -157,6 +157,8 @@ export const accessRequestService = {
     lastName: string;
     firstName: string;
     phoneNumber: string;
+    // Gmail address already verified through Google sign-in
+    email: string;
     grade: GradeNumber | 'teacher' | null;
     school: string;
     password: string;
@@ -166,7 +168,11 @@ export const accessRequestService = {
     const phone = data.phoneNumber.replace(/[\s-]/g, '');
     const school = data.school.trim();
     const password = data.password.trim();
+    const email = data.email.trim().toLowerCase();
 
+    if (!email) {
+      return { success: false, message: 'Gmail хаягаа Google-ээр баталгаажуулна уу.' };
+    }
     if (!lastName || !firstName) {
       return { success: false, message: 'Овог, нэрээ заавал оруулна уу.' };
     }
@@ -192,10 +198,13 @@ export const accessRequestService = {
     if (accounts.some((a) => a.phoneNumber === phone)) {
       return { success: false, message: 'Энэ утасны дугаар аль хэдийн бүртгэлтэй байна. Нэвтэрнэ үү.' };
     }
+    if (email === adminProfile.email.toLowerCase() || accounts.some((a) => a.email && a.email.toLowerCase() === email)) {
+      return { success: false, message: 'Энэ Gmail хаяг аль хэдийн бүртгэлтэй байна. Нэвтэрнэ үү.' };
+    }
 
     const account: ApprovedAccount = {
       userId: userPermissionsService.generateUserId(phone),
-      email: '',
+      email,
       username: phone,
       phoneNumber: phone,
       password,
@@ -211,6 +220,50 @@ export const accessRequestService = {
     this.saveApprovedAccounts([...accounts, account]);
 
     return { success: true, message: 'Бүртгэл амжилттай үүслээ.', account };
+  },
+
+  /**
+   * Login for a Gmail address that Google sign-in has just verified (no password needed).
+   */
+  loginWithVerifiedEmail(
+    verifiedEmail: string
+  ): { valid: boolean; user?: { userId?: string; phoneNumber?: string; email?: string; username?: string; name: string; role: 'admin' | 'teacher' }; error?: string } {
+    const email = verifiedEmail.trim().toLowerCase();
+    const adminProfile = this.getAdminProfile();
+
+    if (email === adminProfile.email.toLowerCase()) {
+      return {
+        valid: true,
+        user: {
+          userId: 'ADMIN-01',
+          phoneNumber: adminProfile.phoneNumber,
+          email: adminProfile.email,
+          username: email,
+          name: adminProfile.name || `Админ (${adminProfile.phoneNumber})`,
+          role: 'admin',
+        },
+      };
+    }
+
+    const account = this.getApprovedAccounts().find((a) => a.email && a.email.toLowerCase() === email);
+    if (!account) {
+      return { valid: false, error: 'Энэ Gmail хаягаар бүртгэл олдсонгүй. Эхлээд бүртгүүлнэ үү.' };
+    }
+    if (!account.active) {
+      return { valid: false, error: 'Таны бүртгэл хаагдсан байна. Админд хандана уу.' };
+    }
+
+    return {
+      valid: true,
+      user: {
+        userId: account.userId || userPermissionsService.generateUserId(account.phoneNumber || email),
+        email: account.email,
+        username: account.username || account.email,
+        phoneNumber: account.phoneNumber,
+        name: account.fullName,
+        role: 'teacher',
+      },
+    };
   },
 
   /**

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { X, UserPlus, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { X, UserPlus, Eye, EyeOff, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { GradeNumber } from '../types';
 import { accessRequestService } from '../services/accessRequestService';
+import { verifyGmailWithGoogle } from '../services/firebase';
+import { GoogleIcon } from './GoogleIcon';
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -26,8 +28,23 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleVerifyGmail = async () => {
+    setError(null);
+    setIsVerifying(true);
+    try {
+      const account = await verifyGmailWithGoogle();
+      setVerifiedEmail(account.email);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google-ээр баталгаажуулж чадсангүй.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,10 +55,16 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
       return;
     }
 
+    if (!verifiedEmail) {
+      setError('Эхлээд Gmail хаягаа Google-ээр баталгаажуулна уу.');
+      return;
+    }
+
     const res = accessRequestService.registerUser({
       lastName,
       firstName,
       phoneNumber,
+      email: verifiedEmail,
       grade,
       school,
       password,
@@ -85,6 +108,36 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
             </div>
           )}
 
+          <div>
+            <label className={labelClass}>Gmail хаяг</label>
+            {verifiedEmail ? (
+              <div className="flex items-center justify-between gap-2 px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <div className="flex items-center gap-2 min-w-0 text-sm text-emerald-900">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="truncate" data-testid="verified-email">{verifiedEmail}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleVerifyGmail}
+                  disabled={isVerifying}
+                  className="text-xs font-bold text-emerald-700 hover:text-emerald-900 shrink-0 cursor-pointer disabled:opacity-50"
+                >
+                  Солих
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleVerifyGmail}
+                disabled={isVerifying}
+                className="w-full py-2.5 px-4 bg-white border border-stone-300 hover:bg-stone-50 text-stone-800 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <GoogleIcon className="w-4 h-4" />
+                <span>{isVerifying ? 'Баталгаажуулж байна...' : 'Google-ээр баталгаажуулах'}</span>
+              </button>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Овог</label>
@@ -95,7 +148,6 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
                 placeholder="Бат"
                 className={inputClass}
                 autoComplete="family-name"
-                autoFocus
               />
             </div>
             <div>
