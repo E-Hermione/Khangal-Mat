@@ -286,7 +286,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="space-y-2">
               {categoryGroups.map((group) => {
                 const expanded = isCategoryExpanded(group.category);
-                const hasActiveTopic = group.topics.some((t) => t.id === selectedTopicId);
 
                 return (
                   <div
@@ -298,7 +297,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       type="button"
                       onClick={() => toggleCategory(group.category)}
                       className={`w-full px-3 py-2 text-left flex items-center justify-between transition-colors cursor-pointer select-none ${
-                        hasActiveTopic
+                        // Only the open category is highlighted; opening another switches the highlight
+                        expanded
                           ? 'bg-stone-800/90 text-amber-300 font-bold'
                           : 'hover:bg-stone-800/60 text-stone-300 font-semibold'
                       }`}
