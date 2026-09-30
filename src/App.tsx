@@ -551,6 +551,8 @@ export default function App() {
                 setActiveView('topics');
               }}
               isAdmin={currentUser?.role === 'admin' && !previewAsUser}
+              userId={currentUser?.userId}
+              uid={getFirebaseAuth().currentUser?.uid}
             />
           ) : currentTopic.id ? (
             <TopicPage

@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { backdropClose } from '../utils/backdrop';
 import { getQuestionOptions, isOptionCorrect } from '../utils/examGrading';
+import { visibilityService } from '../services/visibilityService';
+import { userPermissionsService } from '../services/userPermissionsService';
 
 interface ExamsHubProps {
   topics: TopicPackage[];
@@ -20,6 +22,10 @@ interface ExamsHubProps {
   onSelectGrade: (grade: GradeNumber) => void;
   onSelectTopic?: (topicId: string) => void;
   isAdmin?: boolean;
+  // Signed-in user's permission id (USR-####); non-admins only see what the admin allows
+  userId?: string;
+  // Firebase uid, to keep each user's exam results apart on a shared device
+  uid?: string;
 }
 
 type ExamTier = 'all' | 1 | 2 | 3;
@@ -169,8 +175,36 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
   topics,
   selectedGrade,
   onSelectTopic,
+  isAdmin = false,
+  userId,
+  uid,
 }) => {
   const [topicTiers, setTopicTiers] = useState<Record<string, 1 | 2 | 3>>({});
+
+  // Re-render when the admin changes visibility or permissions
+  const [, setSettingsVersion] = useState(0);
+  React.useEffect(() => {
+    const bump = () => setSettingsVersion((v) => v + 1);
+    window.addEventListener('visibility-settings-updated', bump);
+    window.addEventListener('user-permissions-updated', bump);
+    return () => {
+      window.removeEventListener('visibility-settings-updated', bump);
+      window.removeEventListener('user-permissions-updated', bump);
+    };
+  }, []);
+
+  // Tiers the user may take for a topic: the admin sees all; others only visible topics and
+  // the tests the admin switched on for them
+  const allowedTiers = (topicId: string): (1 | 2 | 3)[] => {
+    if (isAdmin) return [1, 2, 3];
+    if (visibilityService.getTopicAccessMode(topicId) !== 'visible') return [];
+    const v = visibilityService.getTopicVisibility(topicId);
+    return ([1, 2, 3] as const).filter((n) => v[`test${n}` as 'test1' | 'test2' | 'test3']);
+  };
+  const examsAllowed =
+    isAdmin ||
+    (userPermissionsService.isGradeAllowed(userId, selectedGrade, false) &&
+      userPermissionsService.isSectionAllowed(userId, 'exams', false));
 
   // Active taking exam modal
   const [activeExam, setActiveExam] = useState<ExamRowItem | null>(null);
@@ -183,10 +217,11 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
   // Info notice modal for untaken exams
   const [unTakenNoticeExam, setUnTakenNoticeExam] = useState<{ exam: ExamRowItem; actionType: 'score' | 'error' } | null>(null);
 
-  // User test attempts storage key
+  // User test attempts, stored per account in this browser
+  const attemptsKey = `math_app_exam_attempts_v1:${uid || 'guest'}`;
   const [attempts, setAttempts] = useState<Record<string, { answers: Record<string, string>; score?: number; finishedAt?: number }>>(() => {
     try {
-      const data = localStorage.getItem('math_app_exam_attempts_v1');
+      const data = localStorage.getItem(attemptsKey);
       return data ? JSON.parse(data) : {};
     } catch {
       return {};
@@ -197,7 +232,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
     const updated = { ...attempts, [examId]: data };
     setAttempts(updated);
     try {
-      localStorage.setItem('math_app_exam_attempts_v1', JSON.stringify(updated));
+      localStorage.setItem(attemptsKey, JSON.stringify(updated));
     } catch (e) {
       console.error(e);
     }
@@ -255,6 +290,8 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
     return Array.from(topicMap.values());
   }, [topics, selectedGrade]);
 
+  const visibleExamTopics = allGradeTopics.filter((t) => allowedTiers(t.id).length > 0);
+
   return (
     <div className="w-full animate-in fade-in duration-150">
       {/* Styled Table: One row per topic, clean level selector, centered action buttons, fits without cut off */}
@@ -271,19 +308,21 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-200 text-xs md:text-sm">
-              {allGradeTopics.length === 0 ? (
+              {!examsAllowed || visibleExamTopics.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-stone-400">
-                    Энэ ангид шалгалт олдсонгүй.
+                    {examsAllowed ? 'Энэ ангид нээлттэй сорил алга байна.' : 'Танд энэ ангийн сорил өгөх эрх олгогдоогүй байна.'}
                   </td>
                 </tr>
               ) : (
-                allGradeTopics.map((topic, idx) => {
+                visibleExamTopics.map((topic, idx) => {
                   const tests = (topic.test1?.questions?.length && topic.test2?.questions?.length && topic.test3?.questions?.length)
                     ? { test1: topic.test1, test2: topic.test2, test3: topic.test3 }
                     : generateTopicTests(topic.id, topic.title, topic.grade, topic.category);
 
-                  const activeTier: 1 | 2 | 3 = topicTiers[topic.id] || 1;
+                  const tiers = allowedTiers(topic.id);
+                  const chosenTier = topicTiers[topic.id];
+                  const activeTier: 1 | 2 | 3 = chosenTier && tiers.includes(chosenTier) ? chosenTier : tiers[0];
 
                   const testPackage = activeTier === 1 ? tests.test1 : activeTier === 2 ? tests.test2 : tests.test3;
                   const tierName = activeTier === 1 ? 'Анхан шат' : activeTier === 2 ? 'Үндсэн (Дунд)' : 'Ахисан түвшин';
@@ -344,6 +383,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
                       {/* Түвшин: 3-tier Interactive Selector */}
                       <td className="py-2.5 px-2 text-center">
                         <div className="inline-flex items-center p-0.5 bg-stone-100 rounded-lg border border-stone-200 shadow-2xs">
+                          {tiers.includes(1) && (
                           <button
                             type="button"
                             onClick={() => setTopicTiers((prev) => ({ ...prev, [topic.id]: 1 }))}
@@ -359,6 +399,8 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
                               <Check className="w-2.5 h-2.5 text-emerald-200 stroke-[3]" />
                             )}
                           </button>
+                          )}
+                          {tiers.includes(2) && (
                           <button
                             type="button"
                             onClick={() => setTopicTiers((prev) => ({ ...prev, [topic.id]: 2 }))}
@@ -374,6 +416,8 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
                               <Check className="w-2.5 h-2.5 text-amber-200 stroke-[3]" />
                             )}
                           </button>
+                          )}
+                          {tiers.includes(3) && (
                           <button
                             type="button"
                             onClick={() => setTopicTiers((prev) => ({ ...prev, [topic.id]: 3 }))}
@@ -389,6 +433,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
                               <Check className="w-2.5 h-2.5 text-rose-200 stroke-[3]" />
                             )}
                           </button>
+                          )}
                         </div>
                       </td>
 
@@ -448,7 +493,8 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
                             Алдаа шалгах
                           </button>
 
-                          {/* 4. Бодолт */}
+                          {/* 4. Бодолт (only once the admin shows answers for this topic) */}
+                          {testPackage.questions.some((q) => q.solution || q.answer) && (
                           <button
                             type="button"
                             onClick={() => setViewSolutionExam(currentRowItem)}
@@ -456,6 +502,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
                           >
                             Бодолт
                           </button>
+                          )}
                         </div>
                       </td>
                     </tr>
