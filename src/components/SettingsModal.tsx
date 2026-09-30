@@ -265,27 +265,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 shrink-0 ml-2" />
                   </button>
 
-                  {/* Row 3: Нэвтэрсэн төхөөрөмжүүд */}
-                  <button
-                    type="button"
-                    onClick={() => setCurrentView('devices')}
-                    className="w-full p-3.5 flex items-center justify-between hover:bg-stone-50 active:bg-stone-100 transition-colors text-left group cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-3 min-w-0">
-                      <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-                        <Smartphone className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold text-stone-900 group-hover:text-purple-700 transition-colors">
-                          Нэвтэрсэн төхөөрөмжүүд
+                  {/* Row 3: Нэвтэрсэн төхөөрөмжүүд (Зөвхөн админд харагдана) */}
+                  {isUserAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('devices')}
+                      className="w-full p-3.5 flex items-center justify-between hover:bg-stone-50 active:bg-stone-100 transition-colors text-left group cursor-pointer"
+                    >
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                          <Smartphone className="w-4 h-4" />
                         </div>
-                        <div className="text-[11px] text-stone-500 truncate">
-                          Идэвхтэй сесс болон төхөөрөмжийн удирдлага
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-stone-900 group-hover:text-purple-700 transition-colors">
+                            Нэвтэрсэн төхөөрөмжүүд
+                          </div>
+                          <div className="text-[11px] text-stone-500 truncate">
+                            Идэвхтэй сесс болон төхөөрөмжийн удирдлага
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 shrink-0 ml-2" />
-                  </button>
+                      <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 shrink-0 ml-2" />
+                    </button>
+                  )}
 
                   {/* Row 4: Системийн тохиргоо (Зөвхөн админд харагдана) */}
                   {isUserAdmin && (
@@ -657,7 +659,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           )}
 
           {/* VIEW 5: DEVICES (Нэвтэрсэн төхөөрөмжүүд) */}
-          {currentView === 'devices' && (
+          {currentView === 'devices' && isUserAdmin && (
             <div className="bg-white rounded-2xl border border-stone-200/90 p-4 shadow-xs">
               <ActiveDevicesTab onLogoutCurrent={onLogout} />
             </div>
