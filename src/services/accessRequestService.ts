@@ -150,13 +150,14 @@ export const accessRequestService = {
   },
 
   /**
-   * Teacher self-registration with a phone number. The account is active immediately.
+   * Student or teacher self-registration with a phone number. The account is active immediately.
+   * `grade` is the student's grade, or 'teacher' for a teacher.
    */
-  registerTeacher(data: {
+  registerUser(data: {
     lastName: string;
     firstName: string;
     phoneNumber: string;
-    grades: GradeNumber[];
+    grade: GradeNumber | 'teacher' | null;
     school: string;
     password: string;
   }): { success: boolean; message: string; account?: ApprovedAccount } {
@@ -172,8 +173,8 @@ export const accessRequestService = {
     if (!/^\d{8}$/.test(phone)) {
       return { success: false, message: 'Утасны дугаар 8 оронтой тоо байх ёстой.' };
     }
-    if (data.grades.length === 0) {
-      return { success: false, message: 'Заадаг ангиа дор хаяж нэгийг сонгоно уу.' };
+    if (data.grade === null) {
+      return { success: false, message: 'Ангиа сонгоно уу.' };
     }
     if (!school) {
       return { success: false, message: 'Сургуулийнхаа нэрийг оруулна уу.' };
@@ -202,7 +203,8 @@ export const accessRequestService = {
       lastName,
       firstName,
       school,
-      grades: [...data.grades].sort((a, b) => a - b),
+      accountType: data.grade === 'teacher' ? 'teacher' : 'student',
+      grades: data.grade === 'teacher' ? [] : [data.grade],
       approvedAt: Date.now(),
       active: true,
     };
@@ -600,7 +602,7 @@ export const accessRequestService = {
         cleanPhone &&
         accounts.some((a, i) => i !== accountIndex && a.phoneNumber === cleanPhone)
       ) {
-        return { success: false, message: 'Энэ утасны дугаар өөр багшид бүртгэлтэй байна.' };
+        return { success: false, message: 'Энэ утасны дугаар өөр хэрэглэгчид бүртгэлтэй байна.' };
       }
 
       if (accountIndex >= 0) {

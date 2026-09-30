@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { X, UserPlus, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { GradeNumber } from '../types';
 import { accessRequestService } from '../services/accessRequestService';
 
@@ -20,7 +20,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
   const [lastName, setLastName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [grades, setGrades] = useState<GradeNumber[]>([]);
+  const [grade, setGrade] = useState<GradeNumber | 'teacher' | null>(null);
   const [school, setSchool] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -28,10 +28,6 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
-
-  const toggleGrade = (grade: GradeNumber) => {
-    setGrades((prev) => (prev.includes(grade) ? prev.filter((g) => g !== grade) : [...prev, grade]));
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,11 +38,11 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
       return;
     }
 
-    const res = accessRequestService.registerTeacher({
+    const res = accessRequestService.registerUser({
       lastName,
       firstName,
       phoneNumber,
-      grades,
+      grade,
       school,
       password,
     });
@@ -68,7 +64,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
               <UserPlus className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white">Багшаар бүртгүүлэх</h2>
+              <h2 className="text-sm font-bold text-white">Бүртгүүлэх</h2>
               <p className="text-[11px] text-stone-400">Бүртгүүлсний дараа шууд нэвтэрнэ</p>
             </div>
           </div>
@@ -130,26 +126,28 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
           </div>
 
           <div>
-            <label className={labelClass}>Заадаг анги</label>
-            <div className="flex flex-wrap gap-1.5">
-              {ALL_GRADES.map((grade) => {
-                const selected = grades.includes(grade);
-                return (
-                  <button
-                    key={grade}
-                    type="button"
-                    onClick={() => toggleGrade(grade)}
-                    aria-pressed={selected}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
-                      selected
-                        ? 'bg-amber-500 border-amber-500 text-stone-950'
-                        : 'bg-stone-50 border-stone-300 text-stone-600 hover:border-amber-400'
-                    }`}
-                  >
-                    {grade}-р анги
-                  </button>
-                );
-              })}
+            <label className={labelClass} htmlFor="register-grade">Анги</label>
+            <div className="relative">
+              <select
+                id="register-grade"
+                value={grade ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setGrade(v === '' ? null : v === 'teacher' ? 'teacher' : (Number(v) as GradeNumber));
+                }}
+                className={`${inputClass} appearance-none pr-9 cursor-pointer ${grade === null ? 'text-stone-400' : ''}`}
+              >
+                <option value="" disabled>
+                  Сонгоно уу
+                </option>
+                {ALL_GRADES.map((g) => (
+                  <option key={g} value={g}>
+                    {g}-р анги
+                  </option>
+                ))}
+                <option value="teacher">Багш</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-stone-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 

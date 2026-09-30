@@ -277,7 +277,7 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                     : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
-                Бүртгэлтэй багш нар ({approvedAccounts.length})
+                Бүртгэлтэй хэрэглэгчид ({approvedAccounts.length})
               </button>
               <button
                 type="button"
@@ -334,7 +334,7 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
             /* Approved Accounts List */
             approvedAccounts.length === 0 ? (
               <div className="text-center py-12 text-stone-400 text-xs bg-stone-50 rounded-2xl border border-stone-200/60">
-                Бүртгэлтэй багш одоогоор алга байна.
+                Бүртгэлтэй хэрэглэгч одоогоор алга байна.
               </div>
             ) : (
               <div className="space-y-2.5">
@@ -364,8 +364,12 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                           {account.phoneNumber && <span>{account.phoneNumber}</span>}
                           {account.email && <span>• {account.email}</span>}
                           {account.school && <span>• {account.school}</span>}
-                          {account.grades && account.grades.length > 0 && (
-                            <span>• {account.grades.join(', ')}-р анги</span>
+                          {account.accountType === 'teacher' ? (
+                            <span>• Багш</span>
+                          ) : (
+                            account.grades && account.grades.length > 0 && (
+                              <span>• {account.grades.join(', ')}-р анги</span>
+                            )
                           )}
                         </div>
                         <div className="text-[11px] text-stone-500 font-mono">

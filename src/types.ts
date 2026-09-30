@@ -157,7 +157,8 @@ export interface ApprovedAccount {
   lastName?: string;
   firstName?: string;
   school?: string;
-  // Grades the teacher teaches, chosen at self-registration
+  // Chosen at self-registration: a student picks their grade, a teacher picks "Багш"
+  accountType?: 'student' | 'teacher';
   grades?: GradeNumber[];
   approvedAt: number;
   active: boolean;
