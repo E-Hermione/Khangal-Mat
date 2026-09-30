@@ -60,7 +60,15 @@ export async function sendVerificationEmail(): Promise<void> {
   const user = getFirebaseAuth().currentUser;
   if (!user) throw new Error('Эхлээд нэвтэрнэ үү.');
   try {
-    await sendEmailVerification(user, { url: window.location.origin });
+    try {
+      // Link returns the user to this site after verifying
+      await sendEmailVerification(user, { url: window.location.origin });
+    } catch (err) {
+      // This domain is not in Firebase's authorized domains: send the plain link instead
+      const code = (err as { code?: string }).code;
+      if (code !== 'auth/unauthorized-continue-uri' && code !== 'auth/invalid-continue-uri') throw err;
+      await sendEmailVerification(user);
+    }
   } catch (err) {
     throw new Error(authErrorMessage(err, 'Баталгаажуулах имэйл илгээж чадсангүй.'));
   }
