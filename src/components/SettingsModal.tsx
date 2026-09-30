@@ -90,7 +90,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setNewPassword('');
       setConfirmPassword('');
     }
-  }, [isOpen, currentUser]);
+    // Only when the dialog opens: saving the profile updates currentUser and must not
+    // jump back to the main menu or clear the success message
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
