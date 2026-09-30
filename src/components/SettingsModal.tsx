@@ -147,14 +147,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center font-bold">
                 <Sliders className="w-4 h-4" />
               </div>
-              <div>
-                <h2 id="settings-title" className="text-sm font-bold text-stone-900 leading-none">
-                  Тохиргоо
-                </h2>
-                <span className="text-[11px] text-stone-500">
-                  Системийн цэс
-                </span>
-              </div>
+              <h2 id="settings-title" className="text-sm font-bold text-stone-900 leading-none">
+                Тохиргоо
+              </h2>
             </div>
 
             <button
@@ -210,9 +205,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <h3 className="text-sm font-bold text-stone-900 truncate">
                       {currentUser.name}
                     </h3>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
-                      {currentUser.role === 'admin' ? 'Админ' : 'Багш'}
-                    </span>
                   </div>
                   <div className="flex items-center space-x-1.5 mt-1 text-[11px] text-emerald-600 font-medium">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -671,10 +663,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           )}
         </div>
 
-        {/* Footer info */}
-        <div className="p-3 bg-stone-200/60 border-t border-stone-200 text-center text-[10px] text-stone-500">
-          KhangalMate • Тохиргооны систем
-        </div>
       </div>
     </div>
   );
