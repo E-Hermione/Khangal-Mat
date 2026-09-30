@@ -18,7 +18,15 @@ import { getFirebaseAuth, isFirebaseConfigured } from './services/firebase';
 import { loadSession, signOutUser, isRegistering } from './services/authService';
 import { startCloudSync, stopCloudSync } from './services/cloud';
 import { seedCloudFromLegacyData } from './services/migration';
-import { registerCurrentDevice, watchCurrentDevice, forgetCurrentDevice, stopDeviceWatch } from './services/deviceSessions';
+import {
+  registerCurrentDevice,
+  enforceDeviceLimit,
+  watchCurrentDevice,
+  forgetCurrentDevice,
+  stopDeviceWatch,
+  MAX_DEVICES_ADMIN,
+  MAX_DEVICES_USER,
+} from './services/deviceSessions';
 import { accessRequestService } from './services/accessRequestService';
 import {
   Menu,
@@ -125,8 +133,19 @@ export default function App() {
         return;
       }
       if (device === 'ok') {
+        // Sign out the earliest devices beyond the limit, possibly this one
+        const limit = session.isAdmin ? MAX_DEVICES_ADMIN : MAX_DEVICES_USER;
+        const thisDeviceRemoved = await enforceDeviceLimit(fbUser.uid, limit).catch((err) => {
+          console.error('Device limit check failed', err);
+          return false;
+        });
+        if (thisDeviceRemoved) {
+          setLoginNotice('Таны бүртгэлээр өөр төхөөрөмжөөс нэвтэрсэн тул энэ төхөөрөмжөөс гарлаа.');
+          await signOutUser();
+          return;
+        }
         watchCurrentDevice(fbUser.uid, async () => {
-          setLoginNotice('Энэ төхөөрөмжийг өөр төхөөрөмжөөс гаргалаа. Дахин нэвтэрнэ үү.');
+          setLoginNotice('Таны бүртгэлээр өөр төхөөрөмжөөс нэвтэрсэн тул энэ төхөөрөмжөөс гарлаа.');
           clearStoredAuth();
           // Clear the revoked record so signing in again on this device works
           await forgetCurrentDevice(fbUser.uid);

@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDoc, onSnapshot, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { getDb } from './firebase';
 import { detectCurrentDevice, getOrCreateDeviceId } from '../utils/deviceManager';
 import { LoggedInDevice } from '../types';
@@ -21,6 +21,10 @@ export interface DeviceSession {
 }
 
 const HEARTBEAT_MS = 5 * 60 * 1000;
+
+// How many devices may be signed in at once
+export const MAX_DEVICES_ADMIN = 4;
+export const MAX_DEVICES_USER = 1;
 
 let stopWatch: (() => void) | null = null;
 
@@ -56,6 +60,27 @@ export async function registerCurrentDevice(uid: string): Promise<'ok' | 'revoke
   };
   await setDoc(ref, session);
   return 'ok';
+}
+
+/**
+ * Keeps at most `maxDevices` signed-in devices: the ones that signed in earliest are signed out.
+ * Resolves true if this device is one of them (its record is then removed).
+ */
+export async function enforceDeviceLimit(uid: string, maxDevices: number): Promise<boolean> {
+  const snap = await getDocs(collection(getDb(), 'users', uid, 'devices'));
+  const active = snap.docs
+    .map((d) => d.data() as DeviceSession)
+    .filter((d) => !d.revoked)
+    .sort((a, b) => b.createdAt - a.createdAt); // newest sign-in first
+  const excess = active.slice(maxDevices).map((d) => d.id);
+  const currentId = getOrCreateDeviceId();
+  const others = excess.filter((id) => id !== currentId);
+  if (others.length > 0) await revokeOtherDevices(uid, others);
+  if (excess.includes(currentId)) {
+    await deleteDoc(deviceRef(uid, currentId));
+    return true;
+  }
+  return false;
 }
 
 /** Keeps this device's "last active" fresh and calls onRevoked if it is signed out remotely. */
