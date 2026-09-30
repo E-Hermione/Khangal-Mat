@@ -3,11 +3,13 @@ import { Shield } from 'lucide-react';
 
 interface ScreenProtectionProps {
   enabled?: boolean;
-  // Text tiled across the screen as a watermark (e.g. the logged-in user's email)
-  watermarkText?: string;
 }
 
-export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = false, watermarkText }) => {
+/**
+ * Covers the whole screen in black while the page is not in focus (screenshot and recording
+ * tools usually take focus) or when a screenshot shortcut is pressed.
+ */
+export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = false }) => {
   // Hooks must run on every render, before any early return
   const [isBlackout, setIsBlackout] = useState(false);
   const [blackoutReason, setBlackoutReason] = useState<string>('');
@@ -78,13 +80,27 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
       }
     };
 
+    // Black out while the window is unfocused or hidden, until the user comes back
+    const handleBlur = () => triggerBlackout('Дэлгэц хамгаалагдсан байна.', 0);
+    const handleFocus = () => {
+      setIsBlackout(false);
+      setBlackoutReason('');
+    };
+    const handleVisibility = () => (document.hidden ? handleBlur() : handleFocus());
+
     window.addEventListener('keydown', handleKeyDown, true);
     document.addEventListener('contextmenu', handleContextMenu);
+    window.addEventListener('blur', handleBlur);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
       window.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('contextmenu', handleContextMenu);
+      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [enabled]);
 
@@ -92,7 +108,6 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
 
   return (
     <>
-      {watermarkText && <Watermark text={watermarkText} />}
       {isBlackout && (
         <div
           id="screen-protection-shield"
@@ -119,24 +134,5 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
         </div>
       )}
     </>
-  );
-};
-
-// Faint, repeated user identifier over the whole page. It survives phone photos and
-// screenshots, so leaked material can be traced back to the account that viewed it.
-const Watermark: React.FC<{ text: string }> = ({ text }) => {
-  const escaped = text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200">` +
-    `<text x="160" y="100" text-anchor="middle" dominant-baseline="middle" ` +
-    `transform="rotate(-25 160 100)" font-family="sans-serif" font-size="14" ` +
-    `fill="rgba(120,113,108,0.13)">${escaped}</text></svg>`;
-
-  return (
-    <div
-      className="fixed inset-0 pointer-events-none select-none z-[9999998] no-print"
-      style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")` }}
-      aria-hidden="true"
-    />
   );
 };

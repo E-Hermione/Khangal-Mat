@@ -558,10 +558,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-stone-900">
-                        Дэлгэц хамгаалалт (Усан тэмдэг)
+                        Дэлгэц хамгаалалт
                       </div>
                       <div className="text-[11px] text-stone-500">
-                        Бүх хэрэглэгчийн дэлгэц дээр имэйлийг нь бүдэг харуулж, зураг авах товчлуурыг хаана
+                        Хэрэглэгч өөр цонх руу шилжих, зураг авах үед дэлгэцийг бүрэн хараар бүрхэнэ
                       </div>
                     </div>
                   </div>

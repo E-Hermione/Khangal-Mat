@@ -396,10 +396,7 @@ export default function App() {
     <div className="min-h-screen bg-stone-100 flex flex-col font-sans text-stone-900">
       {/* The admin edits content, so copying stays allowed for them */}
       <CopyProtection enabled={appSettings.copyProtection && currentUser.role !== 'admin'} />
-      <ScreenProtection
-        enabled={screenProtectionEnabled}
-        watermarkText={currentUser.email || currentUser.username || currentUser.phoneNumber || currentUser.name}
-      />
+      <ScreenProtection enabled={screenProtectionEnabled && currentUser.role !== 'admin'} />
       {/* Top Navigation Bar on Screen */}
       <header className="screen-header bg-white border-b border-stone-200 sticky top-0 z-40 h-14 px-4 flex items-center shadow-2xs no-print">
         <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
