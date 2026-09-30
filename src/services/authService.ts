@@ -198,8 +198,10 @@ async function resolveEmail(identifier: string): Promise<string> {
   const digits = id.replace(/[\s-]/g, '');
   if (!/^\d{8}$/.test(digits)) return id;
   const phone = await getDoc(doc(getDb(), 'phones', digits)).catch(() => null);
-  if (!phone?.exists()) throw new Error('Утасны дугаар (имэйл) эсвэл нууц үг буруу байна.');
-  return phone.data().email as string;
+  const email = phone?.exists() ? (phone.data().email as string) : null;
+  // The admin signs in only as "Admin" (or by email), not by phone number
+  if (!email || email === ADMIN_EMAIL) throw new Error('Утасны дугаар (имэйл) эсвэл нууц үг буруу байна.');
+  return email;
 }
 
 /** Emails a password reset link to the account behind this phone number or email. */
