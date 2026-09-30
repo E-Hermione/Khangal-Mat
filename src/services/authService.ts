@@ -144,7 +144,9 @@ export async function registerAccount(data: RegistrationData): Promise<void> {
       createdAt: Date.now(),
     });
     if (!auth.currentUser!.emailVerified) {
-      await sendVerificationEmail();
+      // The account is ready; if Firebase throttles the email (e.g. after retries), the
+      // verification screen lets the user resend it later.
+      await sendVerificationEmail().catch((err) => console.warn('Verification email not sent', err));
     }
   } catch (err) {
     // Leave no half-registered session behind; the user can retry with the same email
