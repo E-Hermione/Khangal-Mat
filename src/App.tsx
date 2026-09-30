@@ -8,7 +8,6 @@ import { AdminEditorModal } from './components/AdminEditorModal';
 import { AccessRequestsModal } from './components/AccessRequestsModal';
 import { LoginView } from './components/LoginView';
 import { VerifyEmailView } from './components/VerifyEmailView';
-import { ScreenProtection } from './components/ScreenProtection';
 import { CopyProtection } from './components/CopyProtection';
 import { SettingsModal } from './components/SettingsModal';
 import { ExamsHub } from './components/ExamsHub';
@@ -63,8 +62,6 @@ export default function App() {
     window.addEventListener('app-settings-updated', refresh);
     return () => window.removeEventListener('app-settings-updated', refresh);
   }, []);
-  const screenProtectionEnabled = appSettings.screenProtection;
-  const handleToggleScreenProtection = (enabled: boolean) => cloud.setAppSettings({ screenProtection: enabled });
   const handleToggleDeviceLimit = (enabled: boolean) => cloud.setAppSettings({ deviceLimit: enabled });
   const handleToggleCopyProtection = (enabled: boolean) => cloud.setAppSettings({ copyProtection: enabled });
 
@@ -396,10 +393,6 @@ export default function App() {
     <div className="min-h-screen bg-stone-100 flex flex-col font-sans text-stone-900">
       {/* The admin edits content, so copying stays allowed for them */}
       <CopyProtection enabled={appSettings.copyProtection && currentUser.role !== 'admin'} />
-      <ScreenProtection
-        enabled={screenProtectionEnabled}
-        watermarkText={currentUser.email || currentUser.username || currentUser.phoneNumber || currentUser.name}
-      />
       {/* Top Navigation Bar on Screen */}
       <header className="screen-header bg-white border-b border-stone-200 sticky top-0 z-40 h-14 px-4 flex items-center shadow-2xs no-print">
         <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
@@ -605,8 +598,6 @@ export default function App() {
         currentUser={currentUser}
         onUpdateCurrentUser={(updated) => setCurrentUser(updated)}
         onLogout={handleLogout}
-        screenProtectionEnabled={screenProtectionEnabled}
-        onToggleScreenProtection={handleToggleScreenProtection}
         deviceLimitEnabled={appSettings.deviceLimit}
         onToggleDeviceLimit={handleToggleDeviceLimit}
         copyProtectionEnabled={appSettings.copyProtection}

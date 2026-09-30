@@ -24,12 +24,11 @@ export type VisibilityDoc = Record<string, unknown>;
 
 // Site-wide switches the admin controls in Settings (settings/app)
 export interface AppSettings {
-  screenProtection: boolean;
   deviceLimit: boolean;
   copyProtection: boolean;
 }
 
-export const DEFAULT_APP_SETTINGS: AppSettings = { screenProtection: false, deviceLimit: true, copyProtection: false };
+export const DEFAULT_APP_SETTINGS: AppSettings = { deviceLimit: true, copyProtection: false };
 
 interface CloudState {
   topics: TopicPackage[];
