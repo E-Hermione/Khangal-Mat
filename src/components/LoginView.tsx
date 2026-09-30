@@ -223,7 +223,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <span>Шинээр бүртгүүлэх</span>
             </button>
             <p className="text-[11px] text-stone-400 mt-2">
-              Gmail-ээ баталгаажуулж, утас, анги, сургуулиа оруулаад шууд нэвтэрнэ
+              Имэйлээ кодоор баталгаажуулж, утас, анги, сургуулиа оруулаад шууд нэвтэрнэ
             </p>
           </div>
         </div>

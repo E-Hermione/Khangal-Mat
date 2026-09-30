@@ -4,3 +4,4 @@ dist/
 !.env.example
 !.env.production
 !.env.development
+*-debug.log

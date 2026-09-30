@@ -20,3 +20,14 @@ View your app in AI Studio: https://ai.studio/apps/8168fe20-5628-4f16-a317-dcf60
    Authentication → Settings → Authorized domains)
 3. Run the app:
    `npm run dev`
+
+## Email verification codes (Cloud Functions)
+
+Registration emails a 6-digit code from `functions/` (`sendEmailCode`, `verifyEmailCode`).
+One-time setup (requires the Blaze plan):
+
+1. Firebase console → Firestore Database → create a database.
+2. Create a Gmail app password for the sending account (Google Account → Security →
+   2-Step Verification → App passwords).
+3. `npx firebase-tools functions:secrets:set GMAIL_APP_PASSWORD` and paste the app password.
+4. `npx firebase-tools deploy` (asks for `GMAIL_USER`, the sending Gmail address, on first deploy).

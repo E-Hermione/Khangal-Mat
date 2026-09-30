@@ -171,7 +171,7 @@ export const accessRequestService = {
     const email = data.email.trim().toLowerCase();
 
     if (!email) {
-      return { success: false, message: 'Gmail хаягаа Google-ээр баталгаажуулна уу.' };
+      return { success: false, message: 'Имэйл хаягаа баталгаажуулна уу.' };
     }
     if (!lastName || !firstName) {
       return { success: false, message: 'Овог, нэрээ заавал оруулна уу.' };
@@ -199,7 +199,7 @@ export const accessRequestService = {
       return { success: false, message: 'Энэ утасны дугаар аль хэдийн бүртгэлтэй байна. Нэвтэрнэ үү.' };
     }
     if (email === adminProfile.email.toLowerCase() || accounts.some((a) => a.email && a.email.toLowerCase() === email)) {
-      return { success: false, message: 'Энэ Gmail хаяг аль хэдийн бүртгэлтэй байна. Нэвтэрнэ үү.' };
+      return { success: false, message: 'Энэ имэйл хаяг аль хэдийн бүртгэлтэй байна. Нэвтэрнэ үү.' };
     }
 
     const account: ApprovedAccount = {
