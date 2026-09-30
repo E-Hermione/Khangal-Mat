@@ -14,7 +14,6 @@ import {
   ChevronRight,
   ChevronLeft,
   Sliders,
-  Printer,
   Sparkles,
   Save,
   KeyRound,
@@ -69,7 +68,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [isChangingPass, setIsChangingPass] = useState(false);
 
   // Additional system preference toggles
-  const [autoWorkspace, setAutoWorkspace] = useState(true);
   const [highContrastPrint, setHighContrastPrint] = useState(false);
   const [notifications, setNotifications] = useState(true);
 
@@ -572,32 +570,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div
                       className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
                         screenProtectionEnabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Row 2: Workspace toggle */}
-                <div className="p-3.5 flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center text-stone-600">
-                      <Printer className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-stone-900">Сурагчийн бодолтын зай</div>
-                      <div className="text-[11px] text-stone-500">Хэвлэх үед бодолт бичих шугамыг автоматаар нэмэх</div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setAutoWorkspace(!autoWorkspace)}
-                    className={`w-11 h-6 rounded-full p-0.5 transition-colors cursor-pointer ${
-                      autoWorkspace ? 'bg-amber-500' : 'bg-stone-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
-                        autoWorkspace ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
                   </button>
