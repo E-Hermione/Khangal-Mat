@@ -317,6 +317,21 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
                     .map(([k]) => SECTION_NAMES[k] || k)
                     .join(', ') || 'Байхгүй'}
                 </div>
+                <div>
+                  <span className="text-stone-500">Хугацаа:</span>{' '}
+                  {typeof perms.expiresAt === 'number' ? (
+                    Date.now() > perms.expiresAt ? (
+                      <b className="text-red-600">{new Date(perms.expiresAt).toLocaleDateString()}-нд дууссан</b>
+                    ) : (
+                      <b>
+                        {new Date(perms.expiresAt).toLocaleDateString()} хүртэл (
+                        {Math.ceil((perms.expiresAt - Date.now()) / 86400000)} өдөр үлдсэн)
+                      </b>
+                    )
+                  ) : (
+                    'Хязгааргүй'
+                  )}
+                </div>
                 {perms.isBlocked && <div className="text-red-600 font-bold">Хичээл үзэх эрх хаагдсан</div>}
               </div>
             )}

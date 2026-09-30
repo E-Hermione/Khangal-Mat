@@ -129,9 +129,63 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
   // Save specific user permissions
   const handleSaveUserPermissions = () => {
     if (!selectedUserId || !currentUserPerms) return;
-    userPermissionsService.saveUserPermissions(selectedUserId, currentUserPerms);
-    setSaveStatus(`"${selectedUserId}" хэрэглэгчийн эрх амжилттай шинэчлэгдлээ!`);
+    const targets = bulkTargets.length > 0 ? bulkTargets : [selectedUserId];
+    for (const id of targets) {
+      userPermissionsService.saveUserPermissions(id, { ...currentUserPerms, userId: id });
+    }
+    setSaveStatus(
+      targets.length > 1
+        ? `${targets.length} хэрэглэгчийн эрх амжилттай шинэчлэгдлээ!`
+        : `"${selectedUserId}" хэрэглэгчийн эрх амжилттай шинэчлэгдлээ!`
+    );
     setTimeout(() => setSaveStatus(null), 3500);
+  };
+
+  // Several users at once: IDs (or phone numbers) separated by commas
+  const [bulkInput, setBulkInput] = useState('');
+  const [bulkTargets, setBulkTargets] = useState<string[]>([]);
+  const [bulkUnknown, setBulkUnknown] = useState<string[]>([]);
+
+  const handleSelectBulk = () => {
+    const tokens = bulkInput.split(/[,\s;]+/).map((t) => t.trim()).filter(Boolean);
+    const found: string[] = [];
+    const unknown: string[] = [];
+    for (const token of tokens) {
+      const t = token.toUpperCase();
+      const user = allUsersList.find((u) => u.userId.toUpperCase() === t || u.phone === token);
+      if (user) {
+        if (!found.includes(user.userId)) found.push(user.userId);
+      } else {
+        unknown.push(token);
+      }
+    }
+    setBulkUnknown(unknown);
+    setBulkTargets(found);
+    if (found.length > 0) setSelectedUserId(found[0]);
+  };
+
+  const selectSingleUser = (userId: string) => {
+    setBulkTargets([]);
+    setBulkUnknown([]);
+    setSelectedUserId(userId);
+  };
+
+  // Access period helpers: end of the chosen day
+  const expiryInputValue = (ms?: number | null) => {
+    if (typeof ms !== 'number') return '';
+    const d = new Date(ms);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const endOfDay = (date: Date) => {
+    const d = new Date(date);
+    d.setHours(23, 59, 59, 999);
+    return d.getTime();
+  };
+  const addToToday = (days: number, months = 0) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + months);
+    d.setDate(d.getDate() + days);
+    return endOfDay(d);
   };
 
   // Save default permissions config
@@ -563,6 +617,30 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
               </div>
             </div>
 
+            {/* Several users at once */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={bulkInput}
+                onChange={(e) => setBulkInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSelectBulk();
+                }}
+                placeholder="Олон хэрэглэгч: USR-1234, USR-5678, 99112233 (таслалаар тусгаарлана)"
+                className="flex-1 text-xs px-3 py-2 bg-white border border-stone-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+              />
+              <button
+                type="button"
+                onClick={handleSelectBulk}
+                className="px-3 py-2 bg-stone-900 hover:bg-black text-amber-400 text-xs font-bold rounded-lg cursor-pointer whitespace-nowrap"
+              >
+                Бүгдийг сонгох
+              </button>
+            </div>
+            {bulkUnknown.length > 0 && (
+              <div className="text-[11px] text-red-700">Олдсонгүй: {bulkUnknown.join(', ')}</div>
+            )}
+
             {/* User Select Buttons List */}
             <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 bg-white rounded-xl border border-stone-200">
               {filteredUsersForPicker.length === 0 ? (
@@ -574,7 +652,7 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                     <button
                       key={user.userId}
                       type="button"
-                      onClick={() => setSelectedUserId(user.userId)}
+                      onClick={() => selectSingleUser(user.userId)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                         isSelected
                           ? 'bg-amber-500 text-stone-950 shadow-2xs font-black ring-2 ring-amber-400/40'
@@ -606,6 +684,11 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                   <div className="text-xs text-stone-600">
                     {selectedUserDetails?.email} {selectedUserDetails?.phone && `• ${selectedUserDetails.phone}`}
                   </div>
+                  {bulkTargets.length > 1 && (
+                    <div className="text-xs font-bold text-amber-800" data-testid="bulk-targets">
+                      Хадгалахад {bulkTargets.length} хэрэглэгчид нэг дор хэрэглэнэ: {bulkTargets.join(', ')}
+                    </div>
+                  )}
                 </div>
 
                 {/* Block/Unblock Toggle */}
@@ -849,6 +932,65 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                       Хэрэглэгч зөвхөн багшаас зөвшөөрөл авч нээлгэх шаардлагатай.
                     </div>
                   </button>
+                </div>
+              </div>
+
+              {/* 4. Эрхийн хугацаа (Access period) */}
+              <div className="space-y-2 pt-2 border-t border-stone-100">
+                <label className="text-xs font-black uppercase text-stone-800 tracking-wider">
+                  Эрхийн хугацаа:
+                </label>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentUserPerms({ ...currentUserPerms, expiresAt: null })}
+                    className={`px-3 py-1.5 rounded-lg border font-bold cursor-pointer ${
+                      typeof currentUserPerms.expiresAt !== 'number'
+                        ? 'bg-stone-900 text-amber-400 border-stone-900'
+                        : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+                    }`}
+                  >
+                    Хугацаагүй
+                  </button>
+                  {[
+                    { label: '1 долоо хоног', days: 7, months: 0 },
+                    { label: '1 сар', days: 0, months: 1 },
+                    { label: '3 сар', days: 0, months: 3 },
+                    { label: '1 жил', days: 0, months: 12 },
+                  ].map((opt) => (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      onClick={() => setCurrentUserPerms({ ...currentUserPerms, expiresAt: addToToday(opt.days, opt.months) })}
+                      className="px-3 py-1.5 rounded-lg border font-bold cursor-pointer bg-stone-50 text-stone-700 border-stone-200 hover:bg-amber-50 hover:border-amber-300"
+                    >
+                      +{opt.label}
+                    </button>
+                  ))}
+                  <label className="flex items-center gap-1.5 text-stone-600">
+                    <span>Дуусах өдөр:</span>
+                    <input
+                      type="date"
+                      value={expiryInputValue(currentUserPerms.expiresAt)}
+                      onChange={(e) =>
+                        setCurrentUserPerms({
+                          ...currentUserPerms,
+                          expiresAt: e.target.value ? endOfDay(new Date(`${e.target.value}T00:00:00`)) : null,
+                        })
+                      }
+                      className="px-2 py-1 border border-stone-300 rounded-lg bg-white"
+                      data-testid="expiry-date"
+                    />
+                  </label>
+                </div>
+                <div className="text-[11px] text-stone-500">
+                  {typeof currentUserPerms.expiresAt === 'number'
+                    ? Date.now() > currentUserPerms.expiresAt
+                      ? `Хугацаа ${new Date(currentUserPerms.expiresAt).toLocaleDateString()}-нд дууссан. Хэрэглэгч хичээл, сорил үзэх боломжгүй.`
+                      : `${new Date(currentUserPerms.expiresAt).toLocaleDateString()} хүртэл үзнэ (${Math.ceil(
+                          (currentUserPerms.expiresAt - Date.now()) / 86400000
+                        )} өдөр үлдсэн).`
+                    : 'Хугацааны хязгааргүй.'}
                 </div>
               </div>
 

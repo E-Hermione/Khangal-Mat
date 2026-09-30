@@ -179,6 +179,8 @@ export interface UserPermissions {
   };
   accessMode: 'visible' | 'locked';
   isBlocked?: boolean;
+  // Access ends after this moment (ms); null/undefined means no time limit
+  expiresAt?: number | null;
   updatedAt?: number;
 }
 

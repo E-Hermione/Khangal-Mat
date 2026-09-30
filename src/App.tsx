@@ -29,6 +29,7 @@ import {
   MAX_DEVICES_USER,
 } from './services/deviceSessions';
 import { accessRequestService } from './services/accessRequestService';
+import { userPermissionsService } from './services/userPermissionsService';
 import {
   Menu,
   Printer,
@@ -67,6 +68,14 @@ export default function App() {
   const handleToggleScreenProtection = (enabled: boolean) => cloud.setAppSettings({ screenProtection: enabled });
   const handleToggleDeviceLimit = (enabled: boolean) => cloud.setAppSettings({ deviceLimit: enabled });
   const handleToggleCopyProtection = (enabled: boolean) => cloud.setAppSettings({ copyProtection: enabled });
+
+  // Re-render when the admin changes this user's permissions (e.g. the access period)
+  const [, setPermsVersion] = useState(0);
+  useEffect(() => {
+    const bump = () => setPermsVersion((v) => v + 1);
+    window.addEventListener('user-permissions-updated', bump);
+    return () => window.removeEventListener('user-permissions-updated', bump);
+  }, []);
 
   const [pendingRequestsCount, setPendingRequestsCount] = useState<number>(() => {
     return accessRequestService.getRequests().filter((r) => r.status === 'pending').length;
@@ -541,6 +550,13 @@ export default function App() {
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 md:p-6 lg:p-8 min-w-0">
+          {currentUser.role !== 'admin' && userPermissionsService.isExpired(currentUser.userId) && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800 font-medium" data-testid="access-expired">
+              Таны хичээл үзэх эрхийн хугацаа{' '}
+              {new Date(userPermissionsService.getUserPermissions(currentUser.userId!).expiresAt!).toLocaleDateString()}-нд
+              дууссан байна. Сунгуулахын тулд админд хандана уу.
+            </div>
+          )}
           {activeView === 'exams' ? (
             <ExamsHub
               topics={topics}

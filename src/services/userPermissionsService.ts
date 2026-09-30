@@ -105,6 +105,15 @@ class UserPermissionsService {
   }
 
   /**
+   * True if the user's access period has ended
+   */
+  isExpired(userId: string | undefined): boolean {
+    if (!userId) return false;
+    const expiresAt = this.getUserPermissions(userId).expiresAt;
+    return typeof expiresAt === 'number' && Date.now() > expiresAt;
+  }
+
+  /**
    * Check if a grade is allowed for a user
    */
   isGradeAllowed(userId: string | undefined, grade: GradeNumber, isAdmin: boolean): boolean {
@@ -113,7 +122,7 @@ class UserPermissionsService {
       return this.getDefaultConfig().allowedGrades.includes(grade);
     }
     const perms = this.getUserPermissions(userId);
-    if (perms.isBlocked) return false;
+    if (perms.isBlocked || this.isExpired(userId)) return false;
     return perms.allowedGrades.includes(grade);
   }
 
@@ -130,7 +139,7 @@ class UserPermissionsService {
       return this.getDefaultConfig().sections[section] ?? true;
     }
     const perms = this.getUserPermissions(userId);
-    if (perms.isBlocked) return false;
+    if (perms.isBlocked || this.isExpired(userId)) return false;
     return perms.sections[section] ?? true;
   }
 
