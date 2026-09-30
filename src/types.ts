@@ -154,7 +154,11 @@ export interface ApprovedAccount {
   phoneNumber?: string;
   password: string;
   fullName: string;
+  lastName?: string;
+  firstName?: string;
   school?: string;
+  // Grades the teacher teaches, chosen at self-registration
+  grades?: GradeNumber[];
   approvedAt: number;
   active: boolean;
 }

@@ -152,7 +152,7 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
     const map = new Map<string, { userId: string; name: string; email: string; phone?: string; status: string }>();
 
     approvedAccounts.forEach((acc) => {
-      const uId = acc.userId || userPermissionsService.generateUserId(acc.email);
+      const uId = acc.userId || userPermissionsService.generateUserId(acc.email || acc.phoneNumber || '');
       map.set(uId, {
         userId: uId,
         name: acc.fullName,
@@ -277,7 +277,7 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                     : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
-                Зөвшөөрсөн бүртгэлүүд ({approvedAccounts.length})
+                Бүртгэлтэй багш нар ({approvedAccounts.length})
               </button>
               <button
                 type="button"
@@ -334,15 +334,15 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
             /* Approved Accounts List */
             approvedAccounts.length === 0 ? (
               <div className="text-center py-12 text-stone-400 text-xs bg-stone-50 rounded-2xl border border-stone-200/60">
-                Зөвшөөрсөн идэвхтэй бүртгэл одоогоор алга байна.
+                Бүртгэлтэй багш одоогоор алга байна.
               </div>
             ) : (
               <div className="space-y-2.5">
                 {approvedAccounts.map((account) => {
-                  const uId = account.userId || userPermissionsService.generateUserId(account.email);
+                  const uId = account.userId || userPermissionsService.generateUserId(account.email || account.phoneNumber || '');
                   return (
                     <div
-                      key={account.email}
+                      key={uId}
                       className="p-3.5 bg-white rounded-xl border border-stone-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-amber-300 transition-colors"
                     >
                       <div className="space-y-1 min-w-0 flex-1">
@@ -361,9 +361,12 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                           </button>
                         </div>
                         <div className="text-xs text-stone-600 flex items-center space-x-2 truncate">
-                          <span>{account.email}</span>
-                          {account.phoneNumber && <span>• {account.phoneNumber}</span>}
+                          {account.phoneNumber && <span>{account.phoneNumber}</span>}
+                          {account.email && <span>• {account.email}</span>}
                           {account.school && <span>• {account.school}</span>}
+                          {account.grades && account.grades.length > 0 && (
+                            <span>• {account.grades.join(', ')}-р анги</span>
+                          )}
                         </div>
                         <div className="text-[11px] text-stone-500 font-mono">
                           Нууц үг: <span className="font-bold text-stone-800 bg-stone-100 px-1.5 py-0.5 rounded">{account.password}</span>
@@ -384,7 +387,7 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
 
                         <button
                           type="button"
-                          onClick={() => handleToggleAccount(account.email)}
+                          onClick={() => handleToggleAccount(account.phoneNumber || account.email)}
                           className={`px-2.5 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                             account.active
                               ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
@@ -396,7 +399,7 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
 
                         <button
                           type="button"
-                          onClick={() => handleDeleteAccount(account.email)}
+                          onClick={() => handleDeleteAccount(account.phoneNumber || account.email)}
                           className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
                           title="Устгах"
                         >

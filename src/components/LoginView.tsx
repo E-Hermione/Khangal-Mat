@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AuthUser } from '../types';
 import {
   Lock,
-  Mail,
+  Phone,
   Eye,
   EyeOff,
   LogIn,
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { getOrCreateDeviceId, saveStoredAuth } from '../utils/deviceManager';
 import { accessRequestService } from '../services/accessRequestService';
-import { RequestAccessModal } from './RequestAccessModal';
+import { RegisterModal } from './RegisterModal';
 
 interface LoginViewProps {
   onLoginSuccess: (user: AuthUser) => void;
@@ -22,7 +22,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +32,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     const trimmedPass = password.trim();
 
     if (!trimmedIdentifier) {
-      setError('Gmail хаяг эсвэл нэвтрэх нэрээ оруулна уу.');
+      setError('Утасны дугаараа оруулна уу.');
       return;
     }
 
@@ -44,7 +44,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     const validation = accessRequestService.validateLogin(trimmedIdentifier, trimmedPass);
 
     if (!validation.valid || !validation.user) {
-      setError(validation.error || 'Gmail хаяг эсвэл нууц үг буруу байна.');
+      setError(validation.error || 'Утасны дугаар эсвэл нууц үг буруу байна.');
       return;
     }
 
@@ -77,6 +77,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     if (validation.valid && validation.user) {
       const deviceId = getOrCreateDeviceId();
       const user: AuthUser = {
+        userId: validation.user.userId,
         phoneNumber: validation.user.phoneNumber,
         email: validation.user.email,
         name: validation.user.name,
@@ -116,17 +117,19 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
             <div>
               <label className="block text-xs font-bold text-stone-700 mb-1.5">
-                Gmail хаяг эсвэл нэвтрэх нэр
+                Утасны дугаар
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-stone-400">
-                  <Mail className="w-4 h-4" />
+                  <Phone className="w-4 h-4" />
                 </div>
                 <input
                   type="text"
+                  inputMode="tel"
+                  autoComplete="username"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="Жишээ: bagsh@gmail.com (эсвэл admin)"
+                  placeholder="Жишээ: 99112233"
                   className="w-full pl-9 pr-3 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm text-stone-900 placeholder:text-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                   autoFocus
                 />
@@ -169,28 +172,30 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             </button>
           </form>
 
-          {/* Request Access Button */}
+          {/* Register Button */}
           <div className="mt-6 pt-5 border-t border-stone-200 text-center">
             <button
               type="button"
-              onClick={() => setRequestModalOpen(true)}
+              onClick={() => setRegisterModalOpen(true)}
               className="inline-flex items-center space-x-2 text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-50/80 hover:bg-amber-100/80 px-3.5 py-2 rounded-xl border border-amber-200 transition-colors cursor-pointer w-full justify-center"
             >
               <UserPlus className="w-4 h-4 text-amber-600" />
-              <span>Нэвтрэх эрх авах хүсэлт илгээх (Gmail)</span>
+              <span>Шинээр бүртгүүлэх</span>
             </button>
             <p className="text-[11px] text-stone-400 mt-2">
-              Хүсэлт илгээснээр админ зөвшөөрсний дараа таны Gmail рүү нэвтрэх эрх очих болно
+              Овог нэр, утас, анги, сургуулиа оруулаад шууд нэвтэрнэ
             </p>
           </div>
         </div>
       </div>
 
-      {/* Access Request & Status Checker Modal */}
-      <RequestAccessModal
-        isOpen={requestModalOpen}
-        onClose={() => setRequestModalOpen(false)}
-        onAutoLogin={handleAutoLogin}
+      <RegisterModal
+        isOpen={registerModalOpen}
+        onClose={() => setRegisterModalOpen(false)}
+        onRegistered={(phone, pass) => {
+          setRegisterModalOpen(false);
+          handleAutoLogin(phone, pass);
+        }}
       />
     </div>
   );

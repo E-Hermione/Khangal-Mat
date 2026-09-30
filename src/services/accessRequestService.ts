@@ -1,4 +1,4 @@
-import { AccessRequest, ApprovedAccount, AccessRequestStatus, AuthUser } from '../types';
+import { AccessRequest, ApprovedAccount, AccessRequestStatus, AuthUser, GradeNumber } from '../types';
 import { userPermissionsService } from './userPermissionsService';
 
 const STORAGE_KEY_REQUESTS = 'math_app_access_requests_v1';
@@ -150,6 +150,68 @@ export const accessRequestService = {
   },
 
   /**
+   * Teacher self-registration with a phone number. The account is active immediately.
+   */
+  registerTeacher(data: {
+    lastName: string;
+    firstName: string;
+    phoneNumber: string;
+    grades: GradeNumber[];
+    school: string;
+    password: string;
+  }): { success: boolean; message: string; account?: ApprovedAccount } {
+    const lastName = data.lastName.trim();
+    const firstName = data.firstName.trim();
+    const phone = data.phoneNumber.replace(/[\s-]/g, '');
+    const school = data.school.trim();
+    const password = data.password.trim();
+
+    if (!lastName || !firstName) {
+      return { success: false, message: 'Овог, нэрээ заавал оруулна уу.' };
+    }
+    if (!/^\d{8}$/.test(phone)) {
+      return { success: false, message: 'Утасны дугаар 8 оронтой тоо байх ёстой.' };
+    }
+    if (data.grades.length === 0) {
+      return { success: false, message: 'Заадаг ангиа дор хаяж нэгийг сонгоно уу.' };
+    }
+    if (!school) {
+      return { success: false, message: 'Сургуулийнхаа нэрийг оруулна уу.' };
+    }
+    if (password.length < 6) {
+      return { success: false, message: 'Нууц үг дор хаяж 6 тэмдэгттэй байх ёстой.' };
+    }
+
+    const adminProfile = this.getAdminProfile();
+    if (phone === '89163999' || phone === adminProfile.phoneNumber) {
+      return { success: false, message: 'Энэ дугаар системийн админ дугаар байна.' };
+    }
+
+    const accounts = this.getApprovedAccounts();
+    if (accounts.some((a) => a.phoneNumber === phone)) {
+      return { success: false, message: 'Энэ утасны дугаар аль хэдийн бүртгэлтэй байна. Нэвтэрнэ үү.' };
+    }
+
+    const account: ApprovedAccount = {
+      userId: userPermissionsService.generateUserId(phone),
+      email: '',
+      username: phone,
+      phoneNumber: phone,
+      password,
+      fullName: `${lastName} ${firstName}`,
+      lastName,
+      firstName,
+      school,
+      grades: [...data.grades].sort((a, b) => a - b),
+      approvedAt: Date.now(),
+      active: true,
+    };
+    this.saveApprovedAccounts([...accounts, account]);
+
+    return { success: true, message: 'Бүртгэл амжилттай үүслээ.', account };
+  },
+
+  /**
    * Find request by email or phone to allow checking status
    */
   getRequestByEmail(email: string): AccessRequest | null {
@@ -198,6 +260,18 @@ export const accessRequestService = {
       } catch (err) {
         console.error('Failed to unlock topic:', err);
       }
+    }
+
+    if (target.requestType === 'topic_unlock') {
+      const now = Date.now();
+      const updatedRequest: AccessRequest = { ...target, status: 'approved', approvedAt: now };
+      requests[index] = updatedRequest;
+      this.saveRequests(requests);
+      return {
+        success: true,
+        message: `«${target.requestedTopicTitle || ''}» сэдэв нээгдлээ.`,
+        request: updatedRequest,
+      };
     }
 
     // Generate secure 6-character password or use provided
@@ -306,7 +380,7 @@ export const accessRequestService = {
       const normalized = accounts.map((acc) => {
         if (!acc.userId) {
           updated = true;
-          acc.userId = userPermissionsService.generateUserId(acc.email || acc.phoneNumber);
+          acc.userId = userPermissionsService.generateUserId(acc.email || acc.phoneNumber || '');
         }
         return acc;
       });
@@ -397,7 +471,7 @@ export const accessRequestService = {
     // 2. Approved accounts check (matches by email, username, or phone)
     const accounts = this.getApprovedAccounts();
     const matched = accounts.find(
-      (a) => (a.email?.toLowerCase() === cleanId || a.username?.toLowerCase() === cleanId || a.phoneNumber === cleanId) && a.active
+      (a) => ((a.email && a.email.toLowerCase() === cleanId) || a.username?.toLowerCase() === cleanId || a.phoneNumber === cleanId) && a.active
     );
 
     if (matched) {
@@ -442,7 +516,7 @@ export const accessRequestService = {
       }
     }
 
-    return { valid: false, error: 'Gmail хаяг (эсвэл нэвтрэх нэр) болон нууц үг буруу байна.' };
+    return { valid: false, error: 'Утасны дугаар эсвэл нууц үг буруу байна.' };
   },
 
   /**
@@ -452,7 +526,7 @@ export const accessRequestService = {
     const clean = identifier.trim().toLowerCase();
     const accounts = this.getApprovedAccounts();
     const updated = accounts.map((acc) =>
-      (acc.email?.toLowerCase() === clean || acc.phoneNumber === clean) ? { ...acc, active: !acc.active } : acc
+      ((acc.email && acc.email.toLowerCase() === clean) || acc.phoneNumber === clean) ? { ...acc, active: !acc.active } : acc
     );
     this.saveApprovedAccounts(updated);
     return true;
@@ -464,7 +538,7 @@ export const accessRequestService = {
   deleteAccount(identifier: string): boolean {
     const clean = identifier.trim().toLowerCase();
     const accounts = this.getApprovedAccounts();
-    const updated = accounts.filter((acc) => acc.email?.toLowerCase() !== clean && acc.phoneNumber !== clean);
+    const updated = accounts.filter((acc) => !((acc.email && acc.email.toLowerCase() === clean) || acc.phoneNumber === clean));
     this.saveApprovedAccounts(updated);
     return true;
   },
@@ -519,8 +593,15 @@ export const accessRequestService = {
       const accounts = this.getApprovedAccounts();
       const userIdentifier = (currentUser.email || currentUser.phoneNumber || '').toLowerCase();
       const accountIndex = accounts.findIndex(
-        (a) => a.email.toLowerCase() === userIdentifier || a.phoneNumber === userIdentifier
+        (a) => (a.email && a.email.toLowerCase() === userIdentifier) || a.phoneNumber === userIdentifier
       );
+
+      if (
+        cleanPhone &&
+        accounts.some((a, i) => i !== accountIndex && a.phoneNumber === cleanPhone)
+      ) {
+        return { success: false, message: 'Энэ утасны дугаар өөр багшид бүртгэлтэй байна.' };
+      }
 
       if (accountIndex >= 0) {
         accounts[accountIndex] = {
@@ -577,7 +658,7 @@ export const accessRequestService = {
       const accounts = this.getApprovedAccounts();
       const userIdentifier = (currentUser.email || currentUser.phoneNumber || '').toLowerCase();
       const account = accounts.find(
-        (a) => a.email.toLowerCase() === userIdentifier || a.phoneNumber === userIdentifier
+        (a) => (a.email && a.email.toLowerCase() === userIdentifier) || a.phoneNumber === userIdentifier
       );
 
       if (!account) {
