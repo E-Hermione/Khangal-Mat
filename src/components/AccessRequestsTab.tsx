@@ -25,31 +25,19 @@ import {
 } from 'lucide-react';
 import { accessRequestService } from '../services/accessRequestService';
 import { userPermissionsService } from '../services/userPermissionsService';
-import { storageService } from '../services/storageService';
-import { loadUserAttempts, AttemptMap, ExamAttempt } from '../services/examAttempts';
-import { GRADE_TOPICS_CATALOG } from '../data/initialData';
-
-const TIER_NAMES: Record<string, string> = { '1': 'Анхан', '2': 'Дунд', '3': 'Ахисан' };
-
-// "g6-divisibility-test2" -> "Хуваагдах шинж — Дунд"
-function examLabel(examId: string): string {
-  const m = examId.match(/^(.*)-test([123])$/);
-  if (!m) return examId;
-  const [, topicId, tier] = m;
-  const saved = storageService.getTopics().find((t) => t.id === topicId);
-  const catalog = Object.values(GRADE_TOPICS_CATALOG).flat().find((t) => t.id === topicId);
-  return `${saved?.title || catalog?.title || topicId} — ${TIER_NAMES[tier]}`;
-}
 import { AccessRequest, ApprovedAccount, UserPermissions, DefaultPermissionsConfig, GradeNumber } from '../types';
+import { UserLookupTab } from './UserLookupTab';
 
 interface AccessRequestsTabProps {
   onCountChange?: (count: number) => void;
 }
 
-type MainTab = 'requests' | 'user-permissions' | 'default-permissions';
+type MainTab = 'lookup' | 'requests' | 'user-permissions' | 'default-permissions';
 
 export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountChange }) => {
   const [mainTab, setMainTab] = useState<MainTab>('requests');
+  // User opened in the lookup tab (from "Дэлгэрэнгүй" in the registered users list)
+  const [lookupUid, setLookupUid] = useState<string | null>(null);
   const [requests, setRequests] = useState<AccessRequest[]>([]);
   const [approvedAccounts, setApprovedAccounts] = useState<ApprovedAccount[]>([]);
   const [requestsSubTab, setRequestsSubTab] = useState<'pending' | 'approved' | 'all'>('pending');
@@ -119,30 +107,6 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
       window.alert(err instanceof Error ? err.message : 'Хэрэглэгчийг устгаж чадсангүй.');
     }
     loadData();
-  };
-
-  // Exam results of one user, shown under their row
-  const [resultsUid, setResultsUid] = useState<string | null>(null);
-  const [results, setResults] = useState<AttemptMap>({});
-  const [resultsLoading, setResultsLoading] = useState(false);
-  const [resultsError, setResultsError] = useState<string | null>(null);
-
-  const handleToggleResults = async (uid: string) => {
-    if (resultsUid === uid) {
-      setResultsUid(null);
-      return;
-    }
-    setResultsUid(uid);
-    setResults({});
-    setResultsError(null);
-    setResultsLoading(true);
-    try {
-      setResults(await loadUserAttempts(uid));
-    } catch {
-      setResultsError('Дүнг ачаалж чадсангүй. Firestore-ийн дүрмийг шинэчлэх шаардлагатай байж магадгүй.');
-    } finally {
-      setResultsLoading(false);
-    }
   };
 
   const handleToggleAccount = (identifier: string) => {
@@ -236,6 +200,19 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
       <div className="flex flex-wrap items-center gap-1.5 border-b border-stone-200 pb-2">
         <button
           type="button"
+          onClick={() => setMainTab('lookup')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all cursor-pointer ${
+            mainTab === 'lookup'
+              ? 'bg-stone-900 text-amber-400 shadow-xs'
+              : 'bg-stone-100 text-stone-600 hover:text-stone-900 hover:bg-stone-200/80'
+          }`}
+        >
+          <Search className="w-4 h-4" />
+          <span>Хэрэглэгч хайх</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setMainTab('requests')}
           className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all cursor-pointer ${
             mainTab === 'requests'
@@ -282,6 +259,10 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
       {/* ========================================================================= */}
       {/* TAB 1: НЭВТРЭХ ХҮСЭЛТҮҮД (Requests & Accounts) */}
       {/* ========================================================================= */}
+      {mainTab === 'lookup' && (
+        <UserLookupTab initialUid={lookupUid} onEditPermissions={handleOpenUserPermissions} />
+      )}
+
       {mainTab === 'requests' && (
         <div className="space-y-4">
           {/* Subfilter Bar */}
@@ -346,7 +327,7 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                   return (
                     <div
                       key={uId}
-                      className="p-3.5 bg-white rounded-xl border border-stone-200 shadow-xs flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-3 hover:border-amber-300 transition-colors"
+                      className="p-3.5 bg-white rounded-xl border border-stone-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-amber-300 transition-colors"
                     >
                       <div className="space-y-1 min-w-0 flex-1">
                         <div className="flex items-center space-x-2 flex-wrap gap-1">
@@ -378,14 +359,17 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                       </div>
 
                       <div className="flex items-center space-x-2 shrink-0">
-                        {/* Exam results */}
+                        {/* Everything about this user */}
                         <button
                           type="button"
-                          onClick={() => account.uid && handleToggleResults(account.uid)}
+                          onClick={() => {
+                            setLookupUid(account.uid || null);
+                            setMainTab('lookup');
+                          }}
                           className="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-bold rounded-lg transition-colors cursor-pointer"
-                          title="Энэ хэрэглэгчийн шалгалтын дүн"
+                          title="Энэ хэрэглэгчийн бүх мэдээлэл"
                         >
-                          Дүн
+                          Дэлгэрэнгүй
                         </button>
 
                         {/* Jump to User Permissions */}
@@ -421,34 +405,6 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                         </button>
                       </div>
 
-                      {account.uid && resultsUid === account.uid && (
-                        <div className="basis-full w-full border-t border-stone-100 pt-2.5 text-xs">
-                          {resultsLoading ? (
-                            <div className="text-stone-400">Ачаалж байна...</div>
-                          ) : resultsError ? (
-                            <div className="text-red-700">{resultsError}</div>
-                          ) : Object.keys(results).length === 0 ? (
-                            <div className="text-stone-400">Шалгалт өгөөгүй байна.</div>
-                          ) : (
-                            <table className="w-full">
-                              <tbody className="divide-y divide-stone-100">
-                                {(Object.entries(results) as [string, ExamAttempt][])
-                                  .filter(([, r]) => r.finishedAt)
-                                  .sort(([, a], [, b]) => (b.finishedAt || 0) - (a.finishedAt || 0))
-                                  .map(([examId, r]) => (
-                                    <tr key={examId}>
-                                      <td className="py-1 pr-2 text-stone-800">{examLabel(examId)}</td>
-                                      <td className="py-1 pr-2 font-bold text-stone-900 whitespace-nowrap">{r.score ?? 0} оноо</td>
-                                      <td className="py-1 text-stone-500 whitespace-nowrap text-right">
-                                        {r.finishedAt ? new Date(r.finishedAt).toLocaleString() : ''}
-                                      </td>
-                                    </tr>
-                                  ))}
-                              </tbody>
-                            </table>
-                          )}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
