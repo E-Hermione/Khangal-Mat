@@ -33,6 +33,8 @@ function authErrorMessage(err: unknown, fallback: string): string {
       return 'Нууц үг дор хаяж 6 тэмдэгттэй байх ёстой.';
     case 'auth/network-request-failed':
       return 'Интернэт холболтоо шалгана уу.';
+    case 'auth/operation-not-allowed':
+      return 'Имэйл/нууц үгээр бүртгүүлэх тохиргоо Firebase дээр идэвхжээгүй байна. Админд хандана уу.';
     case 'permission-denied':
       return 'Энэ утасны дугаар аль хэдийн бүртгэлтэй байна.';
   }
