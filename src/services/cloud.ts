@@ -20,10 +20,19 @@ import { TopicPackage, UserPermissions, DefaultPermissionsConfig, AccessRequest,
 // Loose shape; visibilityService fills in defaults
 export type VisibilityDoc = Record<string, unknown>;
 
+// Site-wide switches the admin controls in Settings (settings/app)
+export interface AppSettings {
+  screenProtection: boolean;
+  deviceLimit: boolean;
+}
+
+export const DEFAULT_APP_SETTINGS: AppSettings = { screenProtection: false, deviceLimit: true };
+
 interface CloudState {
   topics: TopicPackage[];
   visibility: VisibilityDoc | null;
   defaultPermissions: DefaultPermissionsConfig | null;
+  appSettings: AppSettings;
   userPermissions: Record<string, UserPermissions>;
   users: UserProfile[];
   requests: AccessRequest[];
@@ -33,6 +42,7 @@ const emptyState = (): CloudState => ({
   topics: [],
   visibility: null,
   defaultPermissions: null,
+  appSettings: DEFAULT_APP_SETTINGS,
   userPermissions: {},
   users: [],
   requests: [],
@@ -130,6 +140,18 @@ export function startCloudSync({ isAdmin, userId }: CloudSyncOptions): Promise<v
       (snap) => {
         state.defaultPermissions = snap.exists() ? (snap.data() as DefaultPermissionsConfig) : null;
         notify('user-permissions-updated');
+        onFirst();
+      },
+      onError
+    )
+  );
+
+  listen((onFirst, onError) =>
+    onSnapshot(
+      doc(db, 'settings', 'app'),
+      (snap) => {
+        state.appSettings = { ...DEFAULT_APP_SETTINGS, ...(snap.exists() ? (snap.data() as Partial<AppSettings>) : {}) };
+        notify('app-settings-updated');
         onFirst();
       },
       onError
@@ -240,6 +262,14 @@ export const cloud = {
     state.visibility = settings;
     notify('visibility-settings-updated');
     write(setDoc(doc(getDb(), 'settings', 'visibility'), clean(settings)));
+  },
+  getAppSettings(): AppSettings {
+    return state.appSettings;
+  },
+  setAppSettings(update: Partial<AppSettings>) {
+    state.appSettings = { ...state.appSettings, ...update };
+    notify('app-settings-updated');
+    write(setDoc(doc(getDb(), 'settings', 'app'), clean(state.appSettings)));
   },
   getDefaultPermissions(): DefaultPermissionsConfig | null {
     return state.defaultPermissions;

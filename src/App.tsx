@@ -16,7 +16,7 @@ import { clearStoredAuth, saveStoredAuth } from './utils/deviceManager';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { getFirebaseAuth, isFirebaseConfigured } from './services/firebase';
 import { loadSession, signOutUser, isRegistering } from './services/authService';
-import { startCloudSync, stopCloudSync } from './services/cloud';
+import { startCloudSync, stopCloudSync, cloud } from './services/cloud';
 import { seedCloudFromLegacyData } from './services/migration';
 import {
   registerCurrentDevice,
@@ -55,22 +55,16 @@ export default function App() {
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [accessRequestsModalOpen, setAccessRequestsModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
-  const [screenProtectionEnabled, setScreenProtectionEnabled] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('math_app_screen_protection') === 'true';
-    } catch {
-      return false;
-    }
-  });
-
-  const handleToggleScreenProtection = (enabled: boolean) => {
-    setScreenProtectionEnabled(enabled);
-    try {
-      localStorage.setItem('math_app_screen_protection', String(enabled));
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  // Site-wide switches stored in Firestore (settings/app), so they apply to every user
+  const [appSettings, setAppSettings] = useState(() => cloud.getAppSettings());
+  useEffect(() => {
+    const refresh = () => setAppSettings(cloud.getAppSettings());
+    window.addEventListener('app-settings-updated', refresh);
+    return () => window.removeEventListener('app-settings-updated', refresh);
+  }, []);
+  const screenProtectionEnabled = appSettings.screenProtection;
+  const handleToggleScreenProtection = (enabled: boolean) => cloud.setAppSettings({ screenProtection: enabled });
+  const handleToggleDeviceLimit = (enabled: boolean) => cloud.setAppSettings({ deviceLimit: enabled });
 
   const [pendingRequestsCount, setPendingRequestsCount] = useState<number>(() => {
     return accessRequestService.getRequests().filter((r) => r.status === 'pending').length;
@@ -122,6 +116,9 @@ export default function App() {
         return;
       }
 
+      // Load data first: the site-wide settings decide whether the device limit applies
+      await startCloudSync({ isAdmin: session.isAdmin, userId: session.user.userId });
+
       // Device tracking must never block sign-in (e.g. before the rules are deployed)
       const device = await registerCurrentDevice(fbUser.uid).catch((err) => {
         console.error('Device registration failed', err);
@@ -135,10 +132,12 @@ export default function App() {
       if (device === 'ok') {
         // Sign out the earliest devices beyond the limit, possibly this one
         const limit = session.isAdmin ? MAX_DEVICES_ADMIN : MAX_DEVICES_USER;
-        const thisDeviceRemoved = await enforceDeviceLimit(fbUser.uid, limit).catch((err) => {
-          console.error('Device limit check failed', err);
-          return false;
-        });
+        const thisDeviceRemoved = cloud.getAppSettings().deviceLimit
+          ? await enforceDeviceLimit(fbUser.uid, limit).catch((err) => {
+              console.error('Device limit check failed', err);
+              return false;
+            })
+          : false;
         if (thisDeviceRemoved) {
           setLoginNotice('Таны бүртгэлээр өөр төхөөрөмжөөс нэвтэрсэн тул энэ төхөөрөмжөөс гарлаа.');
           await signOutUser();
@@ -153,7 +152,6 @@ export default function App() {
         });
       }
 
-      await startCloudSync({ isAdmin: session.isAdmin, userId: session.user.userId });
       if (session.isAdmin) await seedCloudFromLegacyData();
 
       setTopics(storageService.getTopics());
@@ -387,7 +385,6 @@ export default function App() {
   if (!currentUser) {
     return (
       <>
-        <ScreenProtection enabled={screenProtectionEnabled} />
         <LoginView notice={loginNotice} onRegistered={reloadSession} />
       </>
     );
@@ -606,6 +603,8 @@ export default function App() {
         onLogout={handleLogout}
         screenProtectionEnabled={screenProtectionEnabled}
         onToggleScreenProtection={handleToggleScreenProtection}
+        deviceLimitEnabled={appSettings.deviceLimit}
+        onToggleDeviceLimit={handleToggleDeviceLimit}
         isAdmin={currentUser?.role === 'admin'}
       />
     </div>

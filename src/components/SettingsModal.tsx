@@ -32,6 +32,8 @@ interface SettingsModalProps {
   onLogout: () => void;
   screenProtectionEnabled: boolean;
   onToggleScreenProtection: (enabled: boolean) => void;
+  deviceLimitEnabled: boolean;
+  onToggleDeviceLimit: (enabled: boolean) => void;
   isAdmin?: boolean;
 }
 
@@ -45,6 +47,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onLogout,
   screenProtectionEnabled,
   onToggleScreenProtection,
+  deviceLimitEnabled,
+  onToggleDeviceLimit,
   isAdmin,
 }) => {
   const isUserAdmin = isAdmin ?? (currentUser.role === 'admin');
@@ -67,7 +71,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [isChangingPass, setIsChangingPass] = useState(false);
 
   // Additional system preference toggles
-  const [notifications, setNotifications] = useState(true);
 
   // Reset to main view and update inputs when modal is opened or user changes
   useEffect(() => {
@@ -553,7 +556,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         Дэлгэц хамгаалалт (Усан тэмдэг)
                       </div>
                       <div className="text-[11px] text-stone-500">
-                        Нэвтэрсэн хэрэглэгчийн имэйлийг дэлгэц дээр бүдэг харуулж, зураг авах товчлуурыг хаана
+                        Бүх хэрэглэгчийн дэлгэц дээр имэйлийг нь бүдэг харуулж, зураг авах товчлуурыг хаана
                       </div>
                     </div>
                   </div>
@@ -581,19 +584,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-stone-900">Нэвтрэлтийн хамгаалалт</div>
-                      <div className="text-[11px] text-stone-500">Нэгэн зэрэг давхар нэвтрэлтийг хязгаарлах</div>
+                      <div className="text-[11px] text-stone-500">Нэг зэрэг нэвтрэх төхөөрөмж: админ 4, бусад 1</div>
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setNotifications(!notifications)}
+                    onClick={() => onToggleDeviceLimit(!deviceLimitEnabled)}
                     className={`w-11 h-6 rounded-full p-0.5 transition-colors cursor-pointer ${
-                      notifications ? 'bg-amber-500' : 'bg-stone-300'
+                      deviceLimitEnabled ? 'bg-amber-500' : 'bg-stone-300'
                     }`}
                   >
                     <div
                       className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
-                        notifications ? 'translate-x-5' : 'translate-x-0'
+                        deviceLimitEnabled ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
                   </button>
