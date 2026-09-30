@@ -6,21 +6,22 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Must match ADMIN_EMAIL in functions/src/index.ts and src/services/authService.ts
+    function emailVerified() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
+    // Must match ADMIN_EMAIL in src/services/authService.ts
     function isAdmin() {
-      return signedIn()
-        && request.auth.token.email == 'ehangal625@gmail.com'
-        && request.auth.token.email_verified == true;
+      return emailVerified() && request.auth.token.email == 'ehangal625@gmail.com';
     }
 
     function myProfile() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // A registered (code-verified) and active user
+    // A registered, email-verified and active user
     function isMember() {
-      return signedIn()
-        && request.auth.token.email_verified == true
+      return emailVerified()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && myProfile().active == true;
     }
@@ -41,11 +42,45 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Profiles are created by the completeRegistration function
+    // Profiles: created by their owner at registration, together with the phone document
     match /users/{uid} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
-      allow update, delete: if isAdmin();
-      allow create: if false;
+
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['uid', 'userId', 'email', 'phoneNumber', 'lastName',
+             'firstName', 'fullName', 'school', 'accountType', 'grades', 'active', 'createdAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.active == true
+        && request.resource.data.accountType in ['student', 'teacher']
+        && request.resource.data.phoneNumber.matches('^[0-9]{8}$')
+        && getAfter(/databases/$(database)/documents/phones/$(request.resource.data.phoneNumber)).data.uid == uid;
+
+      // Owners may change only their name and phone (the new phone document must be theirs)
+      allow update: if isAdmin() || (
+        signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullName', 'phoneNumber'])
+        && request.resource.data.phoneNumber.matches('^[0-9]{8}$')
+        && getAfter(/databases/$(database)/documents/phones/$(request.resource.data.phoneNumber)).data.uid == uid
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // Phone number -> account, for phone sign-in and to keep numbers unique.
+    // "create" only succeeds when the number is free.
+    match /phones/{phone} {
+      allow get: if true;
+      allow create: if signedIn()
+        && phone.matches('^[0-9]{8}$')
+        && request.resource.data.keys().hasOnly(['uid', 'email'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        // Only the number on the owner's profile (written in the same batch) can be claimed
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.phoneNumber == phone;
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
     // Topic unlock requests: members create their own, the admin manages them
@@ -56,6 +91,6 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // Everything else (phone index, email codes) is server-only: no rule grants access.
+    // Anything not matched above is denied.
   }
 }

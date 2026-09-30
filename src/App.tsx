@@ -7,6 +7,7 @@ import { TopicPage } from './components/TopicPage';
 import { AdminEditorModal } from './components/AdminEditorModal';
 import { AccessRequestsModal } from './components/AccessRequestsModal';
 import { LoginView } from './components/LoginView';
+import { VerifyEmailView } from './components/VerifyEmailView';
 import { ScreenProtection } from './components/ScreenProtection';
 import { SettingsModal } from './components/SettingsModal';
 import { ExamsHub } from './components/ExamsHub';
@@ -14,7 +15,7 @@ import { AuthUser } from './types';
 import { clearStoredAuth, saveStoredAuth } from './utils/deviceManager';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { getFirebaseAuth, isFirebaseConfigured } from './services/firebase';
-import { loadSession, signOutUser } from './services/authService';
+import { loadSession, signOutUser, isRegistering } from './services/authService';
 import { startCloudSync, stopCloudSync } from './services/cloud';
 import { seedCloudFromLegacyData } from './services/migration';
 import { accessRequestService } from './services/accessRequestService';
@@ -35,6 +36,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authLoading, setAuthLoading] = useState(isFirebaseConfigured);
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [previewAsUser, setPreviewAsUser] = useState<boolean>(false);
   const [activeView, setActiveView] = useState<'topics' | 'exams'>('topics');
   const [topics, setTopics] = useState<TopicPackage[]>([]);
@@ -93,9 +95,14 @@ export default function App() {
   const openSession = React.useCallback(async (fbUser: User) => {
     try {
       const session = await loadSession(fbUser);
-      if (session.status === 'incomplete') {
-        // Registration still in progress (or abandoned); stay on the login screen
+      setUnverifiedEmail(session.status === 'unverified' ? session.email : null);
+      if (session.status === 'unverified') {
         setCurrentUser(null);
+        return;
+      }
+      if (session.status === 'incomplete') {
+        setLoginNotice('Бүртгэл дуусаагүй байна. «Шинээр бүртгүүлэх» хэсгээр ижил имэйл, нууц үгээр дахин бүртгүүлнэ үү.');
+        await signOutUser();
         return;
       }
       if (session.status === 'blocked') {
@@ -121,10 +128,12 @@ export default function App() {
   useEffect(() => {
     if (!isFirebaseConfigured) return;
     return onAuthStateChanged(getFirebaseAuth(), async (fbUser) => {
+      if (isRegistering()) return; // RegisterModal calls reloadSession when done
       if (fbUser) {
         await openSession(fbUser);
       } else {
         stopCloudSync();
+        setUnverifiedEmail(null);
         setCurrentUser(null);
       }
       setAuthLoading(false);
@@ -326,6 +335,10 @@ export default function App() {
         Ачаалж байна...
       </div>
     );
+  }
+
+  if (!currentUser && unverifiedEmail) {
+    return <VerifyEmailView email={unverifiedEmail} onVerified={reloadSession} />;
   }
 
   if (!currentUser) {

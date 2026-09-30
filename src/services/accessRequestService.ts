@@ -97,7 +97,7 @@ export const accessRequestService = {
   async deleteAccount(identifier: string): Promise<boolean> {
     const user = findUser(identifier);
     if (!user) return false;
-    await adminDeleteUser(user.uid);
+    await adminDeleteUser(user.uid, user.phoneNumber);
     cloud.removeUserLocally(user.uid);
     return true;
   },

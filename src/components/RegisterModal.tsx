@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { X, UserPlus, Eye, EyeOff, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { X, UserPlus, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { GradeNumber } from '../types';
 import { registerAccount } from '../services/authService';
-import { sendEmailCode, verifyEmailCode } from '../services/firebase';
 
 interface RegisterModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // Called once the account and profile exist; the user is already signed in
+  // Called once the account and profile exist and the verification email is sent
   onRegistered: () => void;
 }
 
@@ -28,60 +27,9 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [codeSentTo, setCodeSentTo] = useState<string | null>(null);
-  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
-  const [info, setInfo] = useState<string | null>(null);
 
   if (!isOpen) return null;
-
-  const handleSendCode = async () => {
-    setError(null);
-    setInfo(null);
-    const target = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) {
-      setError('Зөв имэйл хаяг оруулна уу.');
-      return;
-    }
-    setIsBusy(true);
-    try {
-      await sendEmailCode(target);
-      setCodeSentTo(target);
-      setCode('');
-      setInfo(`${target} хаяг руу 6 оронтой код илгээлээ. Spam хавтсаа ч шалгаарай.`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Код илгээж чадсангүй.');
-    } finally {
-      setIsBusy(false);
-    }
-  };
-
-  const handleVerifyCode = async () => {
-    if (!codeSentTo) return;
-    setError(null);
-    if (!/^\d{6}$/.test(code.trim())) {
-      setError('6 оронтой кодоо оруулна уу.');
-      return;
-    }
-    setIsBusy(true);
-    try {
-      const verified = await verifyEmailCode(codeSentTo, code.trim());
-      setVerifiedEmail(verified);
-      setInfo(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Кодыг шалгаж чадсангүй.');
-    } finally {
-      setIsBusy(false);
-    }
-  };
-
-  const resetEmail = () => {
-    setVerifiedEmail(null);
-    setCodeSentTo(null);
-    setCode('');
-    setInfo(null);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,15 +40,10 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
       return;
     }
 
-    if (!verifiedEmail) {
-      setError('Эхлээд имэйл хаягаа баталгаажуулна уу.');
-      return;
-    }
-
     setIsBusy(true);
     try {
       await registerAccount({
-        email: verifiedEmail,
+        email,
         password,
         lastName,
         firstName,
@@ -126,7 +69,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
             </div>
             <div>
               <h2 className="text-sm font-bold text-white">Бүртгүүлэх</h2>
-              <p className="text-[11px] text-stone-400">Бүртгүүлсний дараа шууд нэвтэрнэ</p>
+              <p className="text-[11px] text-stone-400">Имэйлээ баталгаажуулсны дараа нэвтэрнэ</p>
             </div>
           </div>
           <button
@@ -146,88 +89,18 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
             </div>
           )}
 
-          {info && (
-            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-medium">
-              {info}
-            </div>
-          )}
-
           <div>
             <label className={labelClass}>Имэйл хаяг</label>
-            {verifiedEmail ? (
-              <div className="flex items-center justify-between gap-2 px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
-                <div className="flex items-center gap-2 min-w-0 text-sm text-emerald-900">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span className="truncate" data-testid="verified-email">{verifiedEmail}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={resetEmail}
-                  className="text-xs font-bold text-emerald-700 hover:text-emerald-900 shrink-0 cursor-pointer"
-                >
-                  Солих
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (codeSentTo) resetEmail();
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleSendCode();
-                      }
-                    }}
-                    placeholder="bagsh@gmail.com"
-                    className={inputClass}
-                    autoComplete="email"
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSendCode}
-                    disabled={isBusy}
-                    className="px-3 bg-stone-900 hover:bg-stone-800 text-amber-400 text-xs font-bold rounded-xl shrink-0 cursor-pointer disabled:opacity-50"
-                  >
-                    {codeSentTo ? 'Дахин илгээх' : 'Код авах'}
-                  </button>
-                </div>
-                {codeSentTo && (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={code}
-                      onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleVerifyCode();
-                        }
-                      }}
-                      placeholder="6 оронтой код"
-                      className={`${inputClass} tracking-[0.4em] font-mono`}
-                      autoComplete="one-time-code"
-                      aria-label="Баталгаажуулах код"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleVerifyCode}
-                      disabled={isBusy || code.length !== 6}
-                      className="px-3 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shrink-0 cursor-pointer disabled:opacity-50"
-                    >
-                      Баталгаажуулах
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="bagsh@gmail.com"
+              className={inputClass}
+              autoComplete="email"
+              autoFocus
+            />
+            <p className="text-[11px] text-stone-400 mt-1">Энэ хаяг руу баталгаажуулах холбоос очно.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -346,7 +219,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
             className="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold rounded-xl flex items-center justify-center space-x-2 shadow-sm hover:shadow-md transition-all cursor-pointer disabled:opacity-50"
           >
             <UserPlus className="w-4 h-4" />
-            <span>{isBusy ? 'Түр хүлээнэ үү...' : 'Бүртгүүлээд нэвтрэх'}</span>
+            <span>{isBusy ? 'Түр хүлээнэ үү...' : 'Бүртгүүлэх'}</span>
           </button>
         </form>
       </div>
