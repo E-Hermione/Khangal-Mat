@@ -56,63 +56,43 @@ export function detectCurrentDevice(phoneNumber: string): LoggedInDevice {
     type,
     browser,
     os,
-    ip: '202.131.226.45 (Улаанбаатар)',
-    location: 'Монгол, Улаанбаатар',
+    // The browser cannot see its public IP or location
+    ip: '',
+    location: '',
     lastActive: 'Яг одоо идэвхтэй',
     isCurrent: true,
     phoneNumber,
   };
 }
 
+// Placeholder devices the original demo added to every browser
+const DEMO_DEVICE_IDS = new Set(['dev_iphone_sample', 'dev_macbook_sample']);
+
 export function getStoredDevices(phoneNumber?: string): LoggedInDevice[] {
   const currentDeviceId = getOrCreateDeviceId();
-  const phone = phoneNumber || '89163999';
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY_DEVICES);
     if (raw) {
       const parsed: LoggedInDevice[] = JSON.parse(raw);
-      // Ensure the current device is marked as isCurrent: true
-      return parsed.map((d) => ({
-        ...d,
-        isCurrent: d.id === currentDeviceId,
-        lastActive: d.id === currentDeviceId ? 'Яг одоо идэвхтэй' : d.lastActive,
-      }));
+      const devices = parsed
+        .filter((d) => !DEMO_DEVICE_IDS.has(d.id))
+        .map((d) => ({
+          ...d,
+          // Drop the made-up IP/location the demo stored for this device
+          ...(d.id === currentDeviceId ? { ip: '', location: '' } : {}),
+          // Devices are per browser; the account's phone number is not tied to them
+          phoneNumber: undefined,
+          isCurrent: d.id === currentDeviceId,
+          lastActive: d.id === currentDeviceId ? 'Яг одоо идэвхтэй' : d.lastActive,
+        }));
+      if (devices.length > 0) return devices;
     }
   } catch {
     // ignore parse error
   }
 
-  // Initial demo seed if none exists
-  const current = detectCurrentDevice(phone);
-  const initialDevices: LoggedInDevice[] = [
-    current,
-    {
-      id: 'dev_iphone_sample',
-      name: 'Safari • iOS (iPhone 15)',
-      type: 'mobile',
-      browser: 'Safari',
-      os: 'iOS 17.5',
-      ip: '103.57.94.12 (Улаанбаатар, Юнител)',
-      location: 'Монгол, Улаанбаатар',
-      lastActive: '2 цагийн өмнө',
-      isCurrent: false,
-      phoneNumber: phone,
-    },
-    {
-      id: 'dev_macbook_sample',
-      name: 'Chrome • macOS (MacBook Air)',
-      type: 'desktop',
-      browser: 'Chrome 128',
-      os: 'macOS Sonoma',
-      ip: '66.181.161.200 (Дархан)',
-      location: 'Монгол, Дархан-Уул',
-      lastActive: 'Өчигдөр 19:42',
-      isCurrent: false,
-      phoneNumber: phone,
-    },
-  ];
-
+  const initialDevices = [{ ...detectCurrentDevice(phoneNumber || ''), phoneNumber: undefined }];
   localStorage.setItem(STORAGE_KEY_DEVICES, JSON.stringify(initialDevices));
   return initialDevices;
 }

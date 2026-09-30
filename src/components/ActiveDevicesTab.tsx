@@ -164,10 +164,12 @@ export const ActiveDevicesTab: React.FC<ActiveDevicesTabProps> = ({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-stone-500">
-                  <div className="flex items-center space-x-1">
-                    <Globe className="w-3.5 h-3.5 text-stone-400" />
-                    <span>{device.ip}</span>
-                  </div>
+                  {device.ip && (
+                    <div className="flex items-center space-x-1">
+                      <Globe className="w-3.5 h-3.5 text-stone-400" />
+                      <span>{device.ip}</span>
+                    </div>
+                  )}
 
                   <div className="flex items-center space-x-1">
                     <Clock className="w-3.5 h-3.5 text-stone-400" />
