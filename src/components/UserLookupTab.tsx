@@ -8,7 +8,10 @@ import { loadUserAttempts, AttemptMap, ExamAttempt } from '../services/examAttem
 import { DeviceSession } from '../services/deviceSessions';
 import { getDb } from '../services/firebase';
 import { GRADE_TOPICS_CATALOG } from '../data/initialData';
-import { ApprovedAccount } from '../types';
+import { ApprovedAccount, GradeNumber, TestPackage } from '../types';
+import { generateTopicTests } from './ExamsHub';
+import { getQuestionOptions, isOptionCorrect } from '../utils/examGrading';
+import { MathRenderer } from './MathRenderer';
 
 interface UserLookupTabProps {
   // Opens the permissions editor for this user id
@@ -40,6 +43,49 @@ function examInfo(examId: string) {
   const pkg = saved?.[`test${tier}` as 'test1' | 'test2' | 'test3'];
   const fallbackMax = tier === '1' ? 10 : tier === '2' ? 15 : 20;
   return { title: topicTitle(topicId), tier: TIER_NAMES[tier], maxPoints: pkg?.totalPoints || fallbackMax };
+}
+
+/** The test an exam id refers to, as the exams page builds it (saved topic or generated). */
+function examPackage(examId: string): { topicId: string; pkg: TestPackage } | null {
+  const m = examId.match(/^(.*)-test([123])$/);
+  if (!m) return null;
+  const [, topicId, tier] = m;
+  const key = `test${tier}` as 'test1' | 'test2' | 'test3';
+  const saved = storageService.getTopics().find((t) => t.id === topicId);
+  if (saved?.test1?.questions?.length && saved.test2?.questions?.length && saved.test3?.questions?.length) {
+    return { topicId, pkg: saved[key] };
+  }
+  const gradeEntry = Object.entries(GRADE_TOPICS_CATALOG).find(([, items]) => items.some((t) => t.id === topicId));
+  const catalog = gradeEntry?.[1].find((t) => t.id === topicId);
+  const grade = (saved?.grade || Number(gradeEntry?.[0]) || 6) as GradeNumber;
+  const tests = generateTopicTests(topicId, saved?.title || catalog?.title || topicId, grade, saved?.category || catalog?.category);
+  return { topicId, pkg: tests[key] };
+}
+
+interface QuestionReview {
+  number: number;
+  question: string;
+  chosen: string;
+  correct: string;
+  ok: boolean;
+}
+
+/** Question-by-question check of an attempt against the current answer key. */
+function reviewAttempt(examId: string, answers: Record<string, string>): QuestionReview[] {
+  const found = examPackage(examId);
+  if (!found) return [];
+  return found.pkg.questions.map((q, i) => {
+    const options = getQuestionOptions(q);
+    const chosen = answers[q.id] || '';
+    const correct = options.find((o) => isOptionCorrect(o.letter, q, options));
+    return {
+      number: q.number || i + 1,
+      question: q.question,
+      chosen: chosen ? `${chosen}${options.find((o) => o.letter === chosen) ? ') ' + options.find((o) => o.letter === chosen)!.text : ''}` : 'Хариулаагүй',
+      correct: correct ? `${correct.letter}) ${correct.text}` : q.answer || '—',
+      ok: isOptionCorrect(chosen, q, options),
+    };
+  });
 }
 
 function formatDate(ms?: number): string {
@@ -76,6 +122,7 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
   const [devices, setDevices] = useState<DeviceSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [openExamId, setOpenExamId] = useState<string | null>(null);
 
   useEffect(() => {
     const refresh = () => setAccounts(accessRequestService.getApprovedAccounts());
@@ -152,6 +199,21 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
     return max ? ((r.score || 0) / max) * 100 : 0;
   });
   const average = percents.length ? Math.round(percents.reduce((s, p) => s + p, 0) / percents.length) : null;
+
+  // Mistakes per exam, and the topics with the most wrong answers overall
+  const reviews = Object.fromEntries(finished.map(([id, r]) => [id, reviewAttempt(id, r.answers || {})]));
+  const wrongByTopic = new Map<string, { wrong: number; total: number }>();
+  for (const [id] of finished) {
+    const title = examInfo(id).title;
+    const list = reviews[id];
+    const entry = wrongByTopic.get(title) || { wrong: 0, total: 0 };
+    entry.wrong += list.filter((q) => !q.ok).length;
+    entry.total += list.length;
+    wrongByTopic.set(title, entry);
+  }
+  const weakTopics = [...wrongByTopic.entries()]
+    .filter(([, v]) => v.wrong > 0)
+    .sort(([, a], [, b]) => b.wrong / b.total - a.wrong / a.total);
 
   const perms = user?.userId ? userPermissionsService.getUserPermissions(user.userId) : null;
   const requests = user ? accessRequestService.getRequests().filter((r) => r.requesterUid === user.uid) : [];
@@ -282,25 +344,70 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
                     </>
                   )}
                 </div>
-                <table className="w-full text-xs">
-                  <tbody className="divide-y divide-stone-100">
-                    {finished.map(([id, r]) => {
-                      const info = examInfo(id);
-                      return (
-                        <tr key={id}>
-                          <td className="py-1 pr-2 text-stone-800">
+                {weakTopics.length > 0 && (
+                  <div className="text-xs">
+                    <span className="text-stone-500">Хамгийн их алдсан сэдвүүд:</span>{' '}
+                    {weakTopics.slice(0, 3).map(([title, v], i) => (
+                      <span key={title}>
+                        {i > 0 && ', '}
+                        <b>{title}</b> ({v.wrong}/{v.total} алдсан)
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="divide-y divide-stone-100">
+                  {finished.map(([id, r]) => {
+                    const info = examInfo(id);
+                    const review = reviews[id];
+                    const wrong = review.filter((q) => !q.ok);
+                    const open = openExamId === id;
+                    return (
+                      <div key={id} className="py-1.5 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="flex-1 text-stone-800">
                             {info.title} <span className="text-stone-400">— {info.tier}</span>
-                          </td>
-                          <td className="py-1 pr-2 font-bold whitespace-nowrap">
+                          </span>
+                          <span className="font-bold whitespace-nowrap">
                             {r.score ?? 0}
                             {info.maxPoints ? ` / ${info.maxPoints}` : ''} оноо
-                          </td>
-                          <td className="py-1 text-stone-500 whitespace-nowrap text-right">{formatDate(r.finishedAt)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setOpenExamId(open ? null : id)}
+                            disabled={review.length === 0}
+                            className={`px-2 py-0.5 rounded-md border font-bold cursor-pointer whitespace-nowrap disabled:opacity-40 ${
+                              wrong.length ? 'bg-red-50 text-red-700 border-red-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            }`}
+                          >
+                            {wrong.length ? `${wrong.length} алдаа` : 'Алдаагүй'}
+                          </button>
+                          <span className="text-stone-500 whitespace-nowrap hidden sm:inline">{formatDate(r.finishedAt)}</span>
+                        </div>
+                        {open && (
+                          <div className="mt-2 space-y-1.5" data-testid="attempt-review">
+                            {review.map((q) => (
+                              <div
+                                key={q.number}
+                                className={`p-2 rounded-lg border ${q.ok ? 'border-emerald-100 bg-emerald-50/40' : 'border-red-200 bg-red-50/60'}`}
+                              >
+                                <div className="flex gap-1.5">
+                                  <b className={q.ok ? 'text-emerald-700' : 'text-red-700'}>{q.ok ? '✓' : '✗'} {q.number}.</b>
+                                  <MathRenderer content={q.question} className="flex-1 text-stone-800" />
+                                </div>
+                                {!q.ok && (
+                                  <div className="mt-1 pl-5 text-stone-600">
+                                    Сонгосон: <b className="text-red-700">{q.chosen}</b> • Зөв хариулт:{' '}
+                                    <b className="text-emerald-700">{q.correct}</b>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </>
             )}
           </Section>

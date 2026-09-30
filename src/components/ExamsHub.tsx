@@ -47,7 +47,7 @@ interface ExamRowItem {
 }
 
 // Fallback test generator for any catalog topic that doesn't have custom test definitions
-function generateTopicTests(
+export function generateTopicTests(
   topicId: string,
   topicTitle: string,
   grade: GradeNumber,
