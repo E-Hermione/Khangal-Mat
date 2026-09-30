@@ -9,6 +9,7 @@ import { AccessRequestsModal } from './components/AccessRequestsModal';
 import { LoginView } from './components/LoginView';
 import { VerifyEmailView } from './components/VerifyEmailView';
 import { ScreenProtection } from './components/ScreenProtection';
+import { AnnouncementsBell } from './components/AnnouncementsBell';
 import { CopyProtection } from './components/CopyProtection';
 import { SettingsModal } from './components/SettingsModal';
 import { ExamsHub } from './components/ExamsHub';
@@ -433,6 +434,10 @@ export default function App() {
 
           {/* Action buttons */}
           <div className="flex items-center space-x-2">
+            {currentUser.role !== 'admin' && getFirebaseAuth().currentUser && (
+              <AnnouncementsBell uid={getFirebaseAuth().currentUser!.uid} />
+            )}
+
             {/* Admin vs User View Switcher (Icons only) */}
             {currentUser?.role === 'admin' && (
               <div className="flex items-center bg-stone-100 p-0.5 rounded-lg border border-stone-200">

@@ -22,17 +22,19 @@ import {
   UserCog,
   Sliders,
   Sparkles,
+  Megaphone,
 } from 'lucide-react';
 import { accessRequestService } from '../services/accessRequestService';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { AccessRequest, ApprovedAccount, UserPermissions, DefaultPermissionsConfig, GradeNumber } from '../types';
 import { UserLookupTab } from './UserLookupTab';
+import { AnnouncementsTab } from './AnnouncementsTab';
 
 interface AccessRequestsTabProps {
   onCountChange?: (count: number) => void;
 }
 
-type MainTab = 'lookup' | 'requests' | 'user-permissions' | 'default-permissions';
+type MainTab = 'lookup' | 'requests' | 'user-permissions' | 'default-permissions' | 'announcements';
 
 export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountChange }) => {
   const [mainTab, setMainTab] = useState<MainTab>('requests');
@@ -308,6 +310,19 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
           <Sliders className="w-4 h-4" />
           <span>Анхдагч эрхийн тохиргоо</span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab('announcements')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all cursor-pointer ${
+            mainTab === 'announcements'
+              ? 'bg-stone-900 text-amber-400 shadow-xs'
+              : 'bg-stone-100 text-stone-600 hover:text-stone-900 hover:bg-stone-200/80'
+          }`}
+        >
+          <Megaphone className="w-4 h-4" />
+          <span>Зарлал</span>
+        </button>
       </div>
 
       {/* ========================================================================= */}
@@ -316,6 +331,8 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
       {mainTab === 'lookup' && (
         <UserLookupTab initialUid={lookupUid} onEditPermissions={handleOpenUserPermissions} />
       )}
+
+      {mainTab === 'announcements' && <AnnouncementsTab />}
 
       {mainTab === 'requests' && (
         <div className="space-y-4">

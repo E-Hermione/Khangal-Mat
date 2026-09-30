@@ -83,11 +83,34 @@ service cloud.firestore {
         allow read: if isAdmin();
       }
 
+      // Announcements sent to a group: the admin writes a copy for each recipient
+      match /inbox/{announcementId} {
+        allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+        allow write: if isAdmin();
+      }
+
+      // When the user read an announcement
+      match /announcementReads/{announcementId} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+        allow read, delete: if isAdmin();
+      }
+
       // Exam results: the owner writes, the admin can review
       match /examAttempts/{examId} {
         allow read, write: if signedIn() && request.auth.uid == uid;
         allow read: if isAdmin();
       }
+    }
+
+    // Announcements: members see the ones sent to everyone; group ones arrive in users/{uid}/inbox
+    match /announcements/{announcementId} {
+      allow read: if isAdmin() || (isMember() && resource.data.audience == 'all');
+      allow write: if isAdmin();
+    }
+
+    // The admin counts who read each announcement
+    match /{path=**}/announcementReads/{announcementId} {
+      allow read, delete: if isAdmin();
     }
 
     match /phones/{phone} {
