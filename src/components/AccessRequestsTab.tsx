@@ -39,14 +39,6 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
   const [approvedAccounts, setApprovedAccounts] = useState<ApprovedAccount[]>([]);
   const [requestsSubTab, setRequestsSubTab] = useState<'pending' | 'approved' | 'all'>('pending');
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [lastEmailToast, setLastEmailToast] = useState<{
-    email: string;
-    pass: string;
-    subject: string;
-    body: string;
-    gmailComposeUrl?: string;
-  } | null>(null);
-
   // User Permissions Tab State
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [userSearchQuery, setUserSearchQuery] = useState<string>('');
@@ -74,6 +66,9 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
   useEffect(() => {
     loadData();
     setDefaultConfig(userPermissionsService.getDefaultConfig());
+    // Refresh when Firestore delivers changes (e.g. a new request from another device)
+    window.addEventListener('cloud-data-updated', loadData);
+    return () => window.removeEventListener('cloud-data-updated', loadData);
   }, []);
 
   // When a user is selected in user-permissions tab, load their permissions
@@ -87,17 +82,8 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
   }, [selectedUserId]);
 
   const handleApprove = (requestId: string) => {
-    const res = accessRequestService.approveRequest(requestId);
-    if (res.success && res.request) {
-      loadData();
-      setLastEmailToast({
-        email: res.request.email || res.request.phoneNumber || '',
-        pass: res.request.generatedPassword || '',
-        subject: res.request.emailSubject || '',
-        body: res.request.emailBody || '',
-        gmailComposeUrl: res.gmailComposeUrl,
-      });
-    }
+    accessRequestService.approveRequest(requestId);
+    loadData();
   };
 
   const handleReject = (requestId: string) => {
@@ -110,8 +96,13 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
     loadData();
   };
 
-  const handleDeleteAccount = (identifier: string) => {
-    accessRequestService.deleteAccount(identifier);
+  const handleDeleteAccount = async (identifier: string) => {
+    if (!window.confirm('Энэ хэрэглэгчийн бүртгэлийг бүрмөсөн устгах уу?')) return;
+    try {
+      await accessRequestService.deleteAccount(identifier);
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Хэрэглэгчийг устгаж чадсангүй.');
+    }
     loadData();
   };
 
@@ -302,33 +293,6 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
             </button>
           </div>
 
-          {/* Email dispatch toast */}
-          {lastEmailToast && (
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-950 animate-in fade-in">
-              <div className="space-y-1">
-                <div className="font-bold flex items-center space-x-1.5 text-emerald-800">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Хүсэлт зөвшөөрөгдлөө: {lastEmailToast.email}</span>
-                </div>
-                <div className="text-[11px] text-emerald-700">
-                  Нэвтрэх нууц үг: <span className="font-mono font-bold bg-emerald-100 px-1.5 py-0.5 rounded text-emerald-900">{lastEmailToast.pass}</span>
-                </div>
-              </div>
-              {lastEmailToast.gmailComposeUrl && (
-                <a
-                  href={lastEmailToast.gmailComposeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors cursor-pointer shrink-0"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Gmail-ээр илгээх</span>
-                  <ExternalLink className="w-3 h-3 ml-0.5" />
-                </a>
-              )}
-            </div>
-          )}
-
           {/* Requests Content */}
           {requestsSubTab === 'approved' ? (
             /* Approved Accounts List */
@@ -371,9 +335,6 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                               <span>• {account.grades.join(', ')}-р анги</span>
                             )
                           )}
-                        </div>
-                        <div className="text-[11px] text-stone-500 font-mono">
-                          Нууц үг: <span className="font-bold text-stone-800 bg-stone-100 px-1.5 py-0.5 rounded">{account.password}</span>
                         </div>
                       </div>
 

@@ -21,13 +21,18 @@ View your app in AI Studio: https://ai.studio/apps/8168fe20-5628-4f16-a317-dcf60
 3. Run the app:
    `npm run dev`
 
-## Email verification codes (Cloud Functions)
+## Firebase setup (one time)
 
-Registration emails a 6-digit code from `functions/` (`sendEmailCode`, `verifyEmailCode`).
-One-time setup (requires the Blaze plan):
+Accounts use Firebase Authentication; lessons, settings and users live in Firestore, protected by
+`firestore.rules`. Registration emails a 6-digit code from `functions/`. Requires the Blaze plan.
 
-1. Firebase console → Firestore Database → create a database.
-2. Create a Gmail app password for the sending account (Google Account → Security →
+1. Firebase console → Authentication → Sign-in method → enable **Email/Password**.
+2. Firebase console → Firestore Database → create a database.
+3. Create a Gmail app password for the sending account (Google Account → Security →
    2-Step Verification → App passwords).
-3. `npx firebase-tools functions:secrets:set GMAIL_APP_PASSWORD` and paste the app password.
-4. `npx firebase-tools deploy` (asks for `GMAIL_USER`, the sending Gmail address, on first deploy).
+4. `npx firebase-tools functions:secrets:set GMAIL_APP_PASSWORD` and paste the app password.
+5. `npm run build && npx firebase-tools deploy` (asks for `GMAIL_USER`, the sending Gmail address,
+   on first deploy).
+
+The admin is the account registered with `ehangal625@gmail.com` (see `ADMIN_EMAIL`). On the admin's
+first sign-in, lessons saved in that browser by the old version are copied to Firestore.

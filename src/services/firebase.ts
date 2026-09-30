@@ -1,5 +1,6 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, connectAuthEmulator, Auth } from 'firebase/auth';
+import { getAuth, connectAuthEmulator, Auth } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator, Firestore } from 'firebase/firestore';
 import { getFunctions, httpsCallable, connectFunctionsEmulator, Functions } from 'firebase/functions';
 
 // Firebase web config comes from VITE_FIREBASE_* variables (see .env.example).
@@ -18,7 +19,13 @@ const FUNCTIONS_REGION = 'asia-east1';
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
+let db: Firestore | null = null;
 let functions: Functions | null = null;
+
+function splitHost(hostPort: string): [string, number] {
+  const [host, port] = hostPort.split(':');
+  return [host, Number(port)];
+}
 
 function getFirebaseApp(): FirebaseApp {
   if (!isFirebaseConfigured) {
@@ -28,14 +35,31 @@ function getFirebaseApp(): FirebaseApp {
   return app;
 }
 
+export function getFirebaseAuth(): Auth {
+  if (!auth) {
+    auth = getAuth(getFirebaseApp());
+    const emulatorHost = import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST;
+    if (emulatorHost) {
+      connectAuthEmulator(auth, `http://${emulatorHost}`, { disableWarnings: true });
+    }
+  }
+  return auth;
+}
+
+export function getDb(): Firestore {
+  if (!db) {
+    db = getFirestore(getFirebaseApp());
+    const emulatorHost = import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST;
+    if (emulatorHost) connectFirestoreEmulator(db, ...splitHost(emulatorHost));
+  }
+  return db;
+}
+
 function getFirebaseFunctions(): Functions {
   if (!functions) {
     functions = getFunctions(getFirebaseApp(), FUNCTIONS_REGION);
     const emulatorHost = import.meta.env.VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST;
-    if (emulatorHost) {
-      const [host, port] = emulatorHost.split(':');
-      connectFunctionsEmulator(functions, host, Number(port));
-    }
+    if (emulatorHost) connectFunctionsEmulator(functions, ...splitHost(emulatorHost));
   }
   return functions;
 }
@@ -50,78 +74,27 @@ function callableErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
+/** Calls a Cloud Function, turning its error into an Error with a user-facing message. */
+export async function callFunction<Req, Res>(name: string, data: Req, fallbackError: string): Promise<Res> {
+  try {
+    const res = await httpsCallable<Req, Res>(getFirebaseFunctions(), name)(data);
+    return res.data;
+  } catch (err) {
+    throw new Error(callableErrorMessage(err, fallbackError));
+  }
+}
+
 /** Emails a 6-digit verification code to the address. */
 export async function sendEmailCode(email: string): Promise<void> {
-  try {
-    await httpsCallable(getFirebaseFunctions(), 'sendEmailCode')({ email });
-  } catch (err) {
-    throw new Error(callableErrorMessage(err, 'Код илгээж чадсангүй. Дахин оролдоно уу.'));
-  }
+  await callFunction('sendEmailCode', { email }, 'Код илгээж чадсангүй. Дахин оролдоно уу.');
 }
 
 /** Checks the code the user typed; resolves with the verified email. */
 export async function verifyEmailCode(email: string, code: string): Promise<string> {
-  try {
-    const res = await httpsCallable<{ email: string; code: string }, { verified: boolean; email: string }>(
-      getFirebaseFunctions(),
-      'verifyEmailCode'
-    )({ email, code });
-    return res.data.email;
-  } catch (err) {
-    throw new Error(callableErrorMessage(err, 'Кодыг шалгаж чадсангүй. Дахин оролдоно уу.'));
-  }
-}
-
-function getFirebaseAuth(): Auth {
-  if (!auth) {
-    auth = getAuth(getFirebaseApp());
-    const emulatorHost = import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST;
-    if (emulatorHost) {
-      connectAuthEmulator(auth, `http://${emulatorHost}`, { disableWarnings: true });
-    }
-  }
-  return auth;
-}
-
-export interface VerifiedGoogleAccount {
-  email: string;
-  displayName: string;
-}
-
-/**
- * Opens the Google sign-in popup and returns the account's email once Google has verified it.
- * The Firebase session is not kept; the app still manages its own login state.
- */
-export async function verifyGmailWithGoogle(): Promise<VerifiedGoogleAccount> {
-  if (!isFirebaseConfigured) {
-    throw new Error('Firebase тохируулаагүй байна. Админд хандана уу.');
-  }
-
-  const firebaseAuth = getFirebaseAuth();
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-
-  try {
-    const result = await signInWithPopup(firebaseAuth, provider);
-    const { email, emailVerified, displayName } = result.user;
-    if (!email || !emailVerified) {
-      throw new Error('Google бүртгэлийн имэйл баталгаажаагүй байна.');
-    }
-    return { email: email.toLowerCase(), displayName: displayName || '' };
-  } catch (err) {
-    const code = (err as { code?: string }).code;
-    if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-      throw new Error('Google-ээр нэвтрэх цонхыг хаасан байна.');
-    }
-    if (code === 'auth/popup-blocked') {
-      throw new Error('Хөтөч popup цонхыг хаасан байна. Зөвшөөрөөд дахин оролдоно уу.');
-    }
-    if (code === 'auth/unauthorized-domain') {
-      throw new Error('Энэ домэйн Firebase-д зөвшөөрөгдөөгүй байна. Админд хандана уу.');
-    }
-    if (err instanceof Error && !code) throw err;
-    throw new Error('Google-ээр баталгаажуулж чадсангүй. Дахин оролдоно уу.');
-  } finally {
-    await signOut(firebaseAuth).catch(() => {});
-  }
+  const res = await callFunction<{ email: string; code: string }, { verified: boolean; email: string }>(
+    'verifyEmailCode',
+    { email, code },
+    'Кодыг шалгаж чадсангүй. Дахин оролдоно уу.'
+  );
+  return res.email;
 }

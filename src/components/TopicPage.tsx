@@ -8,6 +8,7 @@ import { ItemEditorModal, ItemEditorType } from './ItemEditorModal';
 import { visibilityService, TopicSectionVisibility, TopicAccessMode } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { accessRequestService } from '../services/accessRequestService';
+import { getFirebaseAuth } from '../services/firebase';
 import { AuthUser } from '../types';
 import {
   Printer,
@@ -95,12 +96,14 @@ export const TopicPage: React.FC<TopicPageProps> = ({
     };
   }, [topic.id]);
 
-  const handleRequestUnlock = () => {
-    if (!currentUser) return;
+  const handleRequestUnlock = async () => {
+    const requesterUid = getFirebaseAuth().currentUser?.uid;
+    if (!currentUser || !requesterUid) return;
     setRequestStatus({ submitting: true, sent: false, message: '' });
 
-    const result = accessRequestService.submitTopicUnlockRequest({
+    const result = await accessRequestService.submitTopicUnlockRequest({
       user: currentUser,
+      requesterUid,
       topicId: topic.id,
       topicTitle: topic.title,
     });

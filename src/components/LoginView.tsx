@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { AuthUser } from '../types';
 import {
   Lock,
   Phone,
@@ -8,17 +7,17 @@ import {
   LogIn,
   UserPlus,
 } from 'lucide-react';
-import { getOrCreateDeviceId, saveStoredAuth } from '../utils/deviceManager';
-import { accessRequestService } from '../services/accessRequestService';
+import { signInWithIdentifier } from '../services/authService';
 import { RegisterModal } from './RegisterModal';
-import { GoogleIcon } from './GoogleIcon';
-import { verifyGmailWithGoogle } from '../services/firebase';
 
 interface LoginViewProps {
-  onLoginSuccess: (user: AuthUser) => void;
+  // Shown above the form, e.g. when an account has been blocked
+  notice?: string | null;
+  // Called after registration so the app loads the newly created profile
+  onRegistered: () => void;
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
+export const LoginView: React.FC<LoginViewProps> = ({ notice, onRegistered }) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -26,97 +25,26 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // On success the app's auth listener takes over and replaces this screen
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    const trimmedIdentifier = identifier.trim();
-    const trimmedPass = password.trim();
-
-    if (!trimmedIdentifier) {
-      setError('Утасны дугаараа оруулна уу.');
+    if (!identifier.trim()) {
+      setError('Утасны дугаар эсвэл имэйлээ оруулна уу.');
       return;
     }
-
-    if (!trimmedPass) {
+    if (!password.trim()) {
       setError('Нууц үгээ оруулна уу.');
       return;
     }
 
-    const validation = accessRequestService.validateLogin(trimmedIdentifier, trimmedPass);
-
-    if (!validation.valid || !validation.user) {
-      setError(validation.error || 'Утасны дугаар эсвэл нууц үг буруу байна.');
-      return;
-    }
-
-    setIsLoading(true);
-
-    setTimeout(() => {
-      const deviceId = getOrCreateDeviceId();
-      const user: AuthUser = {
-        userId: validation.user!.userId,
-        phoneNumber: validation.user!.phoneNumber,
-        email: validation.user!.email,
-        name: validation.user!.name,
-        role: validation.user!.role,
-        loggedInAt: new Date().toISOString(),
-        deviceId,
-      };
-
-      saveStoredAuth(user);
-      setIsLoading(false);
-      onLoginSuccess(user);
-    }, 250);
-  };
-
-  const handleGoogleLogin = async () => {
-    setError(null);
     setIsLoading(true);
     try {
-      const account = await verifyGmailWithGoogle();
-      const validation = accessRequestService.loginWithVerifiedEmail(account.email);
-      if (!validation.valid || !validation.user) {
-        setError(validation.error || 'Нэвтэрч чадсангүй.');
-        return;
-      }
-      const user: AuthUser = {
-        userId: validation.user.userId,
-        phoneNumber: validation.user.phoneNumber,
-        email: validation.user.email,
-        name: validation.user.name,
-        role: validation.user.role,
-        loggedInAt: new Date().toISOString(),
-        deviceId: getOrCreateDeviceId(),
-      };
-      saveStoredAuth(user);
-      onLoginSuccess(user);
+      await signInWithIdentifier(identifier, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google-ээр нэвтэрч чадсангүй.');
-    } finally {
+      setError(err instanceof Error ? err.message : 'Нэвтэрч чадсангүй.');
       setIsLoading(false);
-    }
-  };
-
-  const handleAutoLogin = (loginId: string, pass: string) => {
-    setIdentifier(loginId);
-    setPassword(pass);
-    setError(null);
-
-    const validation = accessRequestService.validateLogin(loginId, pass);
-    if (validation.valid && validation.user) {
-      const deviceId = getOrCreateDeviceId();
-      const user: AuthUser = {
-        userId: validation.user.userId,
-        phoneNumber: validation.user.phoneNumber,
-        email: validation.user.email,
-        name: validation.user.name,
-        role: validation.user.role,
-        loggedInAt: new Date().toISOString(),
-        deviceId,
-      };
-      saveStoredAuth(user);
-      onLoginSuccess(user);
     }
   };
 
@@ -139,15 +67,15 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         {/* Form Body */}
         <div className="p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
+            {(error || notice) && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
-                {error}
+                {error || notice}
               </div>
             )}
 
             <div>
               <label className="block text-xs font-bold text-stone-700 mb-1.5">
-                Утасны дугаар
+                Утасны дугаар эсвэл имэйл
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-stone-400">
@@ -201,17 +129,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <span>{isLoading ? 'Нэвтэрч байна...' : 'Системд нэвтрэх'}</span>
             </button>
           </form>
-
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-            className="mt-3 w-full py-2.5 px-4 bg-white border border-stone-300 hover:bg-stone-50 text-stone-800 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <GoogleIcon className="w-4 h-4" />
-            <span>Google-ээр нэвтрэх</span>
-          </button>
-
           {/* Register Button */}
           <div className="mt-6 pt-5 border-t border-stone-200 text-center">
             <button
@@ -232,9 +149,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       <RegisterModal
         isOpen={registerModalOpen}
         onClose={() => setRegisterModalOpen(false)}
-        onRegistered={(phone, pass) => {
+        onRegistered={() => {
           setRegisterModalOpen(false);
-          handleAutoLogin(phone, pass);
+          onRegistered();
         }}
       />
     </div>

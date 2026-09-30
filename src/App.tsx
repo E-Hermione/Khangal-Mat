@@ -11,7 +11,12 @@ import { ScreenProtection } from './components/ScreenProtection';
 import { SettingsModal } from './components/SettingsModal';
 import { ExamsHub } from './components/ExamsHub';
 import { AuthUser } from './types';
-import { getStoredAuth, clearStoredAuth } from './utils/deviceManager';
+import { clearStoredAuth, saveStoredAuth } from './utils/deviceManager';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { getFirebaseAuth, isFirebaseConfigured } from './services/firebase';
+import { loadSession, signOutUser } from './services/authService';
+import { startCloudSync, stopCloudSync } from './services/cloud';
+import { seedCloudFromLegacyData } from './services/migration';
 import { accessRequestService } from './services/accessRequestService';
 import {
   Menu,
@@ -27,7 +32,9 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => getStoredAuth());
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(isFirebaseConfigured);
+  const [loginNotice, setLoginNotice] = useState<string | null>(null);
   const [previewAsUser, setPreviewAsUser] = useState<boolean>(false);
   const [activeView, setActiveView] = useState<'topics' | 'exams'>('topics');
   const [topics, setTopics] = useState<TopicPackage[]>([]);
@@ -79,7 +86,54 @@ export default function App() {
 
   const handleLogout = () => {
     clearStoredAuth();
-    setCurrentUser(null);
+    signOutUser().catch((err) => console.error('Sign out failed', err));
+  };
+
+  // Turns a Firebase sign-in into the app's user and loads the data they may see
+  const openSession = React.useCallback(async (fbUser: User) => {
+    try {
+      const session = await loadSession(fbUser);
+      if (session.status === 'incomplete') {
+        // Registration still in progress (or abandoned); stay on the login screen
+        setCurrentUser(null);
+        return;
+      }
+      if (session.status === 'blocked') {
+        setLoginNotice('Таны бүртгэл хаагдсан байна. Админд хандана уу.');
+        await signOutUser();
+        return;
+      }
+
+      await startCloudSync({ isAdmin: session.isAdmin, userId: session.user.userId });
+      if (session.isAdmin) await seedCloudFromLegacyData();
+
+      setTopics(storageService.getTopics());
+      saveStoredAuth(session.user);
+      setLoginNotice(null);
+      setCurrentUser(session.user);
+    } catch (err) {
+      console.error('Failed to open session', err);
+      setLoginNotice('Мэдээлэл ачаалж чадсангүй. Интернэт холболтоо шалгаад дахин нэвтэрнэ үү.');
+      await signOutUser().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+    return onAuthStateChanged(getFirebaseAuth(), async (fbUser) => {
+      if (fbUser) {
+        await openSession(fbUser);
+      } else {
+        stopCloudSync();
+        setCurrentUser(null);
+      }
+      setAuthLoading(false);
+    });
+  }, [openSession]);
+
+  const reloadSession = () => {
+    const fbUser = getFirebaseAuth().currentUser;
+    if (fbUser) openSession(fbUser);
   };
 
   // Close print menu on click outside
@@ -97,10 +151,11 @@ export default function App() {
     };
   }, [printMenuOpen]);
 
-  // Load topics from storage on mount
+  // Keep topics in sync with Firestore (edits here or on other devices)
   useEffect(() => {
-    const loaded = storageService.getTopics();
-    setTopics(loaded);
+    const refresh = () => setTopics(storageService.getTopics());
+    window.addEventListener('topics-updated', refresh);
+    return () => window.removeEventListener('topics-updated', refresh);
   }, []);
 
   const refreshTopics = () => {
@@ -257,11 +312,27 @@ export default function App() {
     return topics[0] || ({} as TopicPackage);
   }, [topics, selectedTopicId, selectedGrade]);
 
+  if (!isFirebaseConfigured) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 text-sm text-stone-600 bg-stone-100">
+        Firebase тохиргоо олдсонгүй (.env файлыг шалгана уу).
+      </div>
+    );
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-sm text-stone-500 bg-stone-100">
+        Ачаалж байна...
+      </div>
+    );
+  }
+
   if (!currentUser) {
     return (
       <>
         <ScreenProtection enabled={screenProtectionEnabled} />
-        <LoginView onLoginSuccess={(user) => setCurrentUser(user)} />
+        <LoginView notice={loginNotice} onRegistered={reloadSession} />
       </>
     );
   }
@@ -460,10 +531,7 @@ export default function App() {
           setTopics((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
         }}
         onRefreshAllTopics={refreshTopics}
-        onLogout={() => {
-          clearStoredAuth();
-          setCurrentUser(null);
-        }}
+        onLogout={handleLogout}
       />
 
       {/* Access Requests Management Modal */}

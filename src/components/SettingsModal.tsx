@@ -21,7 +21,7 @@ import {
   Smartphone,
 } from 'lucide-react';
 import { AuthUser } from '../types';
-import { accessRequestService } from '../services/accessRequestService';
+import { updateMyProfile, changePassword } from '../services/authService';
 import { saveStoredAuth } from '../utils/deviceManager';
 import { ActiveDevicesTab } from './ActiveDevicesTab';
 
@@ -89,29 +89,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileMsg(null);
     setIsSavingProfile(true);
 
-    const res = accessRequestService.updateUserProfile(currentUser, {
-      name,
-      email,
-      phoneNumber,
-    });
-
-    setIsSavingProfile(false);
-    if (res.success && res.updatedUser) {
-      setProfileMsg({ type: 'success', text: res.message });
-      saveStoredAuth(res.updatedUser);
-      onUpdateCurrentUser(res.updatedUser);
+    try {
+      const profile = await updateMyProfile({ fullName: name, phoneNumber });
+      const updatedUser: AuthUser = { ...currentUser, name: profile.fullName, phoneNumber: profile.phoneNumber };
+      saveStoredAuth(updatedUser);
+      onUpdateCurrentUser(updatedUser);
+      setProfileMsg({ type: 'success', text: 'Хэрэглэгчийн мэдээлэл амжилттай шинэчлэгдлээ.' });
       setTimeout(() => setProfileMsg(null), 3500);
-    } else {
-      setProfileMsg({ type: 'error', text: res.message });
+    } catch (err) {
+      setProfileMsg({ type: 'error', text: err instanceof Error ? err.message : 'Мэдээлэл хадгалж чадсангүй.' });
+    } finally {
+      setIsSavingProfile(false);
     }
   };
 
-  const handleChangePassword = (e: React.FormEvent) => {
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordMsg(null);
 
@@ -121,17 +118,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
 
     setIsChangingPass(true);
-    const res = accessRequestService.changePassword(currentUser, currentPassword, newPassword);
-    setIsChangingPass(false);
-
-    if (res.success) {
-      setPasswordMsg({ type: 'success', text: res.message });
+    try {
+      await changePassword(currentPassword, newPassword);
+      setPasswordMsg({ type: 'success', text: 'Нууц үг амжилттай солигдлоо.' });
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setTimeout(() => setPasswordMsg(null), 3500);
-    } else {
-      setPasswordMsg({ type: 'error', text: res.message });
+    } catch (err) {
+      setPasswordMsg({ type: 'error', text: err instanceof Error ? err.message : 'Нууц үг солиход алдаа гарлаа.' });
+    } finally {
+      setIsChangingPass(false);
     }
   };
 
@@ -231,7 +228,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
 
                 <div className="bg-white rounded-2xl border border-stone-200/90 shadow-xs divide-y divide-stone-100 overflow-hidden">
-                  {/* Row 1: Хувийн мэдээлэл (Дугаар, Gmail солих) */}
+                  {/* Row 1: Хувийн мэдээлэл (Нэр, утас солих) */}
                   <button
                     type="button"
                     onClick={() => setCurrentView('profile')}
@@ -243,10 +240,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       </div>
                       <div className="min-w-0">
                         <div className="text-xs font-semibold text-stone-900 group-hover:text-amber-700 transition-colors">
-                          Хувийн мэдээлэл (Дугаар, Gmail солих)
+                          Хувийн мэдээлэл (Нэр, утас солих)
                         </div>
                         <div className="text-[11px] text-stone-500 truncate">
-                          Овог нэр, холбогдох Gmail, утасны дугаар
+                          Овог нэр, утасны дугаар
                         </div>
                       </div>
                     </div>
@@ -350,7 +347,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-stone-900">Хувийн мэдээлэл шинэчлэх</h3>
-                    <p className="text-[11px] text-stone-500">Gmail болон утасны дугаараа өөрчилнө үү</p>
+                    <p className="text-[11px] text-stone-500">Нэр болон утасны дугаараа өөрчилнө үү</p>
                   </div>
                 </div>
 
@@ -366,7 +363,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
-                      placeholder="Жишээ: Админ (89163999)"
+                      placeholder="Жишээ: Бат Сараа"
                       className="w-full px-3.5 py-2 text-xs rounded-xl bg-stone-50 border border-stone-200 text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-colors"
                     />
                   </div>
@@ -375,18 +372,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <div>
                     <label className="block text-xs font-semibold text-stone-700 mb-1 flex items-center space-x-1.5">
                       <Mail className="w-3.5 h-3.5 text-stone-400" />
-                      <span>Gmail хаяг</span>
+                      <span>Имэйл хаяг</span>
                     </label>
                     <input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      placeholder="Жишээ: ehangal725@gmail.com"
-                      className="w-full px-3.5 py-2 text-xs rounded-xl bg-stone-50 border border-stone-200 text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-colors"
+                      readOnly
+                      className="w-full px-3.5 py-2 text-xs rounded-xl bg-stone-100 border border-stone-200 text-stone-500 cursor-not-allowed"
                     />
                     <p className="text-[10px] text-stone-400 mt-1">
-                      Энэ Gmail хаягаар системд нэвтрэх боломжтой болно.
+                      Баталгаажсан нэвтрэх имэйл тул өөрчлөх боломжгүй.
                     </p>
                   </div>
 
@@ -400,7 +395,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       type="tel"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="Жишээ: 89163999"
+                      placeholder="Жишээ: 99112233"
                       maxLength={12}
                       className="w-full px-3.5 py-2 text-xs rounded-xl bg-stone-50 border border-stone-200 text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-colors"
                     />

@@ -1,7 +1,8 @@
 import { UserPermissions, DefaultPermissionsConfig, GradeNumber } from '../types';
+import { cloud } from './cloud';
 
-const STORAGE_KEY_PERMISSIONS = 'math_app_user_permissions_v1';
-const STORAGE_KEY_DEFAULT_CONFIG = 'math_app_default_user_permissions_v1';
+const LEGACY_KEY_PERMISSIONS = 'math_app_user_permissions_v1';
+const LEGACY_KEY_DEFAULT_CONFIG = 'math_app_default_user_permissions_v1';
 
 export const DEFAULT_PERMISSIONS_CONFIG: DefaultPermissionsConfig = {
   allowedGrades: [6, 7, 8, 9, 10, 11, 12],
@@ -14,47 +15,52 @@ export const DEFAULT_PERMISSIONS_CONFIG: DefaultPermissionsConfig = {
   defaultAccessMode: 'visible',
 };
 
+function parseDefaultConfig(parsed: Partial<DefaultPermissionsConfig> | null): DefaultPermissionsConfig {
+  if (!parsed) return DEFAULT_PERMISSIONS_CONFIG;
+  return {
+    allowedGrades: Array.isArray(parsed.allowedGrades) ? parsed.allowedGrades : DEFAULT_PERMISSIONS_CONFIG.allowedGrades,
+    sections: { ...DEFAULT_PERMISSIONS_CONFIG.sections, ...(parsed.sections || {}) },
+    defaultAccessMode: parsed.defaultAccessMode || DEFAULT_PERMISSIONS_CONFIG.defaultAccessMode,
+  };
+}
+
+/** Permissions saved in this browser by the pre-Firestore version of the app, if any. */
+export function readLegacyLocalPermissions(): {
+  defaultConfig: DefaultPermissionsConfig | null;
+  users: Record<string, UserPermissions>;
+} {
+  try {
+    const def = localStorage.getItem(LEGACY_KEY_DEFAULT_CONFIG);
+    const users = localStorage.getItem(LEGACY_KEY_PERMISSIONS);
+    return {
+      defaultConfig: def ? parseDefaultConfig(JSON.parse(def)) : null,
+      users: users ? JSON.parse(users) : {},
+    };
+  } catch {
+    return { defaultConfig: null, users: {} };
+  }
+}
+
 class UserPermissionsService {
   /**
    * Get default permission template for new users
    */
   getDefaultConfig(): DefaultPermissionsConfig {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY_DEFAULT_CONFIG);
-      if (!raw) return DEFAULT_PERMISSIONS_CONFIG;
-      const parsed = JSON.parse(raw);
-      return {
-        allowedGrades: Array.isArray(parsed.allowedGrades) ? parsed.allowedGrades : DEFAULT_PERMISSIONS_CONFIG.allowedGrades,
-        sections: { ...DEFAULT_PERMISSIONS_CONFIG.sections, ...(parsed.sections || {}) },
-        defaultAccessMode: parsed.defaultAccessMode || DEFAULT_PERMISSIONS_CONFIG.defaultAccessMode,
-      };
-    } catch {
-      return DEFAULT_PERMISSIONS_CONFIG;
-    }
+    return parseDefaultConfig(cloud.getDefaultPermissions());
   }
 
   /**
    * Save default permission template
    */
   saveDefaultConfig(config: DefaultPermissionsConfig): void {
-    try {
-      localStorage.setItem(STORAGE_KEY_DEFAULT_CONFIG, JSON.stringify(config));
-      window.dispatchEvent(new CustomEvent('user-permissions-updated'));
-    } catch (e) {
-      console.error('Failed to save default permissions config', e);
-    }
+    cloud.setDefaultPermissions(config);
   }
 
   /**
    * Get all user permissions map
    */
   getAllPermissions(): Record<string, UserPermissions> {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY_PERMISSIONS);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
+    return cloud.getUserPermissions();
   }
 
   /**
@@ -95,18 +101,7 @@ class UserPermissionsService {
    */
   saveUserPermissions(userId: string, perms: UserPermissions): void {
     if (!userId) return;
-    try {
-      const all = this.getAllPermissions();
-      all[userId] = {
-        ...perms,
-        userId,
-        updatedAt: Date.now(),
-      };
-      localStorage.setItem(STORAGE_KEY_PERMISSIONS, JSON.stringify(all));
-      window.dispatchEvent(new CustomEvent('user-permissions-updated'));
-    } catch (e) {
-      console.error('Failed to save user permissions', e);
-    }
+    cloud.setUserPermissions(userId, { ...perms, userId, updatedAt: Date.now() });
   }
 
   /**

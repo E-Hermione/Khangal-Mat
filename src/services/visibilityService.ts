@@ -1,3 +1,5 @@
+import { cloud } from './cloud';
+
 export interface TopicSectionVisibility {
   theory: boolean;
   examples: boolean;
@@ -20,7 +22,7 @@ export interface VisibilitySettings {
   lockedTopicIds: string[]; // title visible with lock, request unlock needed
 }
 
-const STORAGE_KEY = 'mongolian_math_visibility_settings_v2';
+const LEGACY_STORAGE_KEY = 'mongolian_math_visibility_settings_v2';
 
 const DEFAULT_SETTINGS: VisibilitySettings = {
   defaultSections: {
@@ -37,43 +39,34 @@ const DEFAULT_SETTINGS: VisibilitySettings = {
   lockedTopicIds: [],
 };
 
+function parseSettings(parsed: Record<string, any> | null): VisibilitySettings {
+  if (!parsed) return DEFAULT_SETTINGS;
+  return {
+    defaultSections: { ...DEFAULT_SETTINGS.defaultSections, ...(parsed.defaultSections || {}) },
+    topicOverrides: parsed.topicOverrides || {},
+    hiddenTopicIds: Array.isArray(parsed.hiddenTopicIds) ? parsed.hiddenTopicIds : [],
+    lockedTopicIds: Array.isArray(parsed.lockedTopicIds) ? parsed.lockedTopicIds : [],
+  };
+}
+
+/** Settings saved in this browser by the pre-Firestore version of the app, if any. */
+export function readLegacyLocalVisibility(): VisibilitySettings | null {
+  try {
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY) ?? localStorage.getItem('mongolian_math_visibility_settings_v1');
+    return raw ? parseSettings(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
 class VisibilityService {
   private getSettings(): VisibilitySettings {
-    try {
-      let data = localStorage.getItem(STORAGE_KEY);
-      if (!data) {
-        // Fallback from v1
-        const v1Data = localStorage.getItem('mongolian_math_visibility_settings_v1');
-        if (v1Data) {
-          const v1Parsed = JSON.parse(v1Data);
-          return {
-            defaultSections: { ...DEFAULT_SETTINGS.defaultSections, ...(v1Parsed.defaultSections || {}) },
-            topicOverrides: v1Parsed.topicOverrides || {},
-            hiddenTopicIds: Array.isArray(v1Parsed.hiddenTopicIds) ? v1Parsed.hiddenTopicIds : [],
-            lockedTopicIds: [],
-          };
-        }
-        return DEFAULT_SETTINGS;
-      }
-      const parsed = JSON.parse(data);
-      return {
-        defaultSections: { ...DEFAULT_SETTINGS.defaultSections, ...(parsed.defaultSections || {}) },
-        topicOverrides: parsed.topicOverrides || {},
-        hiddenTopicIds: Array.isArray(parsed.hiddenTopicIds) ? parsed.hiddenTopicIds : [],
-        lockedTopicIds: Array.isArray(parsed.lockedTopicIds) ? parsed.lockedTopicIds : [],
-      };
-    } catch {
-      return DEFAULT_SETTINGS;
-    }
+    // Return a copy: callers mutate the result before saving it
+    return JSON.parse(JSON.stringify(parseSettings(cloud.getVisibility())));
   }
 
   private saveSettings(settings: VisibilitySettings) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-      window.dispatchEvent(new CustomEvent('visibility-settings-updated'));
-    } catch (e) {
-      console.error('Failed to save visibility settings', e);
-    }
+    cloud.setVisibility({ ...settings });
   }
 
   /**

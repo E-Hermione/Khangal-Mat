@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { X, UserPlus, Eye, EyeOff, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { GradeNumber } from '../types';
-import { accessRequestService } from '../services/accessRequestService';
+import { registerAccount } from '../services/authService';
 import { sendEmailCode, verifyEmailCode } from '../services/firebase';
 
 interface RegisterModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // Called with the new account's credentials so the login screen can sign in right away
-  onRegistered: (phoneNumber: string, password: string) => void;
+  // Called once the account and profile exist; the user is already signed in
+  onRegistered: () => void;
 }
 
 const ALL_GRADES: GradeNumber[] = [6, 7, 8, 9, 10, 11, 12];
@@ -83,7 +83,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
     setInfo(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -97,22 +97,23 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
       return;
     }
 
-    const res = accessRequestService.registerUser({
-      lastName,
-      firstName,
-      phoneNumber,
-      email: verifiedEmail,
-      grade,
-      school,
-      password,
-    });
-
-    if (!res.success || !res.account) {
-      setError(res.message);
-      return;
+    setIsBusy(true);
+    try {
+      await registerAccount({
+        email: verifiedEmail,
+        password,
+        lastName,
+        firstName,
+        phoneNumber,
+        grade,
+        school,
+      });
+      onRegistered();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Бүртгэл үүсгэж чадсангүй.');
+    } finally {
+      setIsBusy(false);
     }
-
-    onRegistered(res.account.phoneNumber || '', password.trim());
   };
 
   return (
@@ -341,10 +342,11 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
 
           <button
             type="submit"
-            className="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold rounded-xl flex items-center justify-center space-x-2 shadow-sm hover:shadow-md transition-all cursor-pointer"
+            disabled={isBusy}
+            className="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold rounded-xl flex items-center justify-center space-x-2 shadow-sm hover:shadow-md transition-all cursor-pointer disabled:opacity-50"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Бүртгүүлээд нэвтрэх</span>
+            <span>{isBusy ? 'Түр хүлээнэ үү...' : 'Бүртгүүлээд нэвтрэх'}</span>
           </button>
         </form>
       </div>

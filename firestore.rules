@@ -1,9 +1,61 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Only Cloud Functions (Admin SDK) read and write data for now.
-    match /{document=**} {
-      allow read, write: if false;
+
+    function signedIn() {
+      return request.auth != null;
     }
+
+    // Must match ADMIN_EMAIL in functions/src/index.ts and src/services/authService.ts
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email == 'ehangal625@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    function myProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // A registered (code-verified) and active user
+    function isMember() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && myProfile().active == true;
+    }
+
+    // Lesson content and site-wide settings: members read, only the admin writes
+    match /topics/{topicId} {
+      allow read: if isAdmin() || isMember();
+      allow write: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if isAdmin() || isMember();
+      allow write: if isAdmin();
+    }
+
+    match /userPermissions/{userId} {
+      allow read: if isAdmin() || (isMember() && myProfile().userId == userId);
+      allow write: if isAdmin();
+    }
+
+    // Profiles are created by the completeRegistration function
+    match /users/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow update, delete: if isAdmin();
+      allow create: if false;
+    }
+
+    // Topic unlock requests: members create their own, the admin manages them
+    match /accessRequests/{requestId} {
+      allow create: if isMember()
+        && request.resource.data.requesterUid == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Everything else (phone index, email codes) is server-only: no rule grants access.
   }
 }

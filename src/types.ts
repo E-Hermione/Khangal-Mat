@@ -124,6 +124,7 @@ export type AccessRequestStatus = 'pending' | 'approved' | 'rejected' | 'expired
 
 export interface AccessRequest {
   id: string;
+  requesterUid?: string;
   userId?: string;
   fullName: string;
   email: string;
@@ -148,11 +149,12 @@ export interface AccessRequest {
 }
 
 export interface ApprovedAccount {
+  uid?: string;
   userId?: string;
   email: string;
   username?: string;
   phoneNumber?: string;
-  password: string;
+  password?: string;
   fullName: string;
   lastName?: string;
   firstName?: string;
@@ -187,4 +189,20 @@ export interface DefaultPermissionsConfig {
     exams: boolean;
   };
   defaultAccessMode: 'visible' | 'locked';
+}
+
+// Profile stored in Firestore users/{uid}, created by the completeRegistration function
+export interface UserProfile {
+  uid: string;
+  userId: string;
+  email: string;
+  phoneNumber: string;
+  lastName: string;
+  firstName: string;
+  fullName: string;
+  school: string;
+  accountType: 'student' | 'teacher';
+  grades: GradeNumber[];
+  active: boolean;
+  createdAt: number;
 }
