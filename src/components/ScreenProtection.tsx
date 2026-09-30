@@ -3,18 +3,23 @@ import { Shield } from 'lucide-react';
 
 interface ScreenProtectionProps {
   enabled?: boolean;
+  // Text tiled across the screen as a watermark (e.g. the logged-in user's email)
+  watermarkText?: string;
 }
 
-export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = false }) => {
-  if (!enabled) return null;
-
+export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = false, watermarkText }) => {
+  // Hooks must run on every render, before any early return
   const [isBlackout, setIsBlackout] = useState(false);
   const [blackoutReason, setBlackoutReason] = useState<string>('');
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      setIsBlackout(false);
+      setBlackoutReason('');
+      return;
+    }
 
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const triggerBlackout = (reason: string, durationMs = 2500) => {
       setIsBlackout(true);
@@ -38,29 +43,7 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
       }
     };
 
-    // 1. Detect Window Blur (triggers when Snipping Tool, Mac screenshot tool, or recording overlay grabs focus)
-    const handleBlur = () => {
-      // Immediate pitch black when window loses focus to capture tool
-      setIsBlackout(true);
-      setBlackoutReason('Төхөөрөмж дэлгэцийн зураг эсвэл бичлэг авах оролдлого хийх үед хамгаалагдсан.');
-    };
-
-    const handleFocus = () => {
-      // Re-enable content once user is safely focused back inside the app
-      setIsBlackout(false);
-      setBlackoutReason('');
-    };
-
-    // 2. Visibility change (when tab is backgrounded or captured)
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setIsBlackout(true);
-      } else {
-        setIsBlackout(false);
-      }
-    };
-
-    // 3. Keydown detection for common screenshot shortcuts
+    // Keydown detection for common screenshot shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
       // PrintScreen key
       if (e.key === 'PrintScreen' || e.keyCode === 44) {
@@ -86,7 +69,7 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
       }
     };
 
-    // 4. Prevent right-click context menu inspection
+    // Prevent right-click context menu inspection
     const handleContextMenu = (e: MouseEvent) => {
       // Allow context menu only on input and textarea
       const target = e.target as HTMLElement;
@@ -95,47 +78,65 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
       }
     };
 
-    window.addEventListener('blur', handleBlur);
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('keydown', handleKeyDown, true);
     document.addEventListener('contextmenu', handleContextMenu);
 
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
-      window.removeEventListener('blur', handleBlur);
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('contextmenu', handleContextMenu);
     };
   }, [enabled]);
 
-  if (!isBlackout) return null;
+  if (!enabled) return null;
+
+  return (
+    <>
+      {watermarkText && <Watermark text={watermarkText} />}
+      {isBlackout && (
+        <div
+          id="screen-protection-shield"
+          onClick={() => {
+            setIsBlackout(false);
+            setBlackoutReason('');
+          }}
+          className="fixed inset-0 bg-black z-[9999999] flex flex-col items-center justify-center p-6 text-center select-none cursor-pointer"
+          style={{ backgroundColor: '#000000', color: '#000000' }}
+          aria-hidden="true"
+        >
+          {/* Pure pitch-black overlay. Minimal subtle text to explain if returned to tab */}
+          <div className="max-w-md text-stone-700 pointer-events-none opacity-40">
+            <Shield className="w-10 h-10 mx-auto mb-2 text-stone-700" />
+            <p className="text-xs font-semibold tracking-wider uppercase text-stone-700">
+              Хамгаалагдсан дэлгэц
+            </p>
+            {blackoutReason && (
+              <p className="text-[11px] text-stone-800 mt-1">
+                {blackoutReason}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+// Faint, repeated user identifier over the whole page. It survives phone photos and
+// screenshots, so leaked material can be traced back to the account that viewed it.
+const Watermark: React.FC<{ text: string }> = ({ text }) => {
+  const escaped = text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200">` +
+    `<text x="160" y="100" text-anchor="middle" dominant-baseline="middle" ` +
+    `transform="rotate(-25 160 100)" font-family="sans-serif" font-size="14" ` +
+    `fill="rgba(120,113,108,0.13)">${escaped}</text></svg>`;
 
   return (
     <div
-      id="screen-protection-shield"
-      onClick={() => {
-        setIsBlackout(false);
-        setBlackoutReason('');
-      }}
-      className="fixed inset-0 bg-black z-[9999999] flex flex-col items-center justify-center p-6 text-center select-none cursor-pointer"
-      style={{ backgroundColor: '#000000', color: '#000000' }}
+      className="fixed inset-0 pointer-events-none select-none z-[9999998] no-print"
+      style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")` }}
       aria-hidden="true"
-    >
-      {/* Pure pitch-black overlay. Minimal subtle text to explain if returned to tab */}
-      <div className="max-w-md text-stone-700 pointer-events-none opacity-40">
-        <Shield className="w-10 h-10 mx-auto mb-2 text-stone-700" />
-        <p className="text-xs font-semibold tracking-wider uppercase text-stone-700">
-          Хамгаалагдсан дэлгэц
-        </p>
-        {blackoutReason && (
-          <p className="text-[11px] text-stone-800 mt-1">
-            {blackoutReason}
-          </p>
-        )}
-      </div>
-    </div>
+    />
   );
 };

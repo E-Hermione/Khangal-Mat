@@ -268,7 +268,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-stone-100 flex flex-col font-sans text-stone-900">
-      <ScreenProtection enabled={screenProtectionEnabled} />
+      <ScreenProtection
+        enabled={screenProtectionEnabled}
+        watermarkText={currentUser.email || currentUser.username || currentUser.phoneNumber || currentUser.name}
+      />
       {/* Top Navigation Bar on Screen */}
       <header className="screen-header bg-white border-b border-stone-200 sticky top-0 z-40 h-14 px-4 flex items-center shadow-2xs no-print">
         <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">

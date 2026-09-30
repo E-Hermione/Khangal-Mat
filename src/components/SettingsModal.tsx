@@ -564,10 +564,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-stone-900">
-                        Дэлгэц хамгаалалт (Тас хар болгох)
+                        Дэлгэц хамгаалалт (Усан тэмдэг)
                       </div>
                       <div className="text-[11px] text-stone-500">
-                        Зураг авах, бичлэг хийх үед дэлгэцийг тас хар болгоно
+                        Нэвтэрсэн хэрэглэгчийн имэйлийг дэлгэц дээр бүдэг харуулж, зураг авах товчлуурыг хаана
                       </div>
                     </div>
                   </div>
