@@ -31,6 +31,8 @@ interface SettingsModalProps {
   currentUser: AuthUser;
   onUpdateCurrentUser: (updatedUser: AuthUser) => void;
   onLogout: () => void;
+  screenProtectionEnabled: boolean;
+  onToggleScreenProtection: (enabled: boolean) => void;
   deviceLimitEnabled: boolean;
   onToggleDeviceLimit: (enabled: boolean) => void;
   copyProtectionEnabled: boolean;
@@ -46,6 +48,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   currentUser,
   onUpdateCurrentUser,
   onLogout,
+  screenProtectionEnabled,
+  onToggleScreenProtection,
   deviceLimitEnabled,
   onToggleDeviceLimit,
   copyProtectionEnabled,
@@ -542,6 +546,41 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {currentView === 'system' && isUserAdmin && (
             <div className="space-y-3 animate-in fade-in duration-150">
               <div className="bg-white rounded-2xl border border-stone-200/90 shadow-xs divide-y divide-stone-100 overflow-hidden">
+                {/* Row 1: Screen Protection */}
+                <div className="p-3.5 flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                        screenProtectionEnabled ? 'bg-stone-900 text-amber-400' : 'bg-stone-100 text-stone-600'
+                      }`}
+                    >
+                      <Shield className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-stone-900">
+                        Дэлгэц хамгаалалт (Усан тэмдэг)
+                      </div>
+                      <div className="text-[11px] text-stone-500">
+                        Бүх хэрэглэгчийн дэлгэц дээр имэйлийг нь бүдэг харуулж, зураг авах товчлуурыг хаана
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onToggleScreenProtection(!screenProtectionEnabled)}
+                    className={`w-11 h-6 rounded-full p-0.5 transition-colors cursor-pointer shrink-0 ml-2 ${
+                      screenProtectionEnabled ? 'bg-amber-500' : 'bg-stone-300'
+                    }`}
+                    aria-label="Дэлгэц хамгаалалт асаах/унтраах"
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
+                        screenProtectionEnabled ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
                 {/* Row 4: Multi-session */}
                 <div className="p-3.5 flex items-center justify-between">
                   <div className="flex items-center space-x-3">
