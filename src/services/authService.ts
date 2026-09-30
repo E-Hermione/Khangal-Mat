@@ -193,6 +193,8 @@ async function createProfileIfMissing(profile: UserProfile): Promise<void> {
 /** Looks up the sign-in email for an 8-digit phone number, or returns the email as given. */
 async function resolveEmail(identifier: string): Promise<string> {
   const id = identifier.trim().toLowerCase();
+  // The admin can sign in with the name "Admin" (the password is checked by Firebase as usual)
+  if (id === 'admin') return ADMIN_EMAIL;
   const digits = id.replace(/[\s-]/g, '');
   if (!/^\d{8}$/.test(digits)) return id;
   const phone = await getDoc(doc(getDb(), 'phones', digits)).catch(() => null);
