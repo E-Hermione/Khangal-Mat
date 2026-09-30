@@ -67,6 +67,12 @@ service cloud.firestore {
       );
 
       allow delete: if isAdmin();
+
+      // Signed-in devices (see src/services/deviceSessions.ts)
+      match /devices/{deviceId} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+        allow read: if isAdmin();
+      }
     }
 
     // Phone number -> account, for phone sign-in and to keep numbers unique.

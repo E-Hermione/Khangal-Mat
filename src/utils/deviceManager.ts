@@ -65,57 +65,6 @@ export function detectCurrentDevice(phoneNumber: string): LoggedInDevice {
   };
 }
 
-// Placeholder devices the original demo added to every browser
-const DEMO_DEVICE_IDS = new Set(['dev_iphone_sample', 'dev_macbook_sample']);
-
-export function getStoredDevices(phoneNumber?: string): LoggedInDevice[] {
-  const currentDeviceId = getOrCreateDeviceId();
-
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_DEVICES);
-    if (raw) {
-      const parsed: LoggedInDevice[] = JSON.parse(raw);
-      const devices = parsed
-        .filter((d) => !DEMO_DEVICE_IDS.has(d.id))
-        .map((d) => ({
-          ...d,
-          // Drop the made-up IP/location the demo stored for this device
-          ...(d.id === currentDeviceId ? { ip: '', location: '' } : {}),
-          // Devices are per browser; the account's phone number is not tied to them
-          phoneNumber: undefined,
-          isCurrent: d.id === currentDeviceId,
-          lastActive: d.id === currentDeviceId ? 'Яг одоо идэвхтэй' : d.lastActive,
-        }));
-      if (devices.length > 0) return devices;
-    }
-  } catch {
-    // ignore parse error
-  }
-
-  const initialDevices = [{ ...detectCurrentDevice(phoneNumber || ''), phoneNumber: undefined }];
-  localStorage.setItem(STORAGE_KEY_DEVICES, JSON.stringify(initialDevices));
-  return initialDevices;
-}
-
-export function saveStoredDevices(devices: LoggedInDevice[]): void {
-  localStorage.setItem(STORAGE_KEY_DEVICES, JSON.stringify(devices));
-}
-
-export function removeDeviceById(deviceId: string): LoggedInDevice[] {
-  const devices = getStoredDevices();
-  const updated = devices.filter((d) => d.id !== deviceId);
-  saveStoredDevices(updated);
-  return updated;
-}
-
-export function removeAllOtherDevices(): LoggedInDevice[] {
-  const currentDeviceId = getOrCreateDeviceId();
-  const devices = getStoredDevices();
-  const updated = devices.filter((d) => d.id === currentDeviceId);
-  saveStoredDevices(updated);
-  return updated;
-}
-
 export function getStoredAuth(): AuthUser | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_AUTH);
@@ -130,14 +79,8 @@ export function getStoredAuth(): AuthUser | null {
 
 export function saveStoredAuth(auth: AuthUser): void {
   localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(auth));
-  // Also register/update this device in devices list
-  const currentDeviceId = getOrCreateDeviceId();
-  const devices = getStoredDevices(auth.phoneNumber);
-  const exists = devices.some((d) => d.id === currentDeviceId);
-  if (!exists) {
-    const current = detectCurrentDevice(auth.phoneNumber);
-    saveStoredDevices([current, ...devices]);
-  }
+  // Clean up the device list older versions kept in this browser (now in Firestore)
+  localStorage.removeItem(STORAGE_KEY_DEVICES);
 }
 
 export function clearStoredAuth(): void {

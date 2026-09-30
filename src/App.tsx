@@ -18,6 +18,7 @@ import { getFirebaseAuth, isFirebaseConfigured } from './services/firebase';
 import { loadSession, signOutUser, isRegistering } from './services/authService';
 import { startCloudSync, stopCloudSync } from './services/cloud';
 import { seedCloudFromLegacyData } from './services/migration';
+import { registerCurrentDevice, watchCurrentDevice, forgetCurrentDevice, stopDeviceWatch } from './services/deviceSessions';
 import { accessRequestService } from './services/accessRequestService';
 import {
   Menu,
@@ -86,8 +87,10 @@ export default function App() {
   const [printMenuOpen, setPrintMenuOpen] = useState(false);
   const printMenuRef = React.useRef<HTMLDivElement>(null);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     clearStoredAuth();
+    const uid = getFirebaseAuth().currentUser?.uid;
+    if (uid) await forgetCurrentDevice(uid);
     signOutUser().catch((err) => console.error('Sign out failed', err));
   };
 
@@ -109,6 +112,26 @@ export default function App() {
         setLoginNotice('Таны бүртгэл хаагдсан байна. Админд хандана уу.');
         await signOutUser();
         return;
+      }
+
+      // Device tracking must never block sign-in (e.g. before the rules are deployed)
+      const device = await registerCurrentDevice(fbUser.uid).catch((err) => {
+        console.error('Device registration failed', err);
+        return 'error' as const;
+      });
+      if (device === 'revoked') {
+        setLoginNotice('Энэ төхөөрөмжийг таны бүртгэлээс гаргасан байна. Дахин нэвтэрнэ үү.');
+        await signOutUser();
+        return;
+      }
+      if (device === 'ok') {
+        watchCurrentDevice(fbUser.uid, async () => {
+          setLoginNotice('Энэ төхөөрөмжийг өөр төхөөрөмжөөс гаргалаа. Дахин нэвтэрнэ үү.');
+          clearStoredAuth();
+          // Clear the revoked record so signing in again on this device works
+          await forgetCurrentDevice(fbUser.uid);
+          signOutUser().catch(() => {});
+        });
       }
 
       await startCloudSync({ isAdmin: session.isAdmin, userId: session.user.userId });
@@ -133,6 +156,7 @@ export default function App() {
         await openSession(fbUser);
       } else {
         stopCloudSync();
+        stopDeviceWatch();
         setUnverifiedEmail(null);
         setCurrentUser(null);
       }

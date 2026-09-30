@@ -6,64 +6,81 @@ import {
   Tablet,
   LogOut,
   ShieldCheck,
-  Globe,
   Clock,
   Trash2,
   AlertTriangle,
-  RefreshCw,
 } from 'lucide-react';
-import {
-  getStoredDevices,
-  removeDeviceById,
-  removeAllOtherDevices,
-} from '../utils/deviceManager';
+import { getOrCreateDeviceId } from '../utils/deviceManager';
+import { getFirebaseAuth } from '../services/firebase';
+import { DeviceSession, subscribeDevices, revokeDevice, revokeOtherDevices } from '../services/deviceSessions';
 
 interface ActiveDevicesTabProps {
   onLogoutCurrent: () => void;
 }
 
+function formatLastActive(ms: number): string {
+  const minutes = Math.floor((Date.now() - ms) / 60000);
+  if (minutes < 10) return 'Саяхан идэвхтэй';
+  if (minutes < 60) return `${minutes} минутын өмнө`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} цагийн өмнө`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} өдрийн өмнө`;
+  return new Date(ms).toLocaleDateString();
+}
+
 export const ActiveDevicesTab: React.FC<ActiveDevicesTabProps> = ({
   onLogoutCurrent,
 }) => {
-  const [devices, setDevices] = useState<LoggedInDevice[]>([]);
+  const uid = getFirebaseAuth().currentUser?.uid;
+  const currentDeviceId = getOrCreateDeviceId();
+  const [sessions, setSessions] = useState<DeviceSession[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  const refreshList = () => {
-    setDevices(getStoredDevices());
-  };
-
   useEffect(() => {
-    refreshList();
-  }, []);
+    if (!uid) return;
+    return subscribeDevices(uid, setSessions);
+  }, [uid]);
+
+  const devices = sessions.map((d) => ({
+    ...d,
+    isCurrent: d.id === currentDeviceId,
+    lastActive: d.id === currentDeviceId ? 'Яг одоо идэвхтэй' : formatLastActive(d.lastActiveAt),
+  }));
 
   const showStatus = (msg: string) => {
     setStatusMessage(msg);
     setTimeout(() => setStatusMessage(null), 3000);
   };
 
-  const handleRemoveDevice = (device: LoggedInDevice) => {
+  const handleRemoveDevice = async (device: (typeof devices)[number]) => {
     if (device.isCurrent) {
-      removeDeviceById(device.id);
       onLogoutCurrent();
       return;
     }
-
-    const updated = removeDeviceById(device.id);
-    setDevices(updated);
-    showStatus(`"${device.name}" төхөөрөмжийг амжилттай гаргалаа.`);
+    if (!uid) return;
+    try {
+      await revokeDevice(uid, device.id);
+      showStatus(`"${device.name}" төхөөрөмжийг амжилттай гаргалаа.`);
+    } catch {
+      showStatus('Гаргаж чадсангүй. Дахин оролдоно уу.');
+    }
   };
 
-  const handleRemoveAllOthers = () => {
-    const otherCount = devices.filter((d) => !d.isCurrent).length;
-    if (otherCount === 0) {
+  const handleRemoveAllOthers = async () => {
+    const others = devices.filter((d) => !d.isCurrent);
+    if (others.length === 0) {
       showStatus('Бусад идэвхтэй төхөөрөмж байхгүй байна.');
       return;
     }
 
-    if (window.confirm(`Одоогийнхоос бусад бүх (${otherCount}) төхөөрөмжийг системээс гаргах уу?`)) {
-      const updated = removeAllOtherDevices();
-      setDevices(updated);
-      showStatus('Бусад бүх төхөөрөмжийг амжилттай гаргалаа.');
+    if (uid && window.confirm(`Одоогийнхоос бусад бүх (${others.length}) төхөөрөмжийг системээс гаргах уу?`)) {
+      try {
+        await revokeOtherDevices(uid, others.map((d) => d.id));
+        showStatus('Бусад бүх төхөөрөмжийг амжилттай гаргалаа.');
+      } catch {
+        showStatus('Гаргаж чадсангүй. Дахин оролдоно уу.');
+      }
     }
   };
 
@@ -96,15 +113,6 @@ export const ActiveDevicesTab: React.FC<ActiveDevicesTabProps> = ({
         </div>
 
         <div className="flex items-center space-x-2">
-          <button
-            type="button"
-            onClick={refreshList}
-            className="p-1.5 text-stone-600 hover:text-stone-900 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors cursor-pointer"
-            title="Шинэчлэх"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-
           {otherDevicesCount > 0 && (
             <button
               type="button"
@@ -164,13 +172,6 @@ export const ActiveDevicesTab: React.FC<ActiveDevicesTabProps> = ({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-stone-500">
-                  {device.ip && (
-                    <div className="flex items-center space-x-1">
-                      <Globe className="w-3.5 h-3.5 text-stone-400" />
-                      <span>{device.ip}</span>
-                    </div>
-                  )}
-
                   <div className="flex items-center space-x-1">
                     <Clock className="w-3.5 h-3.5 text-stone-400" />
                     <span className={device.isCurrent ? 'font-semibold text-emerald-700' : ''}>
@@ -178,11 +179,6 @@ export const ActiveDevicesTab: React.FC<ActiveDevicesTabProps> = ({
                     </span>
                   </div>
 
-                  {device.phoneNumber && (
-                    <div className="text-[11px] text-stone-400">
-                      Дугаар: <span className="font-medium text-stone-600">{device.phoneNumber}</span>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -210,7 +206,7 @@ export const ActiveDevicesTab: React.FC<ActiveDevicesTabProps> = ({
       <div className="flex items-start space-x-2.5 p-3.5 bg-amber-50/60 border border-amber-200 rounded-xl text-xs text-amber-900">
         <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
         <p className="leading-relaxed">
-          <strong>Аюулгүй байдлын зөвлөмж:</strong> Хэрэв танихгүй эсвэл хуучин ашиглахаа больсон төхөөрөмж жагсаалтад байвал <strong>«Гаргах»</strong> товчийг дарж холболтыг нэн даруй цуцална уу. Цуцалсны дараа тухайн төхөөрөмж автоматаар системээс гарна.
+          <strong>Аюулгүй байдлын зөвлөмж:</strong> Хэрэв танихгүй эсвэл хуучин ашиглахаа больсон төхөөрөмж жагсаалтад байвал <strong>«Гаргах»</strong> товчийг дарж холболтыг нэн даруй цуцална уу. Цуцалсны дараа тухайн төхөөрөмж системээс гарна (унтраастай байвал дараа нь асаахад).
         </p>
       </div>
     </div>
