@@ -82,6 +82,12 @@ service cloud.firestore {
         allow read, write: if signedIn() && request.auth.uid == uid;
         allow read: if isAdmin();
       }
+
+      // Exam results: the owner writes, the admin can review
+      match /examAttempts/{examId} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+        allow read: if isAdmin();
+      }
     }
 
     match /phones/{phone} {

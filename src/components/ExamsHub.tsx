@@ -15,6 +15,7 @@ import { backdropClose } from '../utils/backdrop';
 import { getQuestionOptions, isOptionCorrect } from '../utils/examGrading';
 import { visibilityService } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
+import { subscribeAttempts, saveAttempt as saveAttemptCloud, AttemptMap, ExamAttempt } from '../services/examAttempts';
 
 interface ExamsHubProps {
   topics: TopicPackage[];
@@ -217,9 +218,10 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
   // Info notice modal for untaken exams
   const [unTakenNoticeExam, setUnTakenNoticeExam] = useState<{ exam: ExamRowItem; actionType: 'score' | 'error' } | null>(null);
 
-  // User test attempts, stored per account in this browser
+  // Exam results: kept in Firestore per account (users/{uid}/examAttempts), with a copy in this
+  // browser so results still show if Firestore is unreachable
   const attemptsKey = `math_app_exam_attempts_v1:${uid || 'guest'}`;
-  const [attempts, setAttempts] = useState<Record<string, { answers: Record<string, string>; score?: number; finishedAt?: number }>>(() => {
+  const [attempts, setAttempts] = useState<AttemptMap>(() => {
     try {
       const data = localStorage.getItem(attemptsKey);
       return data ? JSON.parse(data) : {};
@@ -228,7 +230,36 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
     }
   });
 
-  const saveAttempt = (examId: string, data: { answers: Record<string, string>; score?: number; finishedAt?: number }) => {
+  React.useEffect(() => {
+    if (!uid) return;
+    let firstSnapshot = true;
+    return subscribeAttempts(uid, (cloudAttempts) => {
+      if (firstSnapshot) {
+        firstSnapshot = false;
+        // Upload results saved only in this browser (before results were stored online)
+        let local: AttemptMap = {};
+        try {
+          local = JSON.parse(localStorage.getItem(attemptsKey) || '{}');
+        } catch {
+          // ignore
+        }
+        for (const [examId, attempt] of Object.entries(local)) {
+          if (!cloudAttempts[examId]) {
+            cloudAttempts[examId] = attempt;
+            saveAttemptCloud(uid, examId, attempt).catch(() => {});
+          }
+        }
+      }
+      setAttempts(cloudAttempts);
+      try {
+        localStorage.setItem(attemptsKey, JSON.stringify(cloudAttempts));
+      } catch {
+        // ignore
+      }
+    });
+  }, [uid, attemptsKey]);
+
+  const saveAttempt = (examId: string, data: ExamAttempt) => {
     const updated = { ...attempts, [examId]: data };
     setAttempts(updated);
     try {
@@ -236,6 +267,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
     } catch (e) {
       console.error(e);
     }
+    if (uid) saveAttemptCloud(uid, examId, data).catch((err) => console.error('Exam result not saved online', err));
   };
 
   // Build complete list of all topics for the selected grade:
