@@ -137,14 +137,8 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return accounts;
-    return accounts.filter(
-      (a) =>
-        (a.userId || '').toLowerCase().includes(q) ||
-        a.fullName.toLowerCase().includes(q) ||
-        (a.phoneNumber || '').includes(q) ||
-        a.email.toLowerCase().includes(q) ||
-        (a.school || '').toLowerCase().includes(q)
-    );
+    // Search by user ID or phone number only
+    return accounts.filter((a) => (a.userId || '').toLowerCase().includes(q) || (a.phoneNumber || '').includes(q));
   }, [accounts, query]);
 
   const user = accounts.find((a) => a.uid === selectedUid) || null;
@@ -232,7 +226,7 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ID (USR-1234), утас, нэр, имэйл эсвэл сургуулиар хайх..."
+            placeholder="ID (USR-1234) эсвэл утасны дугаараар хайх..."
             className="w-full pl-9 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
             autoFocus
           />
