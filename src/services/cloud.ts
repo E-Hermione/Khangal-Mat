@@ -10,7 +10,7 @@ import {
 } from 'firebase/firestore';
 import { getDb } from './firebase';
 import { TopicPackage, UserPermissions, DefaultPermissionsConfig, AccessRequest, UserProfile } from '../types';
-import { TopicAnswers, splitTopic, mergeAnswers, answersVisibleFor, hasInlineAnswers } from './answers';
+import { TopicAnswers, splitTopic, mergeAnswers, answersVisibleFor, needsAnswerRewrite } from './answers';
 import { getQuestionOptions } from '../utils/examGrading';
 
 /**
@@ -280,9 +280,9 @@ export const cloud = {
   getTopics(): TopicPackage[] {
     return state.topics.map((t) => mergeAnswers(t, state.answers[t.id]));
   },
-  /** True if some stored topic still carries its answers inline (saved before answers were split out). */
-  hasTopicsWithInlineAnswers(): boolean {
-    return state.topics.some(hasInlineAnswers);
+  /** True if some stored topic carries inline answers or an outdated answer key. */
+  hasTopicsNeedingAnswerRewrite(): boolean {
+    return state.topics.some(needsAnswerRewrite);
   },
   setTopic(topic: TopicPackage) {
     const { publicTopic, answers } = split(topic);

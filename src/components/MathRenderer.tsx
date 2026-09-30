@@ -48,57 +48,53 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       return escapeHtml(content);
     }
 
-    // Parse mixed text with math
+    // Parse mixed text with math. Rendered formulas are swapped for placeholders so that turning
+    // newlines into <br /> only touches the plain text (KaTeX's SVG paths contain newlines too).
+    const rendered: string[] = [];
+    const keep = (html: string) => `\u0000${rendered.push(html) - 1}\u0000`;
+    const render = (math: string, displayMode: boolean) =>
+      katex.renderToString(math.trim(), { displayMode, throwOnError: false });
+
     // 1. Replace $$...$$ block math
-    let processed = content.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
+    let processed = content.replace(/\$\$([\s\S]+?)\$\$/g, (whole, math) => {
       try {
-        return `<div class="my-2 overflow-x-auto print:overflow-visible flex justify-center">${katex.renderToString(math.trim(), {
-          displayMode: true,
-          throwOnError: false,
-        })}</div>`;
+        return keep(`<div class="my-2 overflow-x-auto print:overflow-visible flex justify-center">${render(math, true)}</div>`);
       } catch {
-        return `$$${math}$$`;
+        return whole;
       }
     });
 
     // 2. Replace \[...\] block math
-    processed = processed.replace(/\\\[([\s\S]+?)\\\]/g, (_, math) => {
+    processed = processed.replace(/\\\[([\s\S]+?)\\\]/g, (whole, math) => {
       try {
-        return `<div class="my-2 overflow-x-auto print:overflow-visible flex justify-center">${katex.renderToString(math.trim(), {
-          displayMode: true,
-          throwOnError: false,
-        })}</div>`;
+        return keep(`<div class="my-2 overflow-x-auto print:overflow-visible flex justify-center">${render(math, true)}</div>`);
       } catch {
-        return `\\[${math}\\]`;
+        return whole;
       }
     });
 
     // 3. Replace $...$ inline math
-    processed = processed.replace(/\$([^$\n]+?)\$/g, (_, math) => {
+    processed = processed.replace(/\$([^$\n]+?)\$/g, (whole, math) => {
       try {
-        return `<span class="inline-math px-0.5">${katex.renderToString(math.trim(), {
-          displayMode: false,
-          throwOnError: false,
-        })}</span>`;
+        return keep(`<span class="inline-math px-0.5">${render(math, false)}</span>`);
       } catch {
-        return `$${math}$`;
+        return whole;
       }
     });
 
     // 4. Replace \(...\) inline math
-    processed = processed.replace(/\\\((.+?)\\\)/g, (_, math) => {
+    processed = processed.replace(/\\\((.+?)\\\)/g, (whole, math) => {
       try {
-        return `<span class="inline-math px-0.5">${katex.renderToString(math.trim(), {
-          displayMode: false,
-          throwOnError: false,
-        })}</span>`;
+        return keep(`<span class="inline-math px-0.5">${render(math, false)}</span>`);
       } catch {
-        return `\\(${math}\\)`;
+        return whole;
       }
     });
 
-    // Preserve newlines for plain paragraphs
-    return processed.replace(/\n/g, '<br />');
+    // Preserve newlines for plain paragraphs, then put the formulas back
+    return processed
+      .replace(/\n/g, '<br />')
+      .replace(/\u0000(\d+)\u0000/g, (_, i) => rendered[Number(i)]);
   }, [content, block]);
 
   return (

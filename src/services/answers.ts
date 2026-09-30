@@ -1,4 +1,5 @@
 import { TopicPackage, TestPackage, TestQuestion } from '../types';
+import { numericAnswerLetter } from '../utils/examGrading';
 
 /**
  * Answers and solutions are kept out of the public topic documents (topics/{id}) and stored in
@@ -13,6 +14,9 @@ export interface TopicAnswers {
 }
 
 const TEST_KEYS = ['test1', 'test2', 'test3'] as const;
+
+// Bump when the answer-key format changes so stored topics get rewritten (see migration.ts)
+export const ANSWER_FORMAT_VERSION = 2;
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 // Small synchronous string hash (cyrb53); obscures the key, it is not cryptographic
@@ -37,8 +41,12 @@ export function answerKeyHash(questionId: string, key: string): string {
 function correctKey(answer: string, options: { letter: string; text: string }[]): string {
   const a = answer.trim();
   if (LETTERS.includes(a.toUpperCase()) && options.some((o) => o.letter === a.toUpperCase())) return a.toUpperCase();
+  // "B) 428" style answers name their option letter
+  const labelled = a.match(/^([A-Fa-f])[).:]/);
+  if (labelled && options.some((o) => o.letter === labelled[1].toUpperCase())) return labelled[1].toUpperCase();
   const match = options.find((o) => o.text.trim().toLowerCase() === a.toLowerCase());
-  return match ? match.letter : a;
+  if (match) return match.letter;
+  return numericAnswerLetter(a, options) ?? a;
 }
 
 /** Keys a user's choice may match: the letter, and the text of the chosen option. */
@@ -81,7 +89,7 @@ export function splitTopic(topic: TopicPackage, optionsOf: OptionsOf): { publicT
     };
   };
 
-  const publicTopic: TopicPackage = { ...topic, practice };
+  const publicTopic = { ...topic, practice, answerFormat: ANSWER_FORMAT_VERSION } as TopicPackage;
   for (const key of TEST_KEYS) {
     (publicTopic as unknown as Record<string, unknown>)[key] = stripTest(topic[key]);
   }
@@ -104,6 +112,11 @@ export function mergeAnswers(topic: TopicPackage, answers: TopicAnswers | undefi
     (merged as unknown as Record<string, unknown>)[key] = fillTest(topic[key]);
   }
   return merged;
+}
+
+/** True if a stored topic needs rewriting: plain answers inline, or an older answer-key format. */
+export function needsAnswerRewrite(topic: TopicPackage): boolean {
+  return hasInlineAnswers(topic) || (topic as { answerFormat?: number }).answerFormat !== ANSWER_FORMAT_VERSION;
 }
 
 /** True if a public topic document still contains plain answers (saved before the split). */

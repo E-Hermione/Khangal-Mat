@@ -12,8 +12,8 @@ import { readLegacyLocalPermissions } from './userPermissionsService';
 export async function seedCloudFromLegacyData(): Promise<void> {
   if (cloud.getTopics().length === 0) {
     await cloud.replaceTopics(readLegacyLocalTopics() ?? INITIAL_TOPICS);
-  } else if (cloud.hasTopicsWithInlineAnswers()) {
-    // Topics saved before answers were split out: rewrite them so answers move to topicAnswers
+  } else if (cloud.hasTopicsNeedingAnswerRewrite()) {
+    // Topics with inline answers or an older answer-key format: rewrite them (answers go to topicAnswers)
     await cloud.replaceTopics(cloud.getTopics());
   }
 

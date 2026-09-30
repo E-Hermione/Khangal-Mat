@@ -38,6 +38,20 @@ export function getQuestionOptions(q: TestQuestion): { letter: string; text: str
   ];
 }
 
+/** The option letter an answer names explicitly ("B", "B)", "B) 428", "B. 428"), if any. */
+export function answerLetter(answer: string): string | null {
+  const m = answer.trim().match(/^([A-Fa-f])(?:[).:]|\s*$)/);
+  return m ? m[1].toUpperCase() : null;
+}
+
+/** For answers that start with a number, the first option whose text is exactly that number. */
+export function numericAnswerLetter(answer: string, options: { letter: string; text: string }[]): string | null {
+  const num = parseFloat(answer.trim());
+  if (isNaN(num)) return null;
+  const match = options.find((o) => o.text.trim() === String(num));
+  return match ? match.letter : null;
+}
+
 export function isOptionCorrect(userAns: string, q: TestQuestion, options: { letter: string; text: string }[]): boolean {
   if (!userAns) return false;
 
@@ -52,12 +66,20 @@ export function isOptionCorrect(userAns: string, q: TestQuestion, options: { let
   // If user selected letter directly matches answer letter (A, B, C, D)
   if (u === r) return true;
 
+  // Answers written with their option label, e.g. "B) 428" or "B. 428"
+  const labelled = answerLetter(q.answer);
+  if (labelled && u === labelled) return true;
+
   // Find the option letter that corresponds to the answer text
   const matchOpt = options.find((opt) => opt.text.trim().toLowerCase() === q.answer.trim().toLowerCase());
   if (matchOpt && u === matchOpt.letter) return true;
 
   // If user choice equals correct answer text
   if (userAns.trim().toLowerCase() === q.answer.trim().toLowerCase()) return true;
+
+  // Descriptive numeric answers ("33 ширхэг тоо"): the first option showing that number
+  const numericLetter = numericAnswerLetter(q.answer, options);
+  if (numericLetter && u === numericLetter) return true;
 
   return false;
 }
