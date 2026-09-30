@@ -94,7 +94,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
               onChange={(e) => setEmail(e.target.value)}
               placeholder="bagsh@gmail.com"
               className={inputClass}
-              autoComplete="email"
+              autoComplete="username"
               autoFocus
             />
             <p className="text-[11px] text-stone-400 mt-1">Энэ хаяг руу баталгаажуулах холбоос очно.</p>
