@@ -10,7 +10,6 @@ service cloud.firestore {
       return signedIn() && request.auth.token.email_verified == true;
     }
 
-    // Must match ADMIN_EMAIL in src/services/authService.ts
     function isAdmin() {
       return emailVerified() && request.auth.token.email == 'ehangal625@gmail.com';
     }
@@ -19,14 +18,12 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // A registered, email-verified and active user
     function isMember() {
       return emailVerified()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && myProfile().active == true;
     }
 
-    // Lesson content and site-wide settings: members read, only the admin writes
     match /topics/{topicId} {
       allow read: if isAdmin() || isMember();
       allow write: if isAdmin();
@@ -42,7 +39,6 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Profiles: created by their owner at registration, together with the phone document
     match /users/{uid} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
 
@@ -57,7 +53,6 @@ service cloud.firestore {
         && request.resource.data.phoneNumber.matches('^[0-9]{8}$')
         && getAfter(/databases/$(database)/documents/phones/$(request.resource.data.phoneNumber)).data.uid == uid;
 
-      // Owners may change only their name and phone (the new phone document must be theirs)
       allow update: if isAdmin() || (
         signedIn()
         && request.auth.uid == uid
@@ -68,15 +63,12 @@ service cloud.firestore {
 
       allow delete: if isAdmin();
 
-      // Signed-in devices (see src/services/deviceSessions.ts)
       match /devices/{deviceId} {
         allow read, write: if signedIn() && request.auth.uid == uid;
         allow read: if isAdmin();
       }
     }
 
-    // Phone number -> account, for phone sign-in and to keep numbers unique.
-    // "create" only succeeds when the number is free.
     match /phones/{phone} {
       allow get: if true;
       allow create: if signedIn()
@@ -84,19 +76,15 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['uid', 'email'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email == request.auth.token.email
-        // Only the number on the owner's profile (written in the same batch) can be claimed
         && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.phoneNumber == phone;
       allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
-    // Topic unlock requests: members create their own, the admin manages them
     match /accessRequests/{requestId} {
       allow create: if isMember()
         && request.resource.data.requesterUid == request.auth.uid
         && request.resource.data.status == 'pending';
       allow read, update, delete: if isAdmin();
     }
-
-    // Anything not matched above is denied.
   }
 }
