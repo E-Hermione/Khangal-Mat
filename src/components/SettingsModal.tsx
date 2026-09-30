@@ -14,7 +14,6 @@ import {
   ChevronRight,
   ChevronLeft,
   Sliders,
-  Sparkles,
   Save,
   KeyRound,
   Smartphone,
@@ -68,7 +67,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [isChangingPass, setIsChangingPass] = useState(false);
 
   // Additional system preference toggles
-  const [highContrastPrint, setHighContrastPrint] = useState(false);
   const [notifications, setNotifications] = useState(true);
 
   // Reset to main view and update inputs when modal is opened or user changes
@@ -570,32 +568,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div
                       className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
                         screenProtectionEnabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Row 3: Contrast print */}
-                <div className="p-3.5 flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center text-stone-600">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-stone-900">Өндөр тодролтой хэвлэлт</div>
-                      <div className="text-[11px] text-stone-500">Гүн хар өнгөөр принтер рүү илгээх</div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setHighContrastPrint(!highContrastPrint)}
-                    className={`w-11 h-6 rounded-full p-0.5 transition-colors cursor-pointer ${
-                      highContrastPrint ? 'bg-amber-500' : 'bg-stone-300'
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
-                        highContrastPrint ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
                   </button>
