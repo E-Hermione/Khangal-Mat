@@ -94,7 +94,11 @@ export async function forgetCurrentDevice(uid: string): Promise<void> {
   await deleteDoc(deviceRef(uid, getOrCreateDeviceId())).catch(() => {});
 }
 
-export function subscribeDevices(uid: string, onChange: (devices: DeviceSession[]) => void) {
+export function subscribeDevices(
+  uid: string,
+  onChange: (devices: DeviceSession[]) => void,
+  onError?: (err: unknown) => void
+) {
   return onSnapshot(
     collection(getDb(), 'users', uid, 'devices'),
     (snap) => {
@@ -104,7 +108,10 @@ export function subscribeDevices(uid: string, onChange: (devices: DeviceSession[
         .sort((a, b) => b.lastActiveAt - a.lastActiveAt);
       onChange(devices);
     },
-    (err) => console.error('Device list failed', err)
+    (err) => {
+      console.error('Device list failed', err);
+      onError?.(err);
+    }
   );
 }
 

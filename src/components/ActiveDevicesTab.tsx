@@ -36,10 +36,18 @@ export const ActiveDevicesTab: React.FC<ActiveDevicesTabProps> = ({
   const currentDeviceId = getOrCreateDeviceId();
   const [sessions, setSessions] = useState<DeviceSession[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!uid) return;
-    return subscribeDevices(uid, setSessions);
+    return subscribeDevices(
+      uid,
+      (list) => {
+        setLoadError(false);
+        setSessions(list);
+      },
+      () => setLoadError(true)
+    );
   }, [uid]);
 
   const devices = sessions.map((d) => ({
@@ -130,6 +138,17 @@ export const ActiveDevicesTab: React.FC<ActiveDevicesTabProps> = ({
         <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-semibold flex items-center space-x-2">
           <ShieldCheck className="w-4 h-4 text-emerald-600" />
           <span>{statusMessage}</span>
+        </div>
+      )}
+
+      {loadError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
+          Төхөөрөмжийн жагсаалтыг ачаалж чадсангүй. Админ Firestore-ийн дүрмийг шинэчлэх шаардлагатай.
+        </div>
+      )}
+      {!loadError && devices.length === 0 && (
+        <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-600">
+          Бүртгэгдсэн төхөөрөмж алга. Гараад дахин нэвтэрвэл энэ төхөөрөмж жагсаалтад нэмэгдэнэ.
         </div>
       )}
 
