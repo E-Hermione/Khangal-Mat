@@ -182,6 +182,20 @@ export interface UserPermissions {
   // Access ends after this moment (ms); null/undefined means no time limit
   expiresAt?: number | null;
   updatedAt?: number;
+  // Every change the admin made, oldest first (kept inside the permissions document)
+  history?: PermissionHistoryEntry[];
+}
+
+export interface PermissionHistoryEntry {
+  at: number;
+  // 'permissions': the permissions below were granted; 'account': the account was blocked/unblocked
+  kind: 'permissions' | 'account';
+  allowedGrades?: GradeNumber[];
+  sections?: UserPermissions['sections'];
+  accessMode?: UserPermissions['accessMode'];
+  isBlocked?: boolean;
+  expiresAt?: number | null;
+  active?: boolean;
 }
 
 export interface DefaultPermissionsConfig {

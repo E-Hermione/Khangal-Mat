@@ -2,6 +2,7 @@ import { AccessRequest, ApprovedAccount, AccessRequestStatus, AuthUser } from '.
 import { cloud } from './cloud';
 import { visibilityService } from './visibilityService';
 import { adminDeleteUser } from './authService';
+import { userPermissionsService } from './userPermissionsService';
 
 // 24 hours in milliseconds
 export const EXPIRATION_DURATION_MS = 24 * 60 * 60 * 1000;
@@ -88,6 +89,7 @@ export const accessRequestService = {
     const user = findUser(identifier);
     if (!user) return false;
     cloud.updateUser(user.uid, { active: !user.active });
+    userPermissionsService.recordAccountStatus(user.userId, !user.active);
     return true;
   },
 

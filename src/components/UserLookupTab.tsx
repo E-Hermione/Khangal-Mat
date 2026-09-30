@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
-import { Search, User, Smartphone, ShieldCheck, ClipboardList, Send, Laptop, Tablet } from 'lucide-react';
+import { Search, User, Smartphone, ShieldCheck, ClipboardList, Send, Laptop, Tablet, History } from 'lucide-react';
 import { accessRequestService } from '../services/accessRequestService';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { storageService } from '../services/storageService';
@@ -333,6 +333,41 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
                   )}
                 </div>
                 {perms.isBlocked && <div className="text-red-600 font-bold">Хичээл үзэх эрх хаагдсан</div>}
+              </div>
+            )}
+          </Section>
+
+          <Section icon={<History className="w-4 h-4 text-stone-600" />} title="Эрхийн түүх">
+            {!perms?.history?.length ? (
+              <div className="text-xs text-stone-400">Эрх өөрчилсөн түүх алга.</div>
+            ) : (
+              <div className="space-y-1.5 text-xs max-h-64 overflow-y-auto" data-testid="permission-history">
+                {[...perms.history].reverse().map((h, i) => (
+                  <div key={i} className="flex gap-3 border-b border-stone-100 pb-1.5 last:border-0">
+                    <span className="text-stone-500 whitespace-nowrap">{formatDate(h.at)}</span>
+                    {h.kind === 'account' ? (
+                      <span className={h.active ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>
+                        {h.active ? 'Бүртгэлийг нээсэн' : 'Бүртгэлийг хаасан'}
+                      </span>
+                    ) : (
+                      <span className="text-stone-800">
+                        Ангиуд: <b>{h.allowedGrades?.length ? [...h.allowedGrades].sort((a, b) => a - b).join(', ') : 'байхгүй'}</b>
+                        {' • '}
+                        Хэсэг:{' '}
+                        <b>
+                          {Object.entries(h.sections || {})
+                            .filter(([, on]) => on)
+                            .map(([k]) => SECTION_NAMES[k] || k)
+                            .join(', ') || 'байхгүй'}
+                        </b>
+                        {' • '}
+                        Хугацаа:{' '}
+                        <b>{typeof h.expiresAt === 'number' ? `${new Date(h.expiresAt).toLocaleDateString()} хүртэл` : 'хязгааргүй'}</b>
+                        {h.isBlocked && <b className="text-red-600"> • Хаагдсан</b>}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </Section>

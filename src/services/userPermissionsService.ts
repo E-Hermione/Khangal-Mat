@@ -1,4 +1,4 @@
-import { UserPermissions, DefaultPermissionsConfig, GradeNumber } from '../types';
+import { UserPermissions, DefaultPermissionsConfig, GradeNumber, PermissionHistoryEntry } from '../types';
 import { cloud } from './cloud';
 
 const LEGACY_KEY_PERMISSIONS = 'math_app_user_permissions_v1';
@@ -101,7 +101,41 @@ class UserPermissionsService {
    */
   saveUserPermissions(userId: string, perms: UserPermissions): void {
     if (!userId) return;
-    cloud.setUserPermissions(userId, { ...perms, userId, updatedAt: Date.now() });
+    const now = Date.now();
+    const entry: PermissionHistoryEntry = {
+      at: now,
+      kind: 'permissions',
+      allowedGrades: [...perms.allowedGrades],
+      sections: { ...perms.sections },
+      accessMode: perms.accessMode,
+      isBlocked: !!perms.isBlocked,
+      expiresAt: typeof perms.expiresAt === 'number' ? perms.expiresAt : null,
+    };
+    cloud.setUserPermissions(userId, {
+      ...perms,
+      userId,
+      updatedAt: now,
+      history: this.withHistory(userId, entry),
+    });
+  }
+
+  /**
+   * Records that the admin blocked or unblocked the account (shown in the permission history)
+   */
+  recordAccountStatus(userId: string, active: boolean): void {
+    if (!userId) return;
+    const current = this.getUserPermissions(userId);
+    cloud.setUserPermissions(userId, {
+      ...current,
+      userId,
+      history: this.withHistory(userId, { at: Date.now(), kind: 'account', active }),
+    });
+  }
+
+  // The stored history plus one entry, capped so the document stays small
+  private withHistory(userId: string, entry: PermissionHistoryEntry): PermissionHistoryEntry[] {
+    const stored = this.getAllPermissions()[userId]?.history || [];
+    return [...stored, entry].slice(-200);
   }
 
   /**
