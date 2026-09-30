@@ -24,6 +24,7 @@ import { AuthUser } from '../types';
 import { updateMyProfile, changePassword } from '../services/authService';
 import { saveStoredAuth } from '../utils/deviceManager';
 import { ActiveDevicesTab } from './ActiveDevicesTab';
+import { backdropClose } from '../utils/backdrop';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -133,7 +134,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop bg-stone-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div {...backdropClose(onClose)} className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop bg-stone-950/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div
         className={`bg-stone-100 w-full ${currentView === 'devices' ? 'max-w-2xl' : 'max-w-md'} max-h-[92vh] rounded-3xl shadow-2xl border border-stone-200 flex flex-col overflow-hidden text-stone-900 animate-in zoom-in-95 duration-200 transition-all`}
         role="dialog"

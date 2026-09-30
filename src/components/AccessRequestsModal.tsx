@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, UserCheck } from 'lucide-react';
 import { AccessRequestsTab } from './AccessRequestsTab';
+import { backdropClose } from '../utils/backdrop';
 
 interface AccessRequestsModalProps {
   isOpen: boolean;
@@ -16,7 +17,7 @@ export const AccessRequestsModal: React.FC<AccessRequestsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+    <div {...backdropClose(onClose)} className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
       <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col h-[90vh]">
         {/* Header */}
         <div className="px-6 py-4 bg-stone-900 text-white flex items-center justify-between shrink-0">

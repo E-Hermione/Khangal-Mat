@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TheoryRule, WorkedExample, PracticeProblem, TestQuestion, DifficultyLevel } from '../types';
 import { LatexInputWithPreview } from './LatexInputWithPreview';
 import { X, Save, Trash2, Plus, HelpCircle } from 'lucide-react';
+import { backdropClose } from '../utils/backdrop';
 
 export type ItemEditorType =
   | { type: 'theory'; item: TheoryRule; isNew?: boolean }
@@ -33,7 +34,7 @@ export const ItemEditorModal: React.FC<ItemEditorModalProps> = ({
   if (!isOpen || !target) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-900/60 backdrop-blur-xs overflow-y-auto">
+    <div {...backdropClose(onClose, 'Хадгалаагүй өөрчлөлт алга болно. Хаах уу?')} className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-900/60 backdrop-blur-xs overflow-y-auto">
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl border border-stone-300 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {target.type === 'theory' && (
           <TheoryEditor

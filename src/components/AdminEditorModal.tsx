@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   ShieldCheck,
 } from 'lucide-react';
+import { backdropClose } from '../utils/backdrop';
 
 interface AdminEditorModalProps {
   isOpen: boolean;
@@ -165,7 +166,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-900/60 backdrop-blur-xs overflow-hidden">
+    <div {...backdropClose(onClose, 'Хадгалаагүй өөрчлөлт алга болно. Хаах уу?')} className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-900/60 backdrop-blur-xs overflow-hidden">
       <div className="bg-white rounded-2xl w-full max-w-5xl h-[92vh] max-h-[92vh] flex flex-col shadow-2xl border border-stone-300 overflow-hidden">
         {/* Header */}
         <div className="shrink-0 p-4 md:px-6 border-b border-stone-200 flex items-center justify-between bg-stone-900 text-white z-20">

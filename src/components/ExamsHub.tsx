@@ -11,6 +11,7 @@ import {
   X,
   HelpCircle,
 } from 'lucide-react';
+import { backdropClose } from '../utils/backdrop';
 
 interface ExamsHubProps {
   topics: TopicPackage[];
@@ -522,7 +523,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
 
       {/* Notice Dialog when user clicks "Дүн харах" or "Алдаа шалгах" before taking exam */}
       {unTakenNoticeExam && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-950/70 backdrop-blur-xs">
+        <div {...backdropClose(() => setUnTakenNoticeExam(null))} className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-950/70 backdrop-blur-xs">
           <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-stone-300 text-center space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="w-14 h-14 bg-amber-100 text-amber-800 rounded-2xl flex items-center justify-center mx-auto shadow-2xs">
               <HelpCircle className="w-7 h-7" />
@@ -689,7 +690,7 @@ function TakeExamModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-950/70 backdrop-blur-xs">
+    <div {...backdropClose(onClose, 'Шалгалтын хариултууд хадгалагдахгүй. Хаах уу?')} className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-950/70 backdrop-blur-xs">
       <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col shadow-2xl border border-stone-300 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="p-4 bg-stone-900 text-white flex items-center justify-between shrink-0">
@@ -802,7 +803,7 @@ function ViewSolutionModal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-950/70 backdrop-blur-xs">
+    <div {...backdropClose(onClose)} className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-950/70 backdrop-blur-xs">
       <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col shadow-2xl border border-stone-300 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         <div className="p-4 bg-rose-900 text-white flex items-center justify-between shrink-0">
           <div>
@@ -921,7 +922,7 @@ function ViewScoreModal({
   const isPassed = percentage >= 60;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-950/70 backdrop-blur-xs">
+    <div {...backdropClose(onClose)} className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-950/70 backdrop-blur-xs">
       <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-stone-300 text-center space-y-4 animate-in fade-in zoom-in-95 duration-150">
         <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto shadow-xs ${
           isPassed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'
@@ -992,7 +993,7 @@ function ViewErrorCheckModal({
   const userAnswers = attempt?.answers || {};
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-950/70 backdrop-blur-xs">
+    <div {...backdropClose(onClose)} className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-stone-950/70 backdrop-blur-xs">
       <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[92vh] flex flex-col shadow-2xl border border-stone-300 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         <div className="p-4 bg-stone-900 text-white flex items-center justify-between shrink-0">
           <div>

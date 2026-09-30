@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, UserPlus, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { GradeNumber } from '../types';
 import { registerAccount } from '../services/authService';
+import { backdropClose } from '../utils/backdrop';
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -60,7 +61,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+    <div {...backdropClose(onClose)} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col max-h-[92vh]">
         <div className="px-6 py-4 bg-stone-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-2.5">
