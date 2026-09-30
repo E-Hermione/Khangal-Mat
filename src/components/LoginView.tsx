@@ -7,7 +7,7 @@ import {
   LogIn,
   UserPlus,
 } from 'lucide-react';
-import { signInWithIdentifier } from '../services/authService';
+import { signInWithIdentifier, sendPasswordReset } from '../services/authService';
 import { RegisterModal } from './RegisterModal';
 
 interface LoginViewProps {
@@ -24,6 +24,26 @@ export const LoginView: React.FC<LoginViewProps> = ({ notice, onRegistered }) =>
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
+
+  const [resetInfo, setResetInfo] = useState<string | null>(null);
+
+  const handleForgotPassword = async () => {
+    setError(null);
+    setResetInfo(null);
+    if (!identifier.trim()) {
+      setError('Нууц үг сэргээхийн тулд утасны дугаар эсвэл имэйлээ оруулна уу.');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const email = await sendPasswordReset(identifier);
+      setResetInfo(`${email} хаяг руу нууц үг сэргээх холбоос илгээлээ. Spam хавтсаа ч шалгаарай.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Илгээж чадсангүй.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // On success the app's auth listener takes over and replaces this screen
   const handleSubmit = async (e: React.FormEvent) => {
@@ -129,6 +149,20 @@ export const LoginView: React.FC<LoginViewProps> = ({ notice, onRegistered }) =>
               <span>{isLoading ? 'Нэвтэрч байна...' : 'Системд нэвтрэх'}</span>
             </button>
           </form>
+
+          {resetInfo && (
+            <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-medium">
+              {resetInfo}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            disabled={isLoading}
+            className="mt-3 w-full text-xs font-bold text-stone-500 hover:text-stone-800 cursor-pointer disabled:opacity-50"
+          >
+            Нууц үгээ мартсан уу?
+          </button>
           {/* Register Button */}
           <div className="mt-6 pt-5 border-t border-stone-200 text-center">
             <button

@@ -2,6 +2,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signOut,
   reauthenticateWithCredential,
   updatePassword,
@@ -189,18 +190,33 @@ async function createProfileIfMissing(profile: UserProfile): Promise<void> {
   }
 }
 
+/** Looks up the sign-in email for an 8-digit phone number, or returns the email as given. */
+async function resolveEmail(identifier: string): Promise<string> {
+  const id = identifier.trim().toLowerCase();
+  const digits = id.replace(/[\s-]/g, '');
+  if (!/^\d{8}$/.test(digits)) return id;
+  const phone = await getDoc(doc(getDb(), 'phones', digits)).catch(() => null);
+  if (!phone?.exists()) throw new Error('Утасны дугаар (имэйл) эсвэл нууц үг буруу байна.');
+  return phone.data().email as string;
+}
+
+/** Emails a password reset link to the account behind this phone number or email. */
+export async function sendPasswordReset(identifier: string): Promise<string> {
+  const email = await resolveEmail(identifier).catch(() => {
+    throw new Error('Энэ утасны дугаараар бүртгэл олдсонгүй.');
+  });
+  if (!EMAIL_RE.test(email)) throw new Error('Утасны дугаар эсвэл имэйлээ зөв оруулна уу.');
+  try {
+    await sendPasswordResetEmail(getFirebaseAuth(), email);
+  } catch (err) {
+    throw new Error(authErrorMessage(err, 'Нууц үг сэргээх имэйл илгээж чадсангүй.'));
+  }
+  return email;
+}
+
 /** Signs in with an 8-digit phone number or an email address. */
 export async function signInWithIdentifier(identifier: string, password: string): Promise<void> {
-  const id = identifier.trim().toLowerCase();
-  let email = id;
-
-  const digits = id.replace(/[\s-]/g, '');
-  if (/^\d{8}$/.test(digits)) {
-    const phone = await getDoc(doc(getDb(), 'phones', digits)).catch(() => null);
-    if (!phone?.exists()) throw new Error('Утасны дугаар (имэйл) эсвэл нууц үг буруу байна.');
-    email = phone.data().email as string;
-  }
-
+  const email = await resolveEmail(identifier);
   try {
     await signInWithEmailAndPassword(getFirebaseAuth(), email, password.trim());
   } catch (err) {
