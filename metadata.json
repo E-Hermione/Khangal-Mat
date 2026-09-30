@@ -1,0 +1,6 @@
+{
+  "name": "Математикийн сургалтын материалын сан",
+  "description": "6-12-р ангийн математикийн багшид зориулсан хичээлийн материал, онол, жишээ, бие даах дасгал, сорил болон A4 хэвлэх ухаалаг систем.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

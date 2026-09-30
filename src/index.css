@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+@layer base {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm 14mm 12mm;
+  }
+}
+
+/* Print specific styles */
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    line-height: 1.45 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide screen-only elements */
+  .no-print,
+  nav,
+  aside,
+  header.screen-header,
+  .print-control-panel,
+  .modal-backdrop,
+  button:not(.allow-print) {
+    display: none !important;
+  }
+
+  /* Expand print content container */
+  .print-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /* Page break utilities */
+  .page-break-before {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .page-break-after {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Crisp borders for paper print */
+  .print-border {
+    border: 1px solid #1a1a1a !important;
+  }
+
+  .print-border-b {
+    border-bottom: 1px solid #1a1a1a !important;
+  }
+
+  .print-dashed-line {
+    border-bottom: 1px dashed #888888 !important;
+  }
+
+  /* Remove card shadows in print */
+  .shadow-sm, .shadow, .shadow-md, .shadow-lg, .shadow-xl {
+    box-shadow: none !important;
+  }
+}
+
+/* Lined work space for students */
+.workspace-grid {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 22px,
+    #e5e7eb 23px
+  );
+  min-height: 60px;
+}
+
+@media print {
+  .workspace-grid {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 22px,
+      #cccccc 23px
+    ) !important;
+  }
+}
+
+/* KaTeX formula readability */
+.katex {
+  font-size: 1.05em;
+  text-rendering: auto;
+}
+
+.katex-display {
+  margin: 0.5em 0 !important;
+}
+
+@media print {
+  .katex {
+    color: #000000 !important;
+  }
+}
