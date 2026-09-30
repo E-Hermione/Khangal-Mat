@@ -67,10 +67,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
             <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
               <UserPlus className="w-4 h-4" />
             </div>
-            <div>
-              <h2 className="text-sm font-bold text-white">Бүртгүүлэх</h2>
-              <p className="text-[11px] text-stone-400">Имэйлээ баталгаажуулсны дараа нэвтэрнэ</p>
-            </div>
+            <h2 className="text-sm font-bold text-white">Бүртгүүлэх</h2>
           </div>
           <button
             type="button"

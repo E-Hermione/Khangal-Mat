@@ -139,9 +139,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ notice, onRegistered }) =>
               <UserPlus className="w-4 h-4 text-amber-600" />
               <span>Шинээр бүртгүүлэх</span>
             </button>
-            <p className="text-[11px] text-stone-400 mt-2">
-              Имэйлээ кодоор баталгаажуулж, утас, анги, сургуулиа оруулаад шууд нэвтэрнэ
-            </p>
           </div>
         </div>
       </div>
