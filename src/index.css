@@ -112,3 +112,9 @@
     color: #000000 !important;
   }
 }
+
+/* CopyProtection: no text selection outside form fields */
+body.copy-protected *:not(input):not(textarea) {
+  -webkit-user-select: none;
+  user-select: none;
+}

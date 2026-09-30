@@ -168,7 +168,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                 )}
 
                 {/* Teacher Solution on Screen or in Print */}
-                {showSol && (
+                {showSol && item.answer && (
                   <div className="mt-3 p-3 bg-amber-50/70 print:bg-stone-100 border border-amber-200 print:border-stone-500 rounded-md text-xs md:text-sm">
                     <div className="font-bold text-amber-950 print:text-black mb-1">
                       Шалгах хариу: <span className="font-mono text-emerald-700 print:text-black"><MathRenderer content={item.answer} className="inline" /></span>

@@ -29,6 +29,21 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Mirrors answersVisibleFor() in src/services/answers.ts
+    function answersVisible(topicId) {
+      let v = get(/databases/$(database)/documents/settings/visibility).data;
+      let override = v.get('topicOverrides', {}).get(topicId, {});
+      return override.get('answers', v.get('defaultSections', {}).get('answers', false)) == true;
+    }
+
+    // Answers and solutions: the admin, or members once the admin shows that topic's answers
+    match /topicAnswers/{topicId} {
+      allow read: if isAdmin() || (isMember()
+        && exists(/databases/$(database)/documents/settings/visibility)
+        && answersVisible(topicId));
+      allow write: if isAdmin();
+    }
+
     match /settings/{settingId} {
       allow read: if isAdmin() || isMember();
       allow write: if isAdmin();

@@ -9,6 +9,7 @@ import { AccessRequestsModal } from './components/AccessRequestsModal';
 import { LoginView } from './components/LoginView';
 import { VerifyEmailView } from './components/VerifyEmailView';
 import { ScreenProtection } from './components/ScreenProtection';
+import { CopyProtection } from './components/CopyProtection';
 import { SettingsModal } from './components/SettingsModal';
 import { ExamsHub } from './components/ExamsHub';
 import { AuthUser } from './types';
@@ -65,6 +66,7 @@ export default function App() {
   const screenProtectionEnabled = appSettings.screenProtection;
   const handleToggleScreenProtection = (enabled: boolean) => cloud.setAppSettings({ screenProtection: enabled });
   const handleToggleDeviceLimit = (enabled: boolean) => cloud.setAppSettings({ deviceLimit: enabled });
+  const handleToggleCopyProtection = (enabled: boolean) => cloud.setAppSettings({ copyProtection: enabled });
 
   const [pendingRequestsCount, setPendingRequestsCount] = useState<number>(() => {
     return accessRequestService.getRequests().filter((r) => r.status === 'pending').length;
@@ -392,6 +394,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-stone-100 flex flex-col font-sans text-stone-900">
+      {/* The admin edits content, so copying stays allowed for them */}
+      <CopyProtection enabled={appSettings.copyProtection && currentUser.role !== 'admin'} />
       <ScreenProtection
         enabled={screenProtectionEnabled}
         watermarkText={currentUser.email || currentUser.username || currentUser.phoneNumber || currentUser.name}
@@ -605,6 +609,8 @@ export default function App() {
         onToggleScreenProtection={handleToggleScreenProtection}
         deviceLimitEnabled={appSettings.deviceLimit}
         onToggleDeviceLimit={handleToggleDeviceLimit}
+        copyProtectionEnabled={appSettings.copyProtection}
+        onToggleCopyProtection={handleToggleCopyProtection}
         isAdmin={currentUser?.role === 'admin'}
       />
     </div>

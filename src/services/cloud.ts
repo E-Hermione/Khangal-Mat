@@ -10,6 +10,8 @@ import {
 } from 'firebase/firestore';
 import { getDb } from './firebase';
 import { TopicPackage, UserPermissions, DefaultPermissionsConfig, AccessRequest, UserProfile } from '../types';
+import { TopicAnswers, splitTopic, mergeAnswers, answersVisibleFor, hasInlineAnswers } from './answers';
+import { getQuestionOptions } from '../utils/examGrading';
 
 /**
  * In-memory mirror of the Firestore data the app uses. Services read from it synchronously
@@ -24,12 +26,15 @@ export type VisibilityDoc = Record<string, unknown>;
 export interface AppSettings {
   screenProtection: boolean;
   deviceLimit: boolean;
+  copyProtection: boolean;
 }
 
-export const DEFAULT_APP_SETTINGS: AppSettings = { screenProtection: false, deviceLimit: true };
+export const DEFAULT_APP_SETTINGS: AppSettings = { screenProtection: false, deviceLimit: true, copyProtection: false };
 
 interface CloudState {
   topics: TopicPackage[];
+  // topicAnswers/{id}, for the topics this user may see answers of
+  answers: Record<string, TopicAnswers>;
   visibility: VisibilityDoc | null;
   defaultPermissions: DefaultPermissionsConfig | null;
   appSettings: AppSettings;
@@ -40,6 +45,7 @@ interface CloudState {
 
 const emptyState = (): CloudState => ({
   topics: [],
+  answers: {},
   visibility: null,
   defaultPermissions: null,
   appSettings: DEFAULT_APP_SETTINGS,
@@ -70,6 +76,44 @@ function clean<T>(value: T): T {
 
 function write(promise: Promise<unknown>) {
   promise.catch(reportWriteError);
+}
+
+function split(topic: TopicPackage) {
+  const { publicTopic, answers } = splitTopic(topic, getQuestionOptions);
+  return { publicTopic: clean(publicTopic), answers: clean(answers) };
+}
+
+// Members read answers topic by topic, only where the admin made them visible (the rules check
+// the same thing). Re-evaluated whenever topics or visibility settings change.
+const answerSubs = new Map<string, Unsubscribe>();
+
+function syncMemberAnswers() {
+  for (const topic of state.topics) {
+    const visible = answersVisibleFor(topic.id, state.visibility);
+    const sub = answerSubs.get(topic.id);
+    if (visible && !sub) {
+      answerSubs.set(
+        topic.id,
+        onSnapshot(
+          doc(getDb(), 'topicAnswers', topic.id),
+          (snap) => {
+            if (snap.exists()) state.answers[topic.id] = snap.data() as TopicAnswers;
+            else delete state.answers[topic.id];
+            notify('topics-updated');
+          },
+          () => {
+            answerSubs.delete(topic.id);
+            delete state.answers[topic.id];
+          }
+        )
+      );
+    } else if (!visible && sub) {
+      sub();
+      answerSubs.delete(topic.id);
+      delete state.answers[topic.id];
+      notify('topics-updated');
+    }
+  }
 }
 
 export interface CloudSyncOptions {
@@ -115,6 +159,7 @@ export function startCloudSync({ isAdmin, userId }: CloudSyncOptions): Promise<v
       collection(db, 'topics'),
       (snap) => {
         state.topics = snap.docs.map((d) => d.data() as TopicPackage);
+        if (!isAdmin) syncMemberAnswers();
         notify('topics-updated');
         onFirst();
       },
@@ -127,6 +172,7 @@ export function startCloudSync({ isAdmin, userId }: CloudSyncOptions): Promise<v
       doc(db, 'settings', 'visibility'),
       (snap) => {
         state.visibility = snap.exists() ? (snap.data() as VisibilityDoc) : null;
+        if (!isAdmin) syncMemberAnswers();
         notify('visibility-settings-updated');
         onFirst();
       },
@@ -159,6 +205,17 @@ export function startCloudSync({ isAdmin, userId }: CloudSyncOptions): Promise<v
   );
 
   if (isAdmin) {
+    listen((onFirst, onError) =>
+      onSnapshot(
+        collection(db, 'topicAnswers'),
+        (snap) => {
+          state.answers = Object.fromEntries(snap.docs.map((d) => [d.id, d.data() as TopicAnswers]));
+          notify('topics-updated');
+          onFirst();
+        },
+        onError
+      )
+    );
     listen((onFirst, onError) =>
       onSnapshot(
         collection(db, 'userPermissions'),
@@ -212,36 +269,63 @@ export function startCloudSync({ isAdmin, userId }: CloudSyncOptions): Promise<v
 export function stopCloudSync() {
   unsubscribers.forEach((u) => u());
   unsubscribers = [];
+  answerSubs.forEach((u) => u());
+  answerSubs.clear();
   state = emptyState();
 }
 
 export const cloud = {
   // Topics
+  /** Topics with the answers this user may see merged back in. */
   getTopics(): TopicPackage[] {
-    return state.topics;
+    return state.topics.map((t) => mergeAnswers(t, state.answers[t.id]));
+  },
+  /** True if some stored topic still carries its answers inline (saved before answers were split out). */
+  hasTopicsWithInlineAnswers(): boolean {
+    return state.topics.some(hasInlineAnswers);
   },
   setTopic(topic: TopicPackage) {
+    const { publicTopic, answers } = split(topic);
     const i = state.topics.findIndex((t) => t.id === topic.id);
-    state.topics = i >= 0 ? state.topics.map((t, j) => (j === i ? topic : t)) : [...state.topics, topic];
+    state.topics = i >= 0 ? state.topics.map((t, j) => (j === i ? publicTopic : t)) : [...state.topics, publicTopic];
+    state.answers[topic.id] = answers;
     notify('topics-updated');
-    write(setDoc(doc(getDb(), 'topics', topic.id), clean(topic)));
+    const db = getDb();
+    const batch = writeBatch(db);
+    batch.set(doc(db, 'topics', topic.id), publicTopic);
+    batch.set(doc(db, 'topicAnswers', topic.id), answers);
+    write(batch.commit());
   },
   deleteTopic(topicId: string) {
     state.topics = state.topics.filter((t) => t.id !== topicId);
+    delete state.answers[topicId];
     notify('topics-updated');
-    write(deleteDoc(doc(getDb(), 'topics', topicId)));
+    const db = getDb();
+    const batch = writeBatch(db);
+    batch.delete(doc(db, 'topics', topicId));
+    batch.delete(doc(db, 'topicAnswers', topicId));
+    write(batch.commit());
   },
   /** Replaces the whole topic collection (import, reset to defaults, first-time seeding). */
   replaceTopics(topics: TopicPackage[]): Promise<void> {
     const db = getDb();
     const keep = new Set(topics.map((t) => t.id));
     const removed = state.topics.filter((t) => !keep.has(t.id));
-    state.topics = topics;
+    const parts = topics.map((t) => ({ id: t.id, ...split(t) }));
+    state.topics = parts.map((p) => p.publicTopic);
+    state.answers = Object.fromEntries(parts.map((p) => [p.id, p.answers]));
     notify('topics-updated');
     // Batches are limited to 500 writes
-    const ops = [
-      ...topics.map((t) => (b: ReturnType<typeof writeBatch>) => b.set(doc(db, 'topics', t.id), clean(t))),
-      ...removed.map((t) => (b: ReturnType<typeof writeBatch>) => b.delete(doc(db, 'topics', t.id))),
+    type Op = (b: ReturnType<typeof writeBatch>) => void;
+    const ops: Op[] = [
+      ...parts.flatMap((p): Op[] => [
+        (b) => b.set(doc(db, 'topics', p.id), p.publicTopic),
+        (b) => b.set(doc(db, 'topicAnswers', p.id), p.answers),
+      ]),
+      ...removed.flatMap((t): Op[] => [
+        (b) => b.delete(doc(db, 'topics', t.id)),
+        (b) => b.delete(doc(db, 'topicAnswers', t.id)),
+      ]),
     ];
     const commits: Promise<void>[] = [];
     for (let i = 0; i < ops.length; i += 400) {

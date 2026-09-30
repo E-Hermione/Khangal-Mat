@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Shield,
+  Copy,
   LogOut,
   ChevronRight,
   ChevronLeft,
@@ -34,6 +35,8 @@ interface SettingsModalProps {
   onToggleScreenProtection: (enabled: boolean) => void;
   deviceLimitEnabled: boolean;
   onToggleDeviceLimit: (enabled: boolean) => void;
+  copyProtectionEnabled: boolean;
+  onToggleCopyProtection: (enabled: boolean) => void;
   isAdmin?: boolean;
 }
 
@@ -49,6 +52,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onToggleScreenProtection,
   deviceLimitEnabled,
   onToggleDeviceLimit,
+  copyProtectionEnabled,
+  onToggleCopyProtection,
   isAdmin,
 }) => {
   const isUserAdmin = isAdmin ?? (currentUser.role === 'admin');
@@ -597,6 +602,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div
                       className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
                         deviceLimitEnabled ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+                {/* Row 5: Copy protection */}
+                <div className="p-3.5 flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center text-stone-600">
+                      <Copy className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-stone-900">Текст хуулах хамгаалалт</div>
+                      <div className="text-[11px] text-stone-500">Хэрэглэгчид хичээлийн текстийг сонгож хуулах боломжгүй</div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onToggleCopyProtection(!copyProtectionEnabled)}
+                    className={`w-11 h-6 rounded-full p-0.5 transition-colors cursor-pointer ${
+                      copyProtectionEnabled ? 'bg-amber-500' : 'bg-stone-300'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
+                        copyProtectionEnabled ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
                   </button>

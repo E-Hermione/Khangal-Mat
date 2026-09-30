@@ -141,7 +141,7 @@ export const TestSection: React.FC<TestSectionProps> = ({
               </div>
 
               {/* Answer / Solution for teacher version */}
-              {teacherVersion && (
+              {teacherVersion && q.answer && (
                 <div className="mt-2.5 p-2.5 bg-amber-50 print:bg-stone-100 border border-amber-200 print:border-stone-500 rounded text-xs md:text-sm">
                   <span className="font-bold text-amber-950 print:text-black">Зөв хариу: </span>
                   <span className="font-mono text-emerald-800 print:text-black font-semibold">

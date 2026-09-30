@@ -41,6 +41,8 @@ export interface TestQuestion {
   points: number;
   answer: string;
   solution?: string;
+  // Hashed answer key used for grading when the plain answer is withheld (see services/answers.ts)
+  answerHash?: string;
   workSpaceLines?: number;
 }
 
