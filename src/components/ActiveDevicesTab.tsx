@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Clock,
   Trash2,
-  AlertTriangle,
 } from 'lucide-react';
 import { getOrCreateDeviceId } from '../utils/deviceManager';
 import { getFirebaseAuth } from '../services/firebase';
@@ -219,14 +218,6 @@ export const ActiveDevicesTab: React.FC<ActiveDevicesTabProps> = ({
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Safety Notice */}
-      <div className="flex items-start space-x-2.5 p-3.5 bg-amber-50/60 border border-amber-200 rounded-xl text-xs text-amber-900">
-        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-        <p className="leading-relaxed">
-          <strong>Аюулгүй байдлын зөвлөмж:</strong> Хэрэв танихгүй эсвэл хуучин ашиглахаа больсон төхөөрөмж жагсаалтад байвал <strong>«Гаргах»</strong> товчийг дарж холболтыг нэн даруй цуцална уу. Цуцалсны дараа тухайн төхөөрөмж системээс гарна (унтраастай байвал дараа нь асаахад).
-        </p>
       </div>
     </div>
   );
