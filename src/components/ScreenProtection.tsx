@@ -3,13 +3,25 @@ import { Shield } from 'lucide-react';
 
 interface ScreenProtectionProps {
   enabled?: boolean;
+  // Shown faintly across the screen (user ID and phone) so a leaked photo or screenshot shows whose it is
+  watermark?: string;
+}
+
+// Tiled, rotated text used as the watermark background
+function watermarkImage(text: string): string {
+  const safe = text.replace(/[<>&"']/g, '');
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200">` +
+    `<text x="160" y="100" text-anchor="middle" transform="rotate(-25 160 100)" ` +
+    `font-family="sans-serif" font-size="16" font-weight="700" fill="#000" fill-opacity="0.09">${safe}</text></svg>`;
+  return `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`;
 }
 
 /**
  * Covers the whole screen in black while the page is not in focus (screenshot and recording
  * tools usually take focus) or when a screenshot shortcut is pressed.
  */
-export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = false }) => {
+export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = false, watermark }) => {
   // Hooks must run on every render, before any early return
   const [isBlackout, setIsBlackout] = useState(false);
   const [blackoutReason, setBlackoutReason] = useState<string>('');
@@ -47,6 +59,13 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
 
     // Keydown detection for common screenshot shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Windows key / Cmd: the OS takes the rest of a screenshot shortcut (Win+Shift+S,
+      // Cmd+Shift+4) before the page sees it, so cover the screen as soon as it goes down
+      if (e.key === 'Meta' || e.key === 'OS') {
+        triggerBlackout('Дэлгэц хамгаалагдсан байна.', 0);
+        return;
+      }
+
       // PrintScreen key
       if (e.key === 'PrintScreen' || e.keyCode === 44) {
         e.preventDefault();
@@ -71,6 +90,19 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
       }
     };
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      // Windows only reports PrintScreen on release, after the image is on the clipboard:
+      // clearing the clipboard (in triggerBlackout) throws it away
+      if (e.key === 'PrintScreen' || e.keyCode === 44) {
+        triggerBlackout('PrintScreen илэрсэн. Дэлгэц хамгаалагдлаа.', 3000);
+        return;
+      }
+      if (e.key === 'Meta' || e.key === 'OS') {
+        // Keep covered a moment longer so the snipping overlay never captures the page
+        triggerBlackout('Дэлгэц хамгаалагдсан байна.', 1500);
+      }
+    };
+
     // Prevent right-click context menu inspection
     const handleContextMenu = (e: MouseEvent) => {
       // Allow context menu only on input and textarea
@@ -89,6 +121,7 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
     const handleVisibility = () => (document.hidden ? handleBlur() : handleFocus());
 
     window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('keyup', handleKeyUp, true);
     document.addEventListener('contextmenu', handleContextMenu);
     window.addEventListener('blur', handleBlur);
     window.addEventListener('focus', handleFocus);
@@ -97,6 +130,7 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
       window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('keyup', handleKeyUp, true);
       document.removeEventListener('contextmenu', handleContextMenu);
       window.removeEventListener('blur', handleBlur);
       window.removeEventListener('focus', handleFocus);
@@ -108,6 +142,14 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
 
   return (
     <>
+      {watermark && (
+        <div
+          className="fixed inset-0 pointer-events-none select-none z-[9999990]"
+          style={{ backgroundImage: watermarkImage(watermark) }}
+          aria-hidden="true"
+          data-testid="watermark"
+        />
+      )}
       {isBlackout && (
         <div
           id="screen-protection-shield"
