@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Shield } from 'lucide-react';
 
 interface ScreenProtectionProps {
   enabled?: boolean;
-  // Shown faintly across the screen (user ID and phone) so a leaked photo or screenshot shows whose it is
+  // Nearly invisible across the screen; shows up when a leaked image is contrast-enhanced: (user ID and phone) so a leaked photo or screenshot shows whose it is
   watermark?: string;
 }
 
@@ -13,7 +12,7 @@ function watermarkImage(text: string): string {
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200">` +
     `<text x="160" y="100" text-anchor="middle" transform="rotate(-25 160 100)" ` +
-    `font-family="sans-serif" font-size="16" font-weight="700" fill="#000" fill-opacity="0.09">${safe}</text></svg>`;
+    `font-family="sans-serif" font-size="16" font-weight="700" fill="#000" fill-opacity="0.015">${safe}</text></svg>`;
   return `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`;
 }
 
@@ -24,12 +23,10 @@ function watermarkImage(text: string): string {
 export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = false, watermark }) => {
   // Hooks must run on every render, before any early return
   const [isBlackout, setIsBlackout] = useState(false);
-  const [blackoutReason, setBlackoutReason] = useState<string>('');
 
   useEffect(() => {
     if (!enabled) {
       setIsBlackout(false);
-      setBlackoutReason('');
       return;
     }
 
@@ -37,7 +34,6 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
 
     const triggerBlackout = (reason: string, durationMs = 2500) => {
       setIsBlackout(true);
-      setBlackoutReason(reason);
 
       // Attempt to clear clipboard if screenshot was attempted
       try {
@@ -52,7 +48,6 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
       if (durationMs > 0) {
         timeoutId = setTimeout(() => {
           setIsBlackout(false);
-          setBlackoutReason('');
         }, durationMs);
       }
     };
@@ -116,7 +111,6 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
     const handleBlur = () => triggerBlackout('Дэлгэц хамгаалагдсан байна.', 0);
     const handleFocus = () => {
       setIsBlackout(false);
-      setBlackoutReason('');
     };
     const handleVisibility = () => (document.hidden ? handleBlur() : handleFocus());
 
@@ -155,25 +149,11 @@ export const ScreenProtection: React.FC<ScreenProtectionProps> = ({ enabled = fa
           id="screen-protection-shield"
           onClick={() => {
             setIsBlackout(false);
-            setBlackoutReason('');
           }}
           className="fixed inset-0 bg-black z-[9999999] flex flex-col items-center justify-center p-6 text-center select-none cursor-pointer"
           style={{ backgroundColor: '#000000', color: '#000000' }}
           aria-hidden="true"
-        >
-          {/* Pure pitch-black overlay. Minimal subtle text to explain if returned to tab */}
-          <div className="max-w-md text-stone-700 pointer-events-none opacity-40">
-            <Shield className="w-10 h-10 mx-auto mb-2 text-stone-700" />
-            <p className="text-xs font-semibold tracking-wider uppercase text-stone-700">
-              Хамгаалагдсан дэлгэц
-            </p>
-            {blackoutReason && (
-              <p className="text-[11px] text-stone-800 mt-1">
-                {blackoutReason}
-              </p>
-            )}
-          </div>
-        </div>
+        />
       )}
     </>
   );
