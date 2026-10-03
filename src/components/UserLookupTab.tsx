@@ -1,12 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { Search, User, Smartphone, ShieldCheck, ClipboardList, Send, Laptop, Tablet, History, Route } from 'lucide-react';
+import { Search, User, ShieldCheck, ClipboardList, Send, History, Route } from 'lucide-react';
 import { accessRequestService } from '../services/accessRequestService';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { storageService } from '../services/storageService';
 import { loadUserAttempts, AttemptMap, ExamAttempt } from '../services/examAttempts';
-import { DeviceSession } from '../services/deviceSessions';
-import { getDb } from '../services/firebase';
 import { GRADE_TOPICS_CATALOG } from '../data/initialData';
 import { ApprovedAccount, GradeNumber, TestPackage } from '../types';
 import { generateTopicTests } from './ExamsHub';
@@ -102,17 +99,6 @@ function formatDate(ms?: number): string {
   return ms ? new Date(ms).toLocaleString() : '—';
 }
 
-function timeAgo(ms?: number): string {
-  if (!ms) return 'Мэдээлэлгүй';
-  const minutes = Math.floor((Date.now() - ms) / 60000);
-  if (minutes < 10) return 'Саяхан идэвхтэй';
-  if (minutes < 60) return `${minutes} минутын өмнө`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} цагийн өмнө`;
-  const days = Math.floor(hours / 24);
-  return days < 30 ? `${days} өдрийн өмнө` : new Date(ms).toLocaleDateString();
-}
-
 const Section: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
   <div className="p-4 bg-white rounded-xl border border-stone-200 space-y-2">
     <h4 className="text-xs font-black text-stone-800 uppercase tracking-wide flex items-center gap-1.5">
@@ -129,7 +115,6 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
   const [accounts, setAccounts] = useState<ApprovedAccount[]>(() => accessRequestService.getApprovedAccounts());
 
   const [attempts, setAttempts] = useState<AttemptMap>({});
-  const [devices, setDevices] = useState<DeviceSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [openExamId, setOpenExamId] = useState<string | null>(null);
@@ -162,21 +147,14 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
     setLoading(true);
     setLoadError(null);
     setAttempts({});
-    setDevices([]);
     setPlacement(undefined);
     loadPlacementResults(selectedUid)
       .then((r) => !cancelled && setPlacement(r))
       .catch(() => !cancelled && setPlacement([]));
-    Promise.all([
-      loadUserAttempts(selectedUid).catch(() => null),
-      getDocs(collection(getDb(), 'users', selectedUid, 'devices'))
-        .then((snap) => snap.docs.map((d) => d.data() as DeviceSession).filter((d) => !d.revoked))
-        .catch(() => null),
-    ]).then(([a, d]) => {
+    loadUserAttempts(selectedUid).catch(() => null).then((a) => {
       if (cancelled) return;
       setAttempts(a || {});
-      setDevices((d || []).sort((x, y) => y.lastActiveAt - x.lastActiveAt));
-      if (!a || !d) setLoadError('Зарим мэдээллийг ачаалж чадсангүй. Firestore-ийн дүрмийг шинэчлэх шаардлагатай байж магадгүй.');
+      if (!a) setLoadError('Зарим мэдээллийг ачаалж чадсангүй. Firestore-ийн дүрмийг шинэчлэх шаардлагатай байж магадгүй.');
       setLoading(false);
     });
     return () => {
@@ -238,10 +216,6 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
 
   const perms = user?.userId ? userPermissionsService.getUserPermissions(user.userId) : null;
   const requests = user ? accessRequestService.getRequests().filter((r) => r.requesterUid === user.uid) : [];
-  const lastActive = devices.length ? devices[0].lastActiveAt : undefined;
-
-  const deviceIcon = (type: DeviceSession['type']) =>
-    type === 'mobile' ? <Smartphone className="w-4 h-4" /> : type === 'tablet' ? <Tablet className="w-4 h-4" /> : <Laptop className="w-4 h-4" />;
 
   return (
     <div className="space-y-4">
@@ -308,26 +282,6 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
                 <b className={user.active ? 'text-emerald-700' : 'text-red-600'}>{user.active ? 'Идэвхтэй' : 'Хаагдсан'}</b>
               </div>
             </div>
-          </Section>
-
-          <Section icon={<Smartphone className="w-4 h-4 text-purple-600" />} title="Идэвх ба төхөөрөмжүүд">
-            <div className="text-xs">
-              <span className="text-stone-500">Хамгийн сүүлд:</span> <b>{loading ? '...' : timeAgo(lastActive)}</b>
-            </div>
-            {!loading && devices.length === 0 ? (
-              <div className="text-xs text-stone-400">Нэвтэрсэн төхөөрөмж алга.</div>
-            ) : (
-              <div className="space-y-1">
-                {devices.map((d) => (
-                  <div key={d.id} className="flex items-center justify-between text-xs text-stone-700">
-                    <span className="flex items-center gap-1.5 text-stone-500">
-                      {deviceIcon(d.type)} <span className="text-stone-800">{d.name}</span>
-                    </span>
-                    <span className="text-stone-500">{timeAgo(d.lastActiveAt)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </Section>
 
           <Section icon={<ShieldCheck className="w-4 h-4 text-emerald-600" />} title="Эрх">
