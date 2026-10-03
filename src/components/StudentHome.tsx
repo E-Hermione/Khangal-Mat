@@ -16,7 +16,7 @@ import {
   PaymentSettings,
   subscribePaymentSettings,
 } from '../services/payments';
-import { PaymentStatusCard } from './LearningPlanView';
+import { PaymentStatusCard, PlanSteps } from './LearningPlanView';
 import { PaymentSettingsForm } from './PaymentsTab';
 import { PlacementAdminTab } from './PlacementAdminTab';
 import { ProgressRing } from './ProgressRing';
@@ -218,18 +218,21 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   const edit = (target: EditTarget) => (editable ? () => setEditing(target) : undefined);
   const done = () => setEditing(null);
 
-  // The one thing to do now
-  const nextStep = needsPlacement
-    ? {
-        text: 'Эхлээд түвшин тогтоох сорил өгнө үү (үнэгүй). Дүнгээр нь танд зориулсан сургалтын төлөвлөгөө гарна.',
-        label: suggested ? `${suggested}-р ангийн сорил эхлэх` : null,
-        onClick: suggested ? () => onStartPlacement(suggested) : null,
-      }
-    : hasPlan && !paid
-    ? { text: 'Төлөвлөгөө тань бэлэн боллоо. Төлбөрөө төлж эрх аваад хичээлээ эхлээрэй.', label: null, onClick: null }
-    : hasPlan && next
-    ? { text: `Үргэлжлүүлэх: «${topicMeta(next.topicId).title}»`, label: 'Үргэлжлүүлэх', onClick: () => onOpenTopic(next.topicId) }
-    : null;
+  // The step cards on the home page take the user to each step
+  const goToStep = (step: number) => {
+    if (step === 1) {
+      if (suggested) startPlacement(suggested);
+      else if (hasPlan) onOpenPlan();
+    } else if (step === 2) {
+      document.getElementById('home-access')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (step === 3) {
+      if (next && paid) onOpenTopic(next.topicId);
+      else if (hasPlan) onOpenPlan();
+      else onOpenLessons();
+    } else {
+      onOpenExams();
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-6" data-testid="student-home">
@@ -249,20 +252,14 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
             </div>
           )
         )}
-        {nextStep && (
-          <div className="mt-3 p-4 rounded-xl bg-stone-900 text-white flex flex-wrap items-center justify-between gap-3" data-testid="next-step">
-            <span className="text-sm">{nextStep.text}</span>
-            {nextStep.label && nextStep.onClick && (
-              <button
-                type="button"
-                onClick={nextStep.onClick}
-                className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 text-sm font-bold cursor-pointer"
-              >
-                {nextStep.label}
-              </button>
-            )}
-          </div>
-        )}
+        <div className="mt-4">
+          <PlanSteps
+            placementDone={hasPlan}
+            paid={paid}
+            nextTopicTitle={next ? topicMeta(next.topicId).title : undefined}
+            onStep={goToStep}
+          />
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
@@ -392,7 +389,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
         </Card>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2" id="home-access">
         <div className="flex items-center gap-1.5">
           <h2 className="text-sm font-black text-stone-800 flex items-center gap-1.5 flex-1">
             <CreditCard className="w-4 h-4 text-amber-600" /> {content.accessTitle}

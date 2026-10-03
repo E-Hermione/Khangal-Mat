@@ -338,25 +338,30 @@ const PaymentDialog: React.FC<{
   );
 };
 
-/** Step-by-step guide to the plan: what to do first, then next, and what the marks mean. */
-const HowItWorks: React.FC<{ paid: boolean }> = ({ paid }) => {
+/** The four steps of the plan as cards; done/now/later from the user's progress. Cards can be clickable. */
+export const PlanSteps: React.FC<{
+  placementDone: boolean;
+  paid: boolean;
+  nextTopicTitle?: string;
+  onStep?: (step: number) => void;
+}> = ({ placementDone, paid, nextTopicTitle, onStep }) => {
   const steps: { icon: React.ReactNode; title: string; text: string; state: 'done' | 'now' | 'later' }[] = [
     {
       icon: <ClipboardCheck className="w-5 h-5" />,
       title: 'Түвшин тогтоох сорил',
-      text: 'Алдсан бодлогуудаар танд үзэх сэдвүүд гарна.',
-      state: 'done',
+      text: placementDone ? 'Алдсан бодлогуудаар танд үзэх сэдвүүд гарсан.' : 'Үнэгүй. Алдсан бодлогуудаар танд үзэх сэдвүүд гарна.',
+      state: placementDone ? 'done' : 'now',
     },
     {
       icon: <CreditCard className="w-5 h-5" />,
       title: 'Төлбөр төлөх',
       text: 'Нүүр хуудасны «Эрх авах» хэсгээс төлнө. Админ баталгаажуулмагц нээгдэнэ.',
-      state: paid ? 'done' : 'now',
+      state: paid ? 'done' : placementDone ? 'now' : 'later',
     },
     {
       icon: <BookOpen className="w-5 h-5" />,
       title: 'Сэдвээ үзэх',
-      text: '«Үзэх» товчоор онол, жишээ, дасгалаа дараалан үзнэ.',
+      text: paid && nextTopicTitle ? `Дараагийн сэдэв: ${nextTopicTitle}` : '«Үзэх» товчоор онол, жишээ, дасгалаа дараалан үзнэ.',
       state: paid ? 'now' : 'later',
     },
     {
@@ -371,24 +376,20 @@ const HowItWorks: React.FC<{ paid: boolean }> = ({ paid }) => {
     now: { card: 'border-amber-300 bg-amber-50 ring-2 ring-amber-100', icon: 'bg-amber-500 text-stone-950', pill: 'bg-amber-500 text-stone-950', label: 'Одоо' },
     later: { card: 'border-stone-200 bg-white', icon: 'bg-stone-100 text-stone-400', pill: 'bg-stone-100 text-stone-500', label: 'Дараа' },
   };
-  const tiers = [
-    { name: 'Анхан', pct: 35 },
-    { name: 'Дунд', pct: 70 },
-    { name: 'Ахисан', pct: 100 },
-  ];
 
   return (
-    <div className="bg-white rounded-2xl border border-stone-200 p-5 space-y-5" data-testid="how-it-works">
-      <div>
-        <h2 className="text-base font-black text-stone-900">Хэрхэн ажиллах вэ?</h2>
-        <p className="text-xs text-stone-500">4 алхмаар сэдвээ эзэмшинэ</p>
-      </div>
-
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {steps.map((st, i) => {
           const style = stateStyle[st.state];
           return (
-            <div key={st.title} className={`relative rounded-xl border p-3.5 ${style.card}`}>
+            <div
+              key={st.title}
+              role={onStep ? 'button' : undefined}
+              tabIndex={onStep ? 0 : undefined}
+              onClick={onStep ? () => onStep(i + 1) : undefined}
+              className={`relative rounded-xl border p-3.5 ${style.card} ${onStep ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+              data-testid={`plan-step-${i + 1}`}
+            >
               <div className="flex items-center justify-between mb-2.5">
                 <span className={`w-9 h-9 rounded-xl flex items-center justify-center ${style.icon}`}>
                   {st.state === 'done' ? <Check className="w-5 h-5" /> : st.icon}
@@ -402,6 +403,25 @@ const HowItWorks: React.FC<{ paid: boolean }> = ({ paid }) => {
           );
         })}
       </div>
+  );
+};
+
+/** Step-by-step guide to the plan: what to do first, then next, and what the marks mean. */
+const HowItWorks: React.FC<{ paid: boolean }> = ({ paid }) => {
+  const tiers = [
+    { name: 'Анхан', pct: 35 },
+    { name: 'Дунд', pct: 70 },
+    { name: 'Ахисан', pct: 100 },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl border border-stone-200 p-5 space-y-5" data-testid="how-it-works">
+      <div>
+        <h2 className="text-base font-black text-stone-900">Хэрхэн ажиллах вэ?</h2>
+        <p className="text-xs text-stone-500">4 алхмаар сэдвээ эзэмшинэ</p>
+      </div>
+
+      <PlanSteps placementDone paid={paid} />
 
       <div className="rounded-xl bg-stone-50 border border-stone-200 p-4 space-y-3">
         <div>
