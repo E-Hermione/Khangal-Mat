@@ -398,9 +398,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   />
                                 )}
                                 <span className="truncate">{topic.title}</span>
-                                {planGate && learningPlan.inPlan(topic.id) && (
-                                  <ProgressRing percent={learningPlan.progress(topic.id)} size={16} />
-                                )}
                               </div>
 
                               <div className="flex items-center space-x-1 shrink-0 ml-1">
@@ -437,13 +434,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   </span>
                                 )}
 
-                                <ChevronRight
-                                  className={`w-3 h-3 transition-transform ${
-                                    isSelected
-                                      ? 'text-amber-400'
-                                      : 'text-stone-600 group-hover:text-stone-400'
-                                  }`}
-                                />
+                                {/* Topics have no subtopics: progress sits where an arrow would be */}
+                                {planGate && learningPlan.inPlan(topic.id) && (
+                                  <ProgressRing percent={learningPlan.progress(topic.id)} size={16} />
+                                )}
                               </div>
                             </button>
                           );
