@@ -318,9 +318,6 @@ const PaymentDialog: React.FC<{
 
             {option && (
               <div className="space-y-3" data-testid="payment-instructions">
-                <p className="text-sm text-stone-800">
-                  <b>{formatMoney(option.price)}</b>-ийг доорх дансанд шилжүүлнэ үү.
-                </p>
                 <div className="rounded-xl border border-stone-200 px-3">
                   {settings.bankName && <Row label="Банк" value={settings.bankName} k="bank" />}
                   <Row label="Дансны дугаар" value={settings.accountNumber} k="acc" />
