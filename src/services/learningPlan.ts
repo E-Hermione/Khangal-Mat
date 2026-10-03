@@ -80,6 +80,13 @@ function testMaxPoints(topicId: string, tier: 1 | 2 | 3): number {
 // How full a topic is after passing its basic, middle and advanced tests
 export const TIER_PROGRESS = [0, 35, 70, 100];
 
+/** One attempt's latest score in percent. */
+export function attemptPercent(examId: string, attempt: { score?: number; maxPoints?: number }): number {
+  const m = examId.match(/^(.*)-test([123])$/);
+  const max = attempt.maxPoints || (m ? testMaxPoints(m[1], Number(m[2]) as 1 | 2 | 3) : 0);
+  return max > 0 ? Math.round(((attempt.score ?? 0) / max) * 100) : 0;
+}
+
 /** Best result on one test of a topic in percent, or null if never taken. */
 export function tierPercent(topicId: string, tier: 1 | 2 | 3, attempts: AttemptMap): number | null {
   const a = attempts[`${topicId}-test${tier}`];

@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { learningPlan, useLearningPlanVersion } from '../services/learningPlan';
 import { ProgressRing } from './ProgressRing';
+import { ExamFilter, ExamsPanel, HomePanel } from './SidebarPanels';
+import { getFirebaseAuth } from '../services/firebase';
 
 interface SidebarProps {
   selectedGrade: GradeNumber;
@@ -47,6 +49,9 @@ interface SidebarProps {
   onSelectView?: (view: 'home' | 'topics' | 'exams' | 'plan' | 'placement') => void;
   // Students get a home tab first
   showHome?: boolean;
+  examFilter?: ExamFilter;
+  onExamFilter?: (f: ExamFilter) => void;
+  onOpenPlan?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -66,8 +71,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeView = 'topics',
   onSelectView,
   showHome = false,
+  examFilter = 'all',
+  onExamFilter,
+  onOpenPlan,
 }) => {
   const showLessonNav = !onSelectView || activeView === 'topics';
+  const showExamNav = !!onSelectView && activeView === 'exams';
   useLearningPlanVersion();
   const [, setTrigger] = useState(0);
 
@@ -245,8 +254,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* Grades and topics only on the lessons view; the exams page has its own grade picker */}
-        {showLessonNav ? (
+        {/* Lessons: grades + topics. Exams: grades + filters and results. Home: progress and news */}
+        {showLessonNav || showExamNav ? (
           <>
         {/* Grades Selector Tabs */}
         <div className="p-3 border-b border-stone-800/80 bg-stone-950/40 shrink-0">
@@ -306,7 +315,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Topics List with Hierarchical Accordion (Агуулгын аймаг -> Дэд сэдэв) */}
+        {showExamNav ? (
+          <div className="flex-1 overflow-y-auto">
+            <ExamsPanel filter={examFilter} onFilter={(f) => onExamFilter?.(f)} onSelectGrade={onSelectGrade} />
+          </div>
+        ) : (
+        /* Topics List with Hierarchical Accordion (Агуулгын аймаг -> Дэд сэдэв) */
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           <div className="px-1 mb-1 text-[11px] font-bold text-stone-400 uppercase tracking-wider">
             {selectedGrade}-р ангийн агуулга
@@ -450,9 +464,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
         </div>
+        )}
           </>
         ) : (
-          <div className="flex-1" />
+          <div className="flex-1 overflow-y-auto">
+            <HomePanel
+              uid={getFirebaseAuth().currentUser?.uid}
+              userId={currentUser?.userId}
+              isAdmin={isAdmin}
+              onOpenPlan={() => onOpenPlan?.()}
+              onOpenAccessRequests={onOpenAccessRequests}
+            />
+          </div>
         )}
 
         {/* Quick Tools & Settings Navigation */}

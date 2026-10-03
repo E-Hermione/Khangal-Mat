@@ -14,7 +14,8 @@ import {
 import { backdropClose } from '../utils/backdrop';
 import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect } from '../utils/examGrading';
 import { visibilityService } from '../services/visibilityService';
-import { learningPlan } from '../services/learningPlan';
+import { attemptPercent, learningPlan, PASS_PERCENT } from '../services/learningPlan';
+import type { ExamFilter } from './SidebarPanels';
 import { ProgressRing } from './ProgressRing';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { subscribeAttempts, saveAttempt as saveAttemptCloud, AttemptMap, ExamAttempt } from '../services/examAttempts';
@@ -29,6 +30,8 @@ interface ExamsHubProps {
   userId?: string;
   // Firebase uid, to keep each user's exam results apart on a shared device
   uid?: string;
+  // Which topics to list (chosen in the sidebar)
+  filter?: ExamFilter;
 }
 
 type ExamTier = 'all' | 1 | 2 | 3;
@@ -182,6 +185,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
   isAdmin = false,
   userId,
   uid,
+  filter = 'all',
 }) => {
   const [topicTiers, setTopicTiers] = useState<Record<string, 1 | 2 | 3>>({});
 
@@ -331,27 +335,27 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
     return Array.from(topicMap.values());
   }, [topics, selectedGrade]);
 
-  const visibleExamTopics = allGradeTopics.filter((t) => allowedTiers(t.id).length > 0);
+  const taken = (topicId: string) => [1, 2, 3].some((n) => attempts[`${topicId}-test${n}`]);
+  const passed = (topicId: string) =>
+    [1, 2, 3].some((n) => {
+      const a = attempts[`${topicId}-test${n}`];
+      return !!a && attemptPercent(`${topicId}-test${n}`, { score: a.bestScore ?? a.score, maxPoints: a.maxPoints }) >= PASS_PERCENT;
+    });
+  const visibleExamTopics = allGradeTopics
+    .filter((t) => allowedTiers(t.id).length > 0)
+    .filter((t) =>
+      filter === 'plan'
+        ? learningPlan.inPlan(t.id)
+        : filter === 'untaken'
+        ? !taken(t.id)
+        : filter === 'passed'
+        ? passed(t.id)
+        : true
+    );
 
   return (
     <div className="w-full animate-in fade-in duration-150">
-      {/* Grade picker (the sidebar shows grades only on the lessons view) */}
-      <div className="flex flex-wrap gap-1.5 mb-4" data-testid="exam-grades">
-        {([6, 7, 8, 9, 10, 11, 12] as GradeNumber[]).map((g) => (
-          <button
-            key={g}
-            type="button"
-            onClick={() => onSelectGrade(g)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
-              g === selectedGrade
-                ? 'bg-amber-500 border-amber-500 text-stone-950'
-                : 'bg-white border-stone-200 text-stone-700 hover:bg-stone-50'
-            }`}
-          >
-            {g}-р анги
-          </button>
-        ))}
-      </div>
+      <h2 className="text-lg font-black text-stone-900 mb-3">{selectedGrade}-р ангийн сорилууд</h2>
 
       {/* Styled Table: One row per topic, clean level selector, centered action buttons, fits without cut off */}
       <div className="bg-white rounded-2xl shadow-sm border border-stone-200/90 overflow-hidden ring-1 ring-stone-900/5">
@@ -370,7 +374,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
               {!examsAllowed || visibleExamTopics.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-stone-400">
-                    {examsAllowed ? 'Энэ ангид нээлттэй сорил алга байна.' : 'Танд энэ ангийн сорил өгөх эрх олгогдоогүй байна.'}
+                    {!examsAllowed ? 'Танд энэ ангийн сорил өгөх эрх олгогдоогүй байна.' : filter !== 'all' ? 'Энэ шүүлтүүрт тохирох сорил алга.' : 'Энэ ангид нээлттэй сорил алга байна.'}
                   </td>
                 </tr>
               ) : (

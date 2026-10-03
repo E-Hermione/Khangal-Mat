@@ -16,6 +16,7 @@ import { ExamsHub } from './components/ExamsHub';
 import { PlacementTestView } from './components/PlacementTestView';
 import { LearningPlanView } from './components/LearningPlanView';
 import { StudentHome } from './components/StudentHome';
+import type { ExamFilter } from './components/SidebarPanels';
 import { learningPlan, startLearningPlan, stopLearningPlan, topicMeta, useLearningPlanVersion } from './services/learningPlan';
 import { AuthUser } from './types';
 import { clearStoredAuth, saveStoredAuth } from './utils/deviceManager';
@@ -223,6 +224,8 @@ export default function App() {
   const isStudent = (currentUser?.role !== 'admin' || isAdminPreview) && !!learningPlan.state.uid;
   // The grade whose placement test the student is taking
   const [placementGrade, setPlacementGrade] = useState<GradeNumber>(6);
+  // Exams page filter, chosen in the sidebar
+  const [examFilter, setExamFilter] = useState<ExamFilter>('all');
   // Right after finishing a placement test, show the plan it produced
   const placementCount = learningPlan.state.results?.length;
   const prevPlacementCount = React.useRef<number | undefined>(undefined);
@@ -606,6 +609,9 @@ export default function App() {
           activeView={activeView}
           onSelectView={setActiveView}
           showHome={isStudent || currentUser.role === 'admin'}
+          examFilter={examFilter}
+          onExamFilter={setExamFilter}
+          onOpenPlan={() => setActiveView(learningPlan.hasPlan() ? 'plan' : 'home')}
         />
 
         {/* Main Content Area */}
@@ -655,6 +661,7 @@ export default function App() {
               isAdmin={currentUser?.role === 'admin' && !previewAsUser}
               userId={currentUser?.userId}
               uid={getFirebaseAuth().currentUser?.uid}
+              filter={examFilter}
             />
           ) : currentTopic.id ? (
             <TopicPage
