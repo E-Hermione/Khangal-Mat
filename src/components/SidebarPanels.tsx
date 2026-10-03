@@ -1,14 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { collectionGroup, getDocs } from 'firebase/firestore';
 import { Bell, CalendarClock, ChevronRight, ClipboardCheck, CreditCard, Megaphone, Users, X } from 'lucide-react';
-import { GradeNumber } from '../types';
-import {
-  attemptPercent,
-  learningPlan,
-  PASS_PERCENT,
-  topicMeta,
-  useLearningPlanVersion,
-} from '../services/learningPlan';
+import { learningPlan, useLearningPlanVersion } from '../services/learningPlan';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { InboxItem, markAnnouncementsRead, subscribeMyAnnouncements } from '../services/announcements';
 import { subscribeAllPaymentRequests } from '../services/payments';
@@ -17,9 +10,9 @@ import { getDb } from '../services/firebase';
 import { ADMIN_EMAIL } from '../services/authService';
 import { ProgressRing } from './ProgressRing';
 
-export type ExamFilter = 'all' | 'plan' | 'untaken' | 'passed';
+// Exams page: all tests of a grade, or only the user's plan topics
+export type ExamFilter = 'all' | 'plan';
 
-const TIER_NAMES = ['Анхан', 'Дунд', 'Ахисан'];
 const DAY = 24 * 60 * 60 * 1000;
 
 const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -241,120 +234,6 @@ const AdminOverview: React.FC<{ onOpenAccessRequests?: () => void }> = ({ onOpen
         label="Түвшин тогтоох сорил өгсөн"
         value={placementTakers ?? '—'}
       />
-    </div>
-  );
-};
-
-/* ------------------------------- exams ------------------------------- */
-
-/** Sidebar on the exams page (under the grade picker): filters, tier summary and recent results. */
-export const ExamsPanel: React.FC<{
-  filter: ExamFilter;
-  onFilter: (f: ExamFilter) => void;
-  onSelectGrade: (g: GradeNumber) => void;
-}> = ({ filter, onFilter, onSelectGrade }) => {
-  useLearningPlanVersion();
-  const attempts = learningPlan.state.attempts;
-  const hasPlan = learningPlan.hasPlan();
-
-  const recent = useMemo(
-    () =>
-      Object.entries(attempts)
-        .filter(([, a]) => a.finishedAt)
-        .sort((x, y) => (y[1].finishedAt || 0) - (x[1].finishedAt || 0))
-        .slice(0, 5)
-        .map(([examId, a]) => {
-          const m = examId.match(/^(.*)-test([123])$/);
-          const topicId = m ? m[1] : examId;
-          return { examId, topicId, tier: m ? Number(m[2]) : 1, pct: attemptPercent(examId, a) };
-        }),
-    [attempts]
-  );
-
-  const passedByTier = [1, 2, 3].map(
-    (tier) =>
-      Object.entries(attempts).filter(([examId, a]) => {
-        if (!examId.endsWith(`-test${tier}`)) return false;
-        return attemptPercent(examId, { score: a.bestScore ?? a.score, maxPoints: a.maxPoints }) >= PASS_PERCENT;
-      }).length
-  );
-
-  const filters: { key: ExamFilter; label: string }[] = [
-    { key: 'all', label: 'Бүгд' },
-    ...(hasPlan ? [{ key: 'plan' as ExamFilter, label: 'Миний төлөвлөгөө' }] : []),
-    { key: 'untaken', label: 'Өгөөгүй' },
-    { key: 'passed', label: 'Давсан' },
-  ];
-
-  return (
-    <div className="p-3 space-y-4" data-testid="exams-panel">
-      <div>
-        <Label>Шүүлтүүр</Label>
-        <div className="grid grid-cols-2 gap-1.5">
-          {filters.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => onFilter(f.key)}
-              className={`py-1.5 px-2 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                filter === f.key ? 'bg-amber-500 text-stone-950' : 'bg-stone-800/80 text-stone-300 hover:bg-stone-700 hover:text-white'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <Label>Давсан шат</Label>
-        <div className="grid grid-cols-3 gap-1.5" data-testid="tier-summary">
-          {TIER_NAMES.map((name, i) => (
-            <div key={name} className="rounded-xl border border-stone-800 bg-stone-950/40 py-2 text-center">
-              <div className="text-base font-black text-white">{passedByTier[i]}</div>
-              <div className="text-[10px] text-stone-400">{name} ✓</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <Label>Сүүлийн дүнгүүд</Label>
-        {recent.length === 0 ? (
-          <Panel>
-            <div className="text-xs text-stone-500">Сорил өгөөгүй байна.</div>
-          </Panel>
-        ) : (
-          <div className="space-y-1.5" data-testid="recent-results">
-            {recent.map((r) => {
-              const meta = topicMeta(r.topicId);
-              const passed = r.pct >= PASS_PERCENT;
-              return (
-                <button
-                  key={r.examId}
-                  type="button"
-                  onClick={() => onSelectGrade(meta.grade)}
-                  className="w-full text-left rounded-xl border border-stone-800 bg-stone-950/40 px-3 py-2 hover:bg-stone-800/60 cursor-pointer flex items-center gap-2"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-xs text-stone-200 truncate">{meta.title}</span>
-                    <span className="block text-[10px] text-stone-500">
-                      {meta.grade}-р анги • {TIER_NAMES[r.tier - 1]}
-                    </span>
-                  </span>
-                  <span
-                    className={`text-xs font-black px-1.5 py-0.5 rounded ${
-                      passed ? 'bg-emerald-500/15 text-emerald-300' : 'bg-stone-800 text-stone-300'
-                    }`}
-                  >
-                    {r.pct}%
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
     </div>
   );
 };

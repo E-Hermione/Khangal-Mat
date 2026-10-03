@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { learningPlan, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
 import { ProgressRing } from './ProgressRing';
-import { ExamFilter, ExamsPanel, HomePanel } from './SidebarPanels';
+import { ExamFilter, HomePanel } from './SidebarPanels';
 import { getFirebaseAuth } from '../services/firebase';
 
 interface SidebarProps {
@@ -80,7 +80,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Lessons can be listed by grade (all topics) or as the user's plan (plan topics of every grade)
   const [lessonMode, setLessonMode] = useState<'all' | 'plan'>('all');
   const canPlanView = !isAdmin && learningPlan.hasPlan();
-  const planMode = showLessonNav && canPlanView && lessonMode === 'plan';
+  // The exams page uses the same two views; its choice also filters the exams table
+  const examMode: 'all' | 'plan' = examFilter === 'plan' ? 'plan' : 'all';
+  const mode = showExamNav ? examMode : lessonMode;
+  const setMode = (m: 'all' | 'plan') => (showExamNav ? onExamFilter?.(m) : setLessonMode(m));
+  const planMode = (showLessonNav || showExamNav) && canPlanView && mode === 'plan';
   useLearningPlanVersion();
   const [, setTrigger] = useState(0);
 
@@ -261,21 +265,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Lessons: grades + topics. Exams: grades + filters and results. Home: progress and news */}
         {showLessonNav || showExamNav ? (
           <>
-        {showLessonNav && canPlanView && (
+        {canPlanView && (
           <div className="px-3 pt-3 shrink-0">
             <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-stone-950 border border-stone-800" data-testid="lesson-mode">
               {(
                 [
-                  ['all', 'Бүх сэдэв'],
+                  ['all', showExamNav ? 'Бүх сорил' : 'Бүх сэдэв'],
                   ['plan', 'Миний төлөвлөгөө'],
                 ] as const
-              ).map(([mode, label]) => (
+              ).map(([m, label]) => (
                 <button
-                  key={mode}
+                  key={m}
                   type="button"
-                  onClick={() => setLessonMode(mode)}
+                  onClick={() => setMode(m)}
                   className={`py-1.5 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
-                    lessonMode === mode ? 'bg-stone-700 text-white' : 'text-stone-400 hover:text-stone-200'
+                    mode === m ? 'bg-stone-700 text-white' : 'text-stone-400 hover:text-stone-200'
                   }`}
                 >
                   {label}
@@ -345,11 +349,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
         )}
 
-        {showExamNav ? (
-          <div className="flex-1 overflow-y-auto">
-            <ExamsPanel filter={examFilter} onFilter={(f) => onExamFilter?.(f)} onSelectGrade={onSelectGrade} />
-          </div>
-        ) : planMode ? (
+        {planMode ? (
           <div className="flex-1 overflow-y-auto p-3 space-y-3" data-testid="plan-topic-list">
             {GRADES_LIST.filter((g) => learningPlan.plan().some((p) => topicMeta(p.topicId).grade === g)).map((g) => (
               <div key={g}>
@@ -369,6 +369,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           onClick={() => {
                             onSelectGrade(meta.grade);
                             onSelectTopic(p.topicId);
+                            // On the exams page this opens that grade's plan tests
                             onCloseMobile();
                           }}
                           className={`w-full text-left pl-3 pr-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center justify-between gap-2 cursor-pointer ${
@@ -395,6 +396,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             ))}
           </div>
+        ) : showExamNav ? (
+          <div className="flex-1" />
         ) : (
         /* Topics List with Hierarchical Accordion (Агуулгын аймаг -> Дэд сэдэв) */
         <div className="flex-1 overflow-y-auto p-3 space-y-2">

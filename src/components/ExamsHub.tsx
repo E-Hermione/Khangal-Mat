@@ -14,7 +14,7 @@ import {
 import { backdropClose } from '../utils/backdrop';
 import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect } from '../utils/examGrading';
 import { visibilityService } from '../services/visibilityService';
-import { attemptPercent, learningPlan, PASS_PERCENT } from '../services/learningPlan';
+import { learningPlan } from '../services/learningPlan';
 import type { ExamFilter } from './SidebarPanels';
 import { ProgressRing } from './ProgressRing';
 import { userPermissionsService } from '../services/userPermissionsService';
@@ -334,23 +334,9 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
     return Array.from(topicMap.values());
   }, [topics, selectedGrade]);
 
-  const taken = (topicId: string) => [1, 2, 3].some((n) => attempts[`${topicId}-test${n}`]);
-  const passed = (topicId: string) =>
-    [1, 2, 3].some((n) => {
-      const a = attempts[`${topicId}-test${n}`];
-      return !!a && attemptPercent(`${topicId}-test${n}`, { score: a.bestScore ?? a.score, maxPoints: a.maxPoints }) >= PASS_PERCENT;
-    });
   const visibleExamTopics = allGradeTopics
     .filter((t) => allowedTiers(t.id).length > 0)
-    .filter((t) =>
-      filter === 'plan'
-        ? learningPlan.inPlan(t.id)
-        : filter === 'untaken'
-        ? !taken(t.id)
-        : filter === 'passed'
-        ? passed(t.id)
-        : true
-    );
+    .filter((t) => filter !== 'plan' || learningPlan.inPlan(t.id));
 
   return (
     <div className="w-full animate-in fade-in duration-150">
@@ -373,7 +359,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
               {!examsAllowed || visibleExamTopics.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-stone-400">
-                    {!examsAllowed ? 'Танд энэ ангийн сорил өгөх эрх олгогдоогүй байна.' : filter !== 'all' ? 'Энэ шүүлтүүрт тохирох сорил алга.' : 'Энэ ангид нээлттэй сорил алга байна.'}
+                    {!examsAllowed ? 'Танд энэ ангийн сорил өгөх эрх олгогдоогүй байна.' : filter === 'plan' ? 'Энэ ангид таны төлөвлөгөөний сорил алга.' : 'Энэ ангид нээлттэй сорил алга байна.'}
                   </td>
                 </tr>
               ) : (
