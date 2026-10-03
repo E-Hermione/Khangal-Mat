@@ -207,7 +207,20 @@ export default function App() {
   }, [openSession]);
 
   const hasPlan = learningPlan.hasPlan();
-  const isStudent = currentUser?.role !== 'admin' && !!learningPlan.state.uid;
+  // The admin's "view as user" mode shows the student pages, using the admin's own (test) data
+  const isAdminPreview = currentUser?.role === 'admin' && previewAsUser;
+  useEffect(() => {
+    if (currentUser?.role !== 'admin') return;
+    const uid = getFirebaseAuth().currentUser?.uid;
+    if (previewAsUser && uid) {
+      startLearningPlan(uid, currentUser.userId || 'ADMIN-01', null);
+      setActiveView('home');
+    } else {
+      stopLearningPlan();
+      setActiveView((v) => (v === 'home' || v === 'plan' || v === 'placement' ? 'topics' : v));
+    }
+  }, [previewAsUser, currentUser?.role]);
+  const isStudent = (currentUser?.role !== 'admin' || isAdminPreview) && !!learningPlan.state.uid;
   // The grade whose placement test the student is taking
   const [placementGrade, setPlacementGrade] = useState<GradeNumber>(6);
   // Right after finishing a placement test, show the plan it produced
@@ -604,7 +617,7 @@ export default function App() {
               дууссан байна. Сунгуулахын тулд админд хандана уу.
             </div>
           )}
-          {currentUser.role !== 'admin' && learningPlan.isLoading() ? (
+          {isStudent && learningPlan.isLoading() ? (
             <div className="text-center py-20 text-sm text-stone-500">Ачаалж байна...</div>
           ) : isStudent && activeView === 'placement' && learningPlan.canTakePlacement(placementGrade) ? (
             <PlacementTestView key={placementGrade} uid={getFirebaseAuth().currentUser!.uid} grade={placementGrade} />
