@@ -280,7 +280,7 @@ export const PaymentStepContent: React.FC<{ uid: string; currentUser: AuthUser; 
         ) : (
           <>
             {paidUntil ? <b className="text-red-700">Хугацаа дууссан. </b> : null}
-            Хугацаагаа сонгоод дансанд шилжүүлнэ. Админ баталгаажуулмагц хичээлүүд нээгдэнэ.
+            Админ шилжүүлгийг шалгаж баталгаажуулмагц хичээлүүд нээгдэнэ.
             {lastRejected && <span className="block text-red-700 mt-0.5">Сүүлийн төлбөр баталгаажаагүй. Админд хандана уу.</span>}
           </>
         )}
