@@ -286,37 +286,53 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               Үнэгүй
             </span>
           </div>
-          <div className="grid grid-cols-4 gap-2" data-testid="placement-grades">
-            {GRADES.map((g) => {
-              const taken = learningPlan.resultFor(g);
-              const open = learningPlan.canTakePlacement(g);
-              const count = placementSize(g).questions;
-              const mine = g === grade;
-              return (
-                <button
-                  key={g}
-                  type="button"
-                  disabled={!open}
-                  onClick={() => startPlacement(g)}
-                  title={
-                    taken
-                      ? `${g}-р анги: ${taken.correct}/${taken.total} зөв • дахин өгөх`
-                      : open
-                      ? `${g}-р анги: ${count} бодлого • сорил эхлэх`
-                      : `${g}-р анги: удахгүй`
-                  }
-                  className={`relative rounded-xl border py-3 flex items-center justify-center transition-all ${
-                    taken
-                      ? 'border-emerald-200 bg-emerald-50/70 hover:border-emerald-400 cursor-pointer'
-                      : open
-                      ? 'border-stone-200 bg-white hover:border-amber-400 hover:bg-amber-50 hover:-translate-y-0.5 cursor-pointer'
-                      : 'border-dashed border-stone-200 bg-stone-50/60'
-                  } ${mine ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}
-                >
-                  <span className={`text-lg font-black leading-none ${open || taken ? 'text-stone-900' : 'text-stone-300'}`}>{g}</span>
-                </button>
-              );
-            })}
+          <div className="rounded-xl bg-stone-50 border border-stone-100 p-2.5">
+            <div className="grid grid-cols-7 gap-1.5" data-testid="placement-grades">
+              {GRADES.map((g) => {
+                const taken = learningPlan.resultFor(g);
+                const open = learningPlan.canTakePlacement(g);
+                const count = placementSize(g).questions;
+                const mine = g === grade;
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    disabled={!open}
+                    onClick={() => startPlacement(g)}
+                    title={
+                      taken
+                        ? `${g}-р анги: ${taken.correct}/${taken.total} зөв • дахин өгөх`
+                        : open
+                        ? `${g}-р анги: ${count} бодлого • сорил эхлэх`
+                        : `${g}-р анги: удахгүй`
+                    }
+                    className={`aspect-square rounded-lg border flex items-center justify-center text-sm font-black transition-all ${
+                      taken
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:border-emerald-500 cursor-pointer'
+                        : open
+                        ? 'border-stone-300 bg-white text-stone-900 hover:border-amber-400 hover:bg-amber-50 cursor-pointer'
+                        : 'border-transparent bg-transparent text-stone-300'
+                    } ${mine ? 'ring-2 ring-amber-400 ring-offset-1 ring-offset-stone-50' : ''}`}
+                  >
+                    {g}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-2.5 text-[10.5px] text-stone-500">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-emerald-50 border border-emerald-300" /> Өгсөн
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-white border border-stone-300" /> Өгөх боломжтой
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm ring-2 ring-amber-400" /> Таны анги
+              </span>
+              <span className="flex items-center gap-1.5 text-stone-400">
+                <span className="text-stone-300 font-black">7</span> Удахгүй
+              </span>
+            </div>
           </div>
           {editable && (
             <button
