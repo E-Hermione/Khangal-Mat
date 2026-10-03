@@ -325,7 +325,6 @@ const PaymentDialog: React.FC<{
                   {settings.bankName && <Row label="Банк" value={settings.bankName} k="bank" />}
                   <Row label="Дансны дугаар" value={settings.accountNumber} k="acc" />
                   {settings.accountName && <Row label="Хүлээн авагч" value={settings.accountName} k="name" />}
-                  <Row label="Дүн" value={String(option.price)} k="amount" />
                 </div>
                 <div className="rounded-xl bg-amber-50 border border-amber-300 p-3">
                   <div className="text-xs text-amber-900 font-bold mb-1">Гүйлгээний утга дээр заавал бичнэ үү:</div>
