@@ -225,12 +225,8 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
       else if (hasPlan) onOpenPlan();
     } else if (step === 2) {
       document.getElementById('home-access')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else if (step === 3) {
-      if (next && paid) onOpenTopic(next.topicId);
-      else if (hasPlan) onOpenPlan();
-      else onOpenLessons();
     } else {
-      onOpenExams();
+      onOpenPlan();
     }
   };
 
@@ -256,7 +252,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
           <PlanSteps
             placementDone={hasPlan}
             paid={paid}
-            nextTopicTitle={next ? topicMeta(next.topicId).title : undefined}
             onStep={goToStep}
           />
         </div>

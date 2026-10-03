@@ -45,7 +45,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
             Миний сургалтын төлөвлөгөө
           </h1>
           <p className="text-sm text-stone-600 mt-1">
-            Танд зориулсан төлөвлөгөө түвшин тогтоох сорил өгсний дараа гарна. Доорх 4 алхмаар явна.
+            Танд зориулсан төлөвлөгөө түвшин тогтоох сорил өгсний дараа гарна. Доорх 3 алхмаар явна.
           </p>
         </div>
         <HowItWorks paid={false} placementDone={false} />
@@ -389,9 +389,8 @@ const PaymentDialog: React.FC<{
 export const PlanSteps: React.FC<{
   placementDone: boolean;
   paid: boolean;
-  nextTopicTitle?: string;
   onStep?: (step: number) => void;
-}> = ({ placementDone, paid, nextTopicTitle, onStep }) => {
+}> = ({ placementDone, paid, onStep }) => {
   const steps: { icon: React.ReactNode; title: string; text: string; state: 'done' | 'now' | 'later' }[] = [
     {
       icon: <ClipboardCheck className="w-5 h-5" />,
@@ -406,15 +405,9 @@ export const PlanSteps: React.FC<{
       state: paid ? 'done' : placementDone ? 'now' : 'later',
     },
     {
-      icon: <BookOpen className="w-5 h-5" />,
-      title: 'Сэдвээ үзэх',
-      text: paid && nextTopicTitle ? `Дараагийн сэдэв: ${nextTopicTitle}` : '«Үзэх» товчоор онол, жишээ, дасгалаа дараалан үзнэ.',
-      state: paid ? 'now' : 'later',
-    },
-    {
-      icon: <Award className="w-5 h-5" />,
-      title: 'Сорил өгөх',
-      text: '«Сорил өгөх» товчоор шат шатаар ахина.',
+      icon: <Route className="w-5 h-5" />,
+      title: 'Төлөвлөгөөтэйгээ танилцах',
+      text: 'Зөвхөн танд зориулсан сэдвүүд, сорилын шатуудтайгаа танилцаад хичээлээ эхэлнэ.',
       state: paid ? 'now' : 'later',
     },
   ];
@@ -425,7 +418,7 @@ export const PlanSteps: React.FC<{
   };
 
   return (
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid sm:grid-cols-3 gap-3">
         {steps.map((st, i) => {
           const style = stateStyle[st.state];
           return (
@@ -460,7 +453,7 @@ const HowItWorks: React.FC<{ paid: boolean; placementDone: boolean }> = ({ paid,
     <div className="bg-white rounded-2xl border border-stone-200 p-5 space-y-5" data-testid="how-it-works">
       <div>
         <h2 className="text-base font-black text-stone-900">Хэрхэн ажиллах вэ?</h2>
-        <p className="text-xs text-stone-500">4 алхмаар сэдвээ эзэмшинэ</p>
+        <p className="text-xs text-stone-500">3 алхмаар эхэлнэ</p>
       </div>
 
       <PlanSteps placementDone={placementDone} paid={paid} />
