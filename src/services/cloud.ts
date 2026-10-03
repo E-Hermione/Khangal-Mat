@@ -30,8 +30,6 @@ export interface AppSettings {
   // New students first take a placement test drawn at random from the topics' tests
   placementEnabled: boolean;
   placementPerTopic: number;
-  // Also check the topics of the grades below the student's own
-  placementLowerGrades: boolean;
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -40,7 +38,6 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   copyProtection: false,
   placementEnabled: true,
   placementPerTopic: 3,
-  placementLowerGrades: true,
 };
 
 interface CloudState {

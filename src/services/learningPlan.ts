@@ -11,8 +11,8 @@ import { getQuestionOptions, hasMadeUpOptions, isOptionCorrect } from '../utils/
 
 /**
  * Placement test and personal learning plan.
- * The placement test is drawn at random from the topics' basic and middle tests (the student's
- * grade, and the grades below it if the admin chose so), a few questions per topic.
+ * A grade's placement test is drawn at random from the basic and middle tests of that grade's
+ * topics, a few questions per topic.
  * Placement tests are free and every grade's (6-12) is open to every student, once each.
  * - users/{uid}/placement/g{grade}: the student's answers on that grade's test and the topics of
  *   the questions they got wrong. Together these topics are their plan. Those topics are their plan; they open once the student has paid (an access period
@@ -134,11 +134,11 @@ function questionPool(t: TopicPackage): TestQuestion[] {
   return [...(t.test1?.questions || []), ...(t.test2?.questions || [])].filter((q) => !hasMadeUpOptions(q));
 }
 
-// Topics the admin filled in (with their own test questions) that a placement test may draw from
-function placementTopics(grade: GradeNumber, lowerGrades: boolean) {
+// Topics of that grade the admin filled in (with their own test questions) that a placement test draws from
+function placementTopics(grade: GradeNumber) {
   return storageService
     .getTopics()
-    .filter((t) => (lowerGrades ? t.grade <= grade : t.grade === grade))
+    .filter((t) => t.grade === grade)
     .filter((t) => questionPool(t).length > 0)
     .sort((a, b) => a.grade - b.grade);
 }
@@ -152,8 +152,7 @@ function placementPerTopic(): number {
 
 /** How many topics and questions a grade's placement test would have. */
 export function placementSize(grade: GradeNumber): { topics: number; questions: number } {
-  const s = cloud.getAppSettings();
-  const topics = placementTopics(grade, s.placementLowerGrades);
+  const topics = placementTopics(grade);
   const per = placementPerTopic();
   const questions = topics.reduce(
     (sum, t) => sum + Math.min(per, questionPool(t).length),
@@ -164,10 +163,9 @@ export function placementSize(grade: GradeNumber): { topics: number; questions: 
 
 /** A fresh random placement test for a grade, or null if there is nothing to draw from. */
 export function buildPlacementTest(grade: GradeNumber): PlacementTest | null {
-  const s = cloud.getAppSettings();
   const per = placementPerTopic();
   const questions: PlacementQuestion[] = [];
-  for (const t of placementTopics(grade, s.placementLowerGrades)) {
+  for (const t of placementTopics(grade)) {
     const pool = questionPool(t);
     for (const q of shuffle(pool).slice(0, per)) questions.push({ topicId: t.id, question: q });
   }

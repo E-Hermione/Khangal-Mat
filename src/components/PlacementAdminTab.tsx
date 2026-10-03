@@ -55,20 +55,6 @@ export const PlacementAdminTab: React.FC = () => {
           {toggle(settings.placementEnabled)}
         </button>
 
-        <button
-          type="button"
-          onClick={() => cloud.setAppSettings({ placementLowerGrades: !settings.placementLowerGrades })}
-          className="w-full flex items-center justify-between gap-3 p-3 rounded-lg border border-stone-200 hover:bg-stone-50 cursor-pointer"
-        >
-          <span className="text-left">
-            <span className="block text-sm font-bold text-stone-800">Доод ангиудын сэдвийг оруулах</span>
-            <span className="block text-[11px] text-stone-500">
-              Жишээ нь 8-р ангийн сурагчид 6, 7, 8-р ангийн сэдвүүдээс бодлого гарна
-            </span>
-          </span>
-          {toggle(settings.placementLowerGrades)}
-        </button>
-
         <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-stone-200">
           <span className="text-left">
             <span className="block text-sm font-bold text-stone-800">Сэдэв бүрээс хэдэн бодлого авах</span>
