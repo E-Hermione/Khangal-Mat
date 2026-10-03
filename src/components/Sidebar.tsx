@@ -241,7 +241,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }`}
               >
                 {!showHome && <BookOpen className="w-3.5 h-3.5" />}
-                <span>Хичээлүүд</span>
+                <span>Хичээл</span>
               </button>
               <button
                 type="button"
