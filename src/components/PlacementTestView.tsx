@@ -5,6 +5,17 @@ import { buildPlacementTest, gradePlacement, savePlacementResult } from '../serv
 import { GradeNumber } from '../types';
 import { getQuestionOptions } from '../utils/examGrading';
 
+
+const NoGuessingNotice: React.FC = () => (
+  <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-left text-sm text-amber-950 space-y-1" data-testid="no-guessing">
+    <div className="font-black">⚠️ Таамаглаж бүү сонгоорой!</div>
+    <div>
+      Мэдэхгүй бодлогоо <b>хоосон үлдээгээрэй</b>. Тааж сонгосон хариулт зөв таарвал тухайн сэдэв таны төлөвлөгөөнд орохгүй
+      бөгөөд та мэдэхгүй сэдвээ алгасах болно. Сонголтоо дахин дарж арилгаж болно.
+    </div>
+  </div>
+);
+
 /** The placement test a new student takes before anything else, drawn at random from the topics' tests. */
 export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = ({ uid, grade }) => {
   // Drawn once when the page opens
@@ -19,7 +30,7 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
 
   const handleSubmit = async () => {
     const left = test.questions.length - answered;
-    if (left > 0 && !window.confirm(`${left} бодлого хариулаагүй байна. Илгээх үү?`)) return;
+    if (!window.confirm(left > 0 ? `${left} бодлого хоосон үлдсэн байна. Шалгалтыг дуусгах уу?` : 'Шалгалтыг дуусгах уу?')) return;
     setSaving(true);
     setError(null);
     try {
@@ -43,6 +54,7 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
           Эхлээд {test.grade}-р ангийн түвшин тогтоох шалгалт өгнө үү ({test.questions.length} бодлого). Таны алдсан
           бодлогууд дээр үндэслэн танд зориулсан сургалтын төлөвлөгөө гарна. Шалгалтыг нэг л удаа өгнө.
         </p>
+        <NoGuessingNotice />
         <button
           type="button"
           onClick={() => setStarted(true)}
@@ -62,6 +74,7 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
           {answered}/{test.questions.length} хариулсан
         </span>
       </div>
+      <NoGuessingNotice />
 
       {test.questions.map(({ question: q }, i) => (
         <div key={q.id} className="bg-white rounded-xl border border-stone-200 p-5 space-y-3">
@@ -76,7 +89,15 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
                 <button
                   key={letter}
                   type="button"
-                  onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: letter }))}
+                  // Clicking the chosen option again clears it (unknown questions stay blank)
+                  onClick={() =>
+                    setAnswers((prev) => {
+                      const next = { ...prev };
+                      if (next[q.id] === letter) delete next[q.id];
+                      else next[q.id] = letter;
+                      return next;
+                    })
+                  }
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-left text-sm cursor-pointer transition-colors ${
                     chosen ? 'border-amber-500 bg-amber-50 ring-1 ring-amber-400' : 'border-stone-200 hover:bg-stone-50'
                   }`}

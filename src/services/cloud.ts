@@ -39,7 +39,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   deviceLimit: true,
   copyProtection: false,
   placementEnabled: true,
-  placementPerTopic: 1,
+  placementPerTopic: 3,
   placementLowerGrades: true,
 };
 

@@ -40,7 +40,7 @@ export const PlacementAdminTab: React.FC = () => {
           <span>Түвшин тогтоох шалгалт</span>
         </h4>
         <p className="text-[11px] text-stone-500 leading-relaxed">
-          Сурагч бүртгүүлээд анх орохдоо түвшин тогтоох шалгалт өгнө. Бодлогуудыг сэдвүүдийн Анхан ба Дунд шатны сорилоос
+          Сурагч бүртгүүлээд анх орохдоо түвшин тогтоох шалгалт өгнө. Бодлогуудыг сэдвүүдийн Анхан ба Дунд шатны сорилын сонголттой бодлогуудаас
           санамсаргүйгээр сонгоно (сурагч бүрд өөр). Алдсан бодлогуудын сэдвүүдээр тухайн сурагчийн сургалтын төлөвлөгөө гарна.
           Зөвхөн сорилын бодлого оруулсан сэдвүүд хамрагдана.
         </p>
@@ -70,15 +70,20 @@ export const PlacementAdminTab: React.FC = () => {
         </button>
 
         <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-stone-200">
-          <span className="text-sm font-bold text-stone-800">Сэдэв бүрээс хэдэн бодлого авах</span>
+          <span className="text-left">
+            <span className="block text-sm font-bold text-stone-800">Сэдэв бүрээс хэдэн бодлого авах</span>
+            <span className="block text-[11px] text-stone-500">
+              Дор хаяж 3. Сорилд үүнээс цөөн бодлоготой сэдвээс байгаа бүх бодлогыг нь авна.
+            </span>
+          </span>
           <div className="flex gap-1">
-            {[1, 2, 3].map((n) => (
+            {[3, 4, 5].map((n) => (
               <button
                 key={n}
                 type="button"
                 onClick={() => cloud.setAppSettings({ placementPerTopic: n })}
                 className={`w-9 h-8 rounded-lg text-sm font-bold border cursor-pointer ${
-                  settings.placementPerTopic === n
+                  Math.max(3, settings.placementPerTopic || 0) === n
                     ? 'bg-stone-900 text-amber-400 border-stone-900'
                     : 'bg-white text-stone-700 border-stone-200'
                 }`}

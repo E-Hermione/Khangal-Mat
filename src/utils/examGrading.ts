@@ -30,12 +30,19 @@ export function getQuestionOptions(q: TestQuestion): { letter: string; text: str
     ];
   }
 
-  return [
-    { letter: 'A', text: rightAns || 'Хариу 1' },
-    { letter: 'B', text: 'Боломжгүй' },
-    { letter: 'C', text: 'Тэгтэй тэнцүү' },
-    { letter: 'D', text: 'Аль нь ч биш' },
-  ];
+  return [{ letter: 'A', text: rightAns || 'Хариу 1' }, ...FILLER_OPTIONS.map((text, i) => ({ letter: 'BCD'[i], text }))];
+}
+
+// Wrong choices made up for open questions (the right answer is always A)
+const FILLER_OPTIONS = ['Боломжгүй', 'Тэгтэй тэнцүү', 'Аль нь ч биш'];
+
+/** True if the question's choices were made up from its answer rather than written by the teacher. */
+export function hasMadeUpOptions(q: TestQuestion): boolean {
+  const texts = getQuestionOptions(q).map((o) => o.text.trim());
+  if (FILLER_OPTIONS.every((f, i) => texts[i + 1] === f)) return true;
+  // Numeric answers get n, n+2, n-2, 2n
+  const n = parseFloat(texts[0]);
+  return texts.length === 4 && !isNaN(n) && texts.join('|') === [n, n + 2, Math.max(1, n - 2), n * 2].map(String).join('|');
 }
 
 /** The option letter an answer names explicitly ("B", "B)", "B) 428", "B. 428"), if any. */
