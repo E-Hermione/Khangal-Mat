@@ -356,7 +356,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               <ProgressRing percent={overall} size={40} />
               <span>
                 Таны төлөвлөгөөнд <b>{plan.length}</b> сэдэв байна.
-                {!paid && <span className="block text-amber-700 text-xs mt-0.5">Төлбөр төлсний дараа нээгдэнэ.</span>}
               </span>
             </div>
           ) : (
