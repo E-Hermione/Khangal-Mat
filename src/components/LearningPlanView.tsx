@@ -323,10 +323,10 @@ const PaymentDialog: React.FC<{
                   <Row label="Дансны дугаар" value={settings.accountNumber} k="acc" />
                   {settings.accountName && <Row label="Хүлээн авагч" value={settings.accountName} k="name" />}
                 </div>
-                <div className="rounded-xl bg-amber-50 border border-amber-300 p-3">
-                  <div className="text-xs text-amber-900 font-bold mb-1">Гүйлгээний утга дээр заавал бичнэ үү:</div>
+                <div className="rounded-xl bg-amber-50 border-[3px] border-amber-400 p-3.5">
+                  <div className="text-sm text-amber-900 font-black mb-1.5">Гүйлгээний утга дээр заавал бичнэ үү:</div>
                   <div className="flex items-center justify-between gap-2">
-                    <b className="text-base text-stone-950 select-all" data-testid="transfer-note">
+                    <b className="text-xl tracking-wide text-stone-950 select-all" data-testid="transfer-note">
                       {note}
                     </b>
                     <button
