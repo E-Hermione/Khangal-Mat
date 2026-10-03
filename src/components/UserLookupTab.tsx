@@ -10,7 +10,7 @@ import { getDb } from '../services/firebase';
 import { GRADE_TOPICS_CATALOG } from '../data/initialData';
 import { ApprovedAccount, GradeNumber, TestPackage } from '../types';
 import { generateTopicTests } from './ExamsHub';
-import { getQuestionOptions, isOptionCorrect } from '../utils/examGrading';
+import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect } from '../utils/examGrading';
 import { MathRenderer } from './MathRenderer';
 import { ProgressRing } from './ProgressRing';
 import {
@@ -85,12 +85,13 @@ function reviewAttempt(examId: string, answers: Record<string, string>): Questio
   return found.pkg.questions.map((q, i) => {
     const options = getQuestionOptions(q);
     const chosen = answers[q.id] || '';
-    const correct = options.find((o) => isOptionCorrect(o.letter, q, options));
+    const correct = correctOption(q, options);
+    const open = isOpenQuestion(q);
     return {
       number: q.number || i + 1,
       question: q.question,
-      chosen: chosen ? `${chosen}${options.find((o) => o.letter === chosen) ? ') ' + options.find((o) => o.letter === chosen)!.text : ''}` : 'Хариулаагүй',
-      correct: correct ? `${correct.letter}) ${correct.text}` : q.answer || '—',
+      chosen: open ? chosen || 'Хариулаагүй' : chosen ? `${chosen}${options.find((o) => o.letter === chosen) ? ') ' + options.find((o) => o.letter === chosen)!.text : ''}` : 'Хариулаагүй',
+      correct: correct ? (open ? correct.text : `${correct.letter}) ${correct.text}`) : q.answer || '—',
       ok: isOptionCorrect(chosen, q, options),
     };
   });

@@ -59,7 +59,41 @@ export function numericAnswerLetter(answer: string, options: { letter: string; t
   return match ? match.letter : null;
 }
 
+/** Open questions (no choices written by the teacher) are answered by typing the answer. */
+export function isOpenQuestion(q: TestQuestion): boolean {
+  return hasMadeUpOptions(q);
+}
+
+// A typed answer matches the expected one ignoring case, spaces, $ and a final period; numbers
+// match by value, and a bare number matches an answer with just that one number ("x = 4", "Үлдэгдэл 1")
+export function sameAnswer(expected: string, typed: string): boolean {
+  const norm = (s: string) => s.toLowerCase().replace(/\$|\\[,;! ]|\s/g, '').replace(/\.$/, '');
+  const x = norm(expected);
+  const y = norm(typed);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  const ny = Number(y.replace(',', '.'));
+  if (isNaN(ny)) return false;
+  const numbers = x.match(/-?\d+(?:[.,]\d+)?/g);
+  return numbers?.length === 1 && Number(numbers[0].replace(',', '.')) === ny && !/[\\^/]/.test(x);
+}
+
 export function isOptionCorrect(userAns: string, q: TestQuestion, options: { letter: string; text: string }[]): boolean {
+  if (!userAns) return false;
+  if (isOpenQuestion(q)) {
+    // A typed answer counts only through the option showing that answer, never as a bare letter
+    const match = options.find((o) => sameAnswer(o.text, userAns));
+    return !!match && isChoiceCorrect(match.letter, q, options);
+  }
+  return isChoiceCorrect(userAns, q, options);
+}
+
+/** The correct option (for open questions, the one holding the answer). */
+export function correctOption(q: TestQuestion, options: { letter: string; text: string }[]) {
+  return options.find((o) => isChoiceCorrect(o.letter, q, options));
+}
+
+function isChoiceCorrect(userAns: string, q: TestQuestion, options: { letter: string; text: string }[]): boolean {
   if (!userAns) return false;
 
   // Answer withheld from this user: compare against the hashed answer key

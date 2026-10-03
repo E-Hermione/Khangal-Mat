@@ -12,7 +12,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { backdropClose } from '../utils/backdrop';
-import { getQuestionOptions, isOptionCorrect } from '../utils/examGrading';
+import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect } from '../utils/examGrading';
 import { visibilityService } from '../services/visibilityService';
 import { learningPlan } from '../services/learningPlan';
 import { ProgressRing } from './ProgressRing';
@@ -776,7 +776,25 @@ function TakeExamModal({
                 <MathRenderer content={q.question} />
               </div>
 
-              {/* Multiple Choice Test Options (A, B, C, D) */}
+              {isOpenQuestion(q) ? (
+                // No choices written for this question: the student types the answer
+                <div className="space-y-1.5 pt-1">
+                  <input
+                    type="text"
+                    value={answers[q.id] || ''}
+                    onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
+                    placeholder="Хариултаа энд бичнэ үү"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    data-testid="open-answer"
+                  />
+                  {(answers[q.id] || '').includes('\\') && (
+                    <div className="text-xs text-stone-600 px-1">
+                      <MathRenderer content={`$${answers[q.id]}$`} />
+                    </div>
+                  )}
+                  <p className="text-[11px] text-stone-500 px-1">Зөвхөн эцсийн хариугаа бичнэ. Бутархайг 3/4 эсвэл \frac{3}{4} гэж бичнэ.</p>
+                </div>
+              ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                 {getQuestionOptions(q).map((opt) => {
                   const isSelected = (answers[q.id] || '').trim().toUpperCase() === opt.letter;
@@ -808,6 +826,7 @@ function TakeExamModal({
                   );
                 })}
               </div>
+              )}
             </div>
           ))}
         </div>
@@ -881,6 +900,11 @@ function ViewSolutionModal({
               </div>
 
               {/* Test Options (A, B, C, D) with Correct Answer Highlighted */}
+              {isOpenQuestion(q) ? (
+                <div className="p-2.5 rounded-xl border bg-emerald-50 border-emerald-400 text-emerald-950 text-xs md:text-sm font-bold">
+                  ✓ Зөв хариу: <MathRenderer content={correctOption(q, getQuestionOptions(q))?.text || q.answer || '—'} />
+                </div>
+              ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                 {getQuestionOptions(q).map((opt) => {
                   const isCorrect = isOptionCorrect(opt.letter, q, getQuestionOptions(q));
@@ -915,6 +939,7 @@ function ViewSolutionModal({
                   );
                 })}
               </div>
+              )}
 
               {/* Solution Box */}
               <div className="p-3.5 bg-white border border-rose-200 rounded-lg space-y-1.5 text-xs md:text-sm">
@@ -1090,6 +1115,18 @@ function ViewErrorCheckModal({
                 </div>
 
                 {/* Display 4 Options with user choice & correct choice highlighted */}
+                {isOpenQuestion(q) ? (
+                  <div className="space-y-1.5 text-xs md:text-sm">
+                    <div className={`p-2.5 rounded-xl border ${isCorrect ? 'bg-emerald-50 border-emerald-400' : 'bg-rose-50 border-rose-400'}`}>
+                      Таны хариулт: <b>{userAns || 'Хариулаагүй'}</b>
+                    </div>
+                    {!isCorrect && (
+                      <div className="p-2.5 rounded-xl border bg-emerald-50 border-emerald-400 font-bold text-emerald-950">
+                        ✓ Зөв хариу: <MathRenderer content={correctOption(q, opts)?.text || q.answer || '—'} />
+                      </div>
+                    )}
+                  </div>
+                ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   {opts.map((opt) => {
                     const isUserChoice = userAns.toUpperCase() === opt.letter;
@@ -1133,6 +1170,7 @@ function ViewErrorCheckModal({
                     );
                   })}
                 </div>
+                )}
 
                 {q.solution && (
                   <div className="p-3 bg-white/80 border border-stone-200 rounded-lg text-xs text-stone-700 leading-relaxed">
