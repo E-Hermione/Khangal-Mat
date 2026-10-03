@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Check, CreditCard, X } from 'lucide-react';
+import { Check, CreditCard, Plus, Trash2, X } from 'lucide-react';
 import {
   approvePayment,
   EMPTY_PAYMENT_SETTINGS,
@@ -10,8 +10,6 @@ import {
   savePaymentSettings,
   subscribeAllPaymentRequests,
   subscribePaymentSettings,
-  paymentOptions,
-  PAYMENT_MONTHS,
 } from '../services/payments';
 
 const input =
@@ -137,9 +135,11 @@ export const PaymentSettingsForm: React.FC<{ onSaved?: () => void }> = ({ onSave
   const edit = (patch: Partial<PaymentSettings>) => setDraft({ ...form, ...patch });
 
   const handleSave = async () => {
+    const options = form.options
+      .filter((o) => o.months > 0 && o.price > 0)
+      .sort((a, b) => a.months - b.months);
     try {
-      // Periods are priced from the monthly price; the old per-period list is no longer used
-      await savePaymentSettings({ ...form, monthlyPrice: form.monthlyPrice || 0, options: [] });
+      await savePaymentSettings({ ...form, options });
       setDraft(null);
       setSaveMsg('Хадгалагдлаа.');
       onSaved?.();
@@ -161,34 +161,47 @@ export const PaymentSettingsForm: React.FC<{ onSaved?: () => void }> = ({ onSave
           <input className={input} placeholder="Дансны дугаар" value={form.accountNumber} onChange={(e) => edit({ accountNumber: e.target.value })} />
           <input className={input} placeholder="Хүлээн авагчийн нэр" value={form.accountName} onChange={(e) => edit({ accountName: e.target.value })} />
         </div>
-        <div className="space-y-2">
-          <label className="flex items-center gap-2">
-            <span className="text-xs font-bold text-stone-600">1 сарын үнэ</span>
-            <input
-              type="number"
-              min={0}
-              className={`${input} w-40`}
-              placeholder="жишээ: 30000"
-              value={form.monthlyPrice || ''}
-              onChange={(e) => edit({ monthlyPrice: Number(e.target.value) })}
-              data-testid="monthly-price"
-            />
-            <span className="text-xs text-stone-500">₮</span>
-          </label>
-          {(form.monthlyPrice || 0) > 0 ? (
-            <div className="grid grid-cols-5 gap-1.5 text-center" data-testid="price-preview">
-              {paymentOptions({ ...form, options: [] }).map((o) => (
-                <div key={o.months} className="p-2 rounded-lg bg-stone-50 border border-stone-200">
-                  <div className="text-xs font-black text-stone-900">{o.months} сар</div>
-                  <div className="text-[11px] text-stone-600">{formatMoney(o.price)}</div>
-                </div>
-              ))}
+        <div className="space-y-1.5">
+          <div className="text-xs font-bold text-stone-600">Сунгах хугацаа ба үнэ</div>
+          {form.options.map((o, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                className={`${input} w-24`}
+                value={o.months || ''}
+                onChange={(e) =>
+                  edit({ options: form.options.map((x, j) => (j === i ? { ...x, months: Number(e.target.value) } : x)) })
+                }
+              />
+              <span className="text-xs text-stone-500">сар</span>
+              <input
+                type="number"
+                min={0}
+                className={`${input} w-36`}
+                value={o.price || ''}
+                onChange={(e) =>
+                  edit({ options: form.options.map((x, j) => (j === i ? { ...x, price: Number(e.target.value) } : x)) })
+                }
+              />
+              <span className="text-xs text-stone-500">₮</span>
+              <button
+                type="button"
+                onClick={() => edit({ options: form.options.filter((_, j) => j !== i) })}
+                className="p-1.5 rounded-md text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                aria-label="Устгах"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
-          ) : (
-            <div className="text-[11px] text-stone-500">
-              Сурагч {PAYMENT_MONTHS.join(', ')} сараас сонгоно. Үнийг 1 сарын үнээс автоматаар бодно.
-            </div>
-          )}
+          ))}
+          <button
+            type="button"
+            onClick={() => edit({ options: [...form.options, { months: 0, price: 0 }] })}
+            className="text-xs font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" /> Хугацаа нэмэх
+          </button>
         </div>
         <div className="flex items-center gap-3">
           <button

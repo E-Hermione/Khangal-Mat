@@ -13,8 +13,6 @@ import { HomeContent, saveHomeContent, useHomeContent } from '../services/homeCo
 import {
   EMPTY_PAYMENT_SETTINGS,
   formatMoney,
-  PAYMENT_MONTHS,
-  paymentOptions,
   PaymentSettings,
   subscribePaymentSettings,
 } from '../services/payments';
@@ -418,9 +416,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               {payment.accountNumber ? (
                 <>
                   {payment.bankName} {payment.accountNumber} {payment.accountName && `(${payment.accountName})`} •{' '}
-                  {payment.monthlyPrice
-                    ? `1 сар ${formatMoney(payment.monthlyPrice)} (${PAYMENT_MONTHS.join(', ')} сараар)`
-                    : paymentOptions(payment).map((o) => `${o.months} сар ${formatMoney(o.price)}`).join(', ') || 'үнэ оруулаагүй'}
+                  {payment.options.map((o) => `${o.months} сар ${formatMoney(o.price)}`).join(', ') || 'үнэ оруулаагүй'}
                 </>
               ) : (
                 'Төлбөрийн данс оруулаагүй байна.'

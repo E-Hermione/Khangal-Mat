@@ -19,24 +19,10 @@ export interface PaymentSettings {
   bankName: string;
   accountNumber: string;
   accountName: string;
-  // Price of one month; each period costs months × this
-  monthlyPrice?: number;
-  // Older settings: periods priced one by one
   options: PaymentOption[];
 }
 
 export const EMPTY_PAYMENT_SETTINGS: PaymentSettings = { bankName: '', accountNumber: '', accountName: '', options: [] };
-
-// Periods a student can pay for
-export const PAYMENT_MONTHS = [1, 2, 3, 6, 12];
-
-/** The periods on offer and what each costs. */
-export function paymentOptions(s: PaymentSettings): PaymentOption[] {
-  if (s.monthlyPrice && s.monthlyPrice > 0) {
-    return PAYMENT_MONTHS.map((months) => ({ months, price: months * s.monthlyPrice! }));
-  }
-  return s.options || [];
-}
 
 export interface PaymentRequest {
   id: string;
