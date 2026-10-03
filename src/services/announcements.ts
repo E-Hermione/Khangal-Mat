@@ -23,13 +23,19 @@ export interface Announcement {
   title: string;
   body: string;
   createdAt: number;
+  // Shown until this moment (end of the chosen day); null means no end
+  expiresAt?: number | null;
   audience: 'all' | 'group';
   // Admin-facing description of who it went to, e.g. "8-р анги"
   targetLabel: string;
   recipientUids: string[];
 }
 
-export type InboxItem = Pick<Announcement, 'id' | 'title' | 'body' | 'createdAt'>;
+export type InboxItem = Pick<Announcement, 'id' | 'title' | 'body' | 'createdAt' | 'expiresAt'>;
+
+export function isExpired(a: { expiresAt?: number | null }): boolean {
+  return typeof a.expiresAt === 'number' && Date.now() > a.expiresAt;
+}
 
 const BATCH_LIMIT = 450;
 
@@ -43,17 +49,27 @@ async function commitInChunks(ops: ((b: ReturnType<typeof writeBatch>) => void)[
 
 /** Admin: sends to everyone (recipientUids empty) or to the given accounts. */
 export async function sendAnnouncement(
-  input: Pick<Announcement, 'title' | 'body' | 'audience' | 'targetLabel' | 'recipientUids'>
+  input: Pick<Announcement, 'title' | 'body' | 'audience' | 'targetLabel' | 'recipientUids' | 'expiresAt'>
 ): Promise<void> {
   const db = getDb();
   const ref = doc(collection(db, 'announcements'));
   const createdAt = Date.now();
   const recipientUids = input.audience === 'all' ? [] : input.recipientUids;
-  const ann: Announcement = { ...input, id: ref.id, createdAt, recipientUids };
-  const item: InboxItem = { id: ref.id, title: input.title, body: input.body, createdAt };
+  const expiresAt = input.expiresAt ?? null;
+  const ann: Announcement = { ...input, id: ref.id, createdAt, recipientUids, expiresAt };
+  const item: InboxItem = { id: ref.id, title: input.title, body: input.body, createdAt, expiresAt };
   await commitInChunks([
     (b) => b.set(ref, ann),
     ...recipientUids.map((uid) => (b: ReturnType<typeof writeBatch>) => b.set(doc(db, 'users', uid, 'inbox', ref.id), item)),
+  ]);
+}
+
+/** Admin: changes until when it is shown (also on the recipients' copies). */
+export async function updateAnnouncementExpiry(ann: Announcement, expiresAt: number | null): Promise<void> {
+  const db = getDb();
+  await commitInChunks([
+    (b) => b.update(doc(db, 'announcements', ann.id), { expiresAt }),
+    ...ann.recipientUids.map((uid) => (b: ReturnType<typeof writeBatch>) => b.update(doc(db, 'users', uid, 'inbox', ann.id), { expiresAt })),
   ]);
 }
 
@@ -97,12 +113,20 @@ export function subscribeMyAnnouncements(
   const emit = () => {
     const byId = new Map<string, InboxItem>();
     [...common, ...personal].forEach((a) => byId.set(a.id, a));
-    onChange([...byId.values()].sort((a, b) => b.createdAt - a.createdAt), readIds);
+    // Past their end date they are no longer shown
+    const live = [...byId.values()].filter((a) => !isExpired(a));
+    onChange(live.sort((a, b) => b.createdAt - a.createdAt), readIds);
   };
   const onError = (err: unknown) => console.error('Announcements failed to load', err);
   const toItem = (d: { id: string; data: () => Record<string, unknown> }): InboxItem => {
     const x = d.data();
-    return { id: d.id, title: String(x.title || ''), body: String(x.body || ''), createdAt: Number(x.createdAt) || 0 };
+    return {
+      id: d.id,
+      title: String(x.title || ''),
+      body: String(x.body || ''),
+      createdAt: Number(x.createdAt) || 0,
+      expiresAt: typeof x.expiresAt === 'number' ? x.expiresAt : null,
+    };
   };
 
   const unsubs = [

@@ -4,6 +4,8 @@ import { cloud } from '../services/cloud';
 import {
   Announcement,
   deleteAnnouncement,
+  isExpired,
+  updateAnnouncementExpiry,
   loadAnnouncementsWithReads,
   sendAnnouncement,
 } from '../services/announcements';
@@ -13,6 +15,18 @@ import { GradeNumber, UserProfile } from '../types';
 type Audience = 'all' | 'grades' | 'users';
 
 const GRADES: GradeNumber[] = [6, 7, 8, 9, 10, 11, 12];
+
+// yyyy-mm-dd for date inputs, and the end of such a day
+function dateInput(ms: number): string {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function dayEnd(value: string): number | null {
+  if (!value) return null;
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(y, m - 1, d, 23, 59, 59, 999).getTime();
+}
 
 function formatDate(ms: number): string {
   return new Date(ms).toLocaleString();
@@ -26,6 +40,8 @@ export const AnnouncementsTab: React.FC = () => {
   const [audience, setAudience] = useState<Audience>('all');
   const [grades, setGrades] = useState<GradeNumber[]>([]);
   const [idsInput, setIdsInput] = useState('');
+  // Last day it is shown ('' = no end)
+  const [untilDate, setUntilDate] = useState('');
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const [sent, setSent] = useState<(Announcement & { readCount: number })[] | null>(null);
@@ -90,16 +106,28 @@ export const AnnouncementsTab: React.FC = () => {
         audience: audience === 'all' ? 'all' : 'group',
         targetLabel: target.label,
         recipientUids: target.uids,
+        expiresAt: dayEnd(untilDate),
       });
       setStatus({ ok: true, text: `Зарлал илгээгдлээ: ${target.label} (${target.count} хэрэглэгч)` });
       setTitle('');
       setBody('');
+      setUntilDate('');
       reload();
     } catch (err) {
       console.error(err);
       setStatus({ ok: false, text: 'Илгээж чадсангүй. Дахин оролдоно уу.' });
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleExpiry = async (ann: Announcement, value: string) => {
+    try {
+      await updateAnnouncementExpiry(ann, dayEnd(value));
+      reload();
+    } catch (err) {
+      console.error(err);
+      alert('Хадгалж чадсангүй.');
     }
   };
 
@@ -142,6 +170,41 @@ export const AnnouncementsTab: React.FC = () => {
           maxLength={4000}
           className="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
         />
+
+        <div className="space-y-1.5">
+          <div className="text-xs font-bold text-stone-600">Хэдийг хүртэл харуулах вэ?</div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button type="button" className={chip(!untilDate)} onClick={() => setUntilDate('')}>
+              Хугацаагүй
+            </button>
+            {[
+              { label: '1 долоо хоног', days: 7 },
+              { label: '1 сар', days: 30 },
+            ].map((o) => (
+              <button
+                key={o.days}
+                type="button"
+                className={chip(untilDate === dateInput(Date.now() + o.days * 86400000))}
+                onClick={() => setUntilDate(dateInput(Date.now() + o.days * 86400000))}
+              >
+                {o.label}
+              </button>
+            ))}
+            <input
+              type="date"
+              value={untilDate}
+              min={dateInput(Date.now())}
+              onChange={(e) => setUntilDate(e.target.value)}
+              className="px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400"
+              data-testid="announce-until"
+            />
+          </div>
+          <div className="text-[11px] text-stone-500">
+            {untilDate
+              ? `${new Date(dayEnd(untilDate)!).toLocaleDateString()} хүртэл харагдаад автоматаар алга болно.`
+              : 'Устгах хүртэл харагдана.'}
+          </div>
+        </div>
 
         <div className="space-y-2">
           <div className="text-xs font-bold text-stone-600">Хэнд илгээх вэ?</div>
@@ -228,6 +291,30 @@ export const AnnouncementsTab: React.FC = () => {
                       <div className="text-sm font-bold text-stone-900">{a.title}</div>
                       <div className="text-[11px] text-stone-500">
                         {formatDate(a.createdAt)} • {a.targetLabel} • {Math.min(a.readCount, total)}/{total} уншсан
+                      </div>
+                      <div className="text-[11px] mt-1 flex items-center gap-1.5 flex-wrap">
+                        {isExpired(a) ? (
+                          <span className="px-1.5 py-0.5 rounded bg-stone-200 text-stone-600 font-bold">Хугацаа дууссан</span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Харагдаж байна</span>
+                        )}
+                        <span className="text-stone-500">хүртэл:</span>
+                        <input
+                          type="date"
+                          value={typeof a.expiresAt === 'number' ? dateInput(a.expiresAt) : ''}
+                          onChange={(e) => handleExpiry(a, e.target.value)}
+                          className="px-1.5 py-0.5 rounded border border-stone-300 bg-white text-[11px]"
+                          title="Харуулах эцсийн өдөр (хоосон бол хугацаагүй)"
+                        />
+                        {typeof a.expiresAt === 'number' && (
+                          <button
+                            type="button"
+                            onClick={() => handleExpiry(a, '')}
+                            className="text-stone-500 hover:text-stone-800 underline cursor-pointer"
+                          >
+                            хугацаагүй болгох
+                          </button>
+                        )}
                       </div>
                     </div>
                     <button
