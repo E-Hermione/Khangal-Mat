@@ -406,19 +406,20 @@ const PaymentDialog: React.FC<{
                   <Row label="Дансны дугаар" value={settings.accountNumber} k="acc" />
                   {settings.accountName && <Row label="Хүлээн авагч" value={settings.accountName} k="name" />}
                 </div>
-                <div className="rounded-xl bg-amber-50 border-[3px] border-amber-400 p-3.5">
-                  <div className="text-sm text-amber-900 font-black mb-1.5">Гүйлгээний утга дээрээ өөрийн ID болон утасны дугаараа бичнэ үү.</div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xl tracking-wide text-stone-950 select-all" data-testid="transfer-note">
+                <div className="rounded-xl bg-amber-50 border-2 border-amber-300 p-3.5 space-y-2">
+                  <div className="text-xs text-amber-900">Гүйлгээний утга дээрээ өөрийн ID болон утасны дугаараа бичнэ үү.</div>
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-white border border-amber-200 px-3 py-2">
+                    <span className="text-lg tracking-wide text-stone-900 select-all" data-testid="transfer-note">
                       {note}
                     </span>
                     <button
                       type="button"
                       onClick={() => copy('note', note)}
-                      className="p-1 rounded hover:bg-amber-100 text-amber-800 cursor-pointer"
+                      className="px-2 py-1 rounded-md text-xs text-amber-800 hover:bg-amber-50 flex items-center gap-1 cursor-pointer"
                       aria-label="Хуулах"
                     >
                       {copied === 'note' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                      {copied === 'note' ? 'Хуулсан' : 'Хуулах'}
                     </button>
                   </div>
                 </div>
@@ -431,9 +432,6 @@ const PaymentDialog: React.FC<{
                 >
                   {sending ? 'Илгээж байна…' : 'Шилжүүлсэн'}
                 </button>
-                <p className="text-[11px] text-stone-500 text-center">
-                  Админ шилжүүлгийг шалгаж баталгаажуулмагц хичээлүүд нээгдэнэ.
-                </p>
               </div>
             )}
           </div>
