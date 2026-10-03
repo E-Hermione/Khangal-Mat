@@ -211,7 +211,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
   };
   const examsAllowed =
     isAdmin ||
-    learningPlan.hasPlan() ||
+    learningPlan.isGated() ||
     (userPermissionsService.isGradeAllowed(userId, selectedGrade, false) &&
       userPermissionsService.isSectionAllowed(userId, 'exams', false));
 

@@ -43,10 +43,10 @@ interface SidebarProps {
   pendingRequestsCount?: number;
   onOpenAccessRequests?: () => void;
   isAdmin: boolean;
-  activeView?: 'topics' | 'exams' | 'plan';
-  onSelectView?: (view: 'topics' | 'exams' | 'plan') => void;
-  // Students with a learning plan get a third tab for it
-  showPlan?: boolean;
+  activeView?: 'home' | 'topics' | 'exams' | 'plan' | 'placement';
+  onSelectView?: (view: 'home' | 'topics' | 'exams' | 'plan' | 'placement') => void;
+  // Students get a home tab first
+  showHome?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -65,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isAdmin,
   activeView = 'topics',
   onSelectView,
-  showPlan = false,
+  showHome = false,
 }) => {
   useLearningPlanVersion();
   const [, setTrigger] = useState(0);
@@ -191,23 +191,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {onSelectView && (
           <div className="p-3 pb-0 shrink-0">
             <div
-              className={`grid ${showPlan ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 bg-stone-950 p-1 rounded-xl border border-stone-800`}
+              className={`grid ${showHome ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 bg-stone-950 p-1 rounded-xl border border-stone-800`}
             >
-              {showPlan && (
+              {showHome && (
                 <button
                   type="button"
                   onClick={() => {
-                    onSelectView('plan');
+                    onSelectView('home');
                     onCloseMobile();
                   }}
                   className={`py-2 px-1 rounded-lg text-[11px] font-bold flex items-center justify-center transition-all cursor-pointer ${
-                    activeView === 'plan'
+                    activeView === 'home' || activeView === 'plan' || activeView === 'placement'
                       ? 'bg-amber-500 text-stone-950 shadow-xs'
                       : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
                   }`}
                 >
                   
-                  <span>Төлөвлөгөө</span>
+                  <span>Нүүр</span>
                 </button>
               )}
               <button
@@ -216,13 +216,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onSelectView('topics');
                   onCloseMobile();
                 }}
-                className={`py-2 ${showPlan ? 'px-1 text-[11px]' : 'px-2.5 text-xs space-x-1.5'} rounded-lg font-bold flex items-center justify-center transition-all cursor-pointer ${
+                className={`py-2 ${showHome ? 'px-1 text-[11px]' : 'px-2.5 text-xs space-x-1.5'} rounded-lg font-bold flex items-center justify-center transition-all cursor-pointer ${
                   activeView === 'topics'
                     ? 'bg-amber-500 text-stone-950 shadow-xs'
                     : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
                 }`}
               >
-                {!showPlan && <BookOpen className="w-3.5 h-3.5" />}
+                {!showHome && <BookOpen className="w-3.5 h-3.5" />}
                 <span>Хичээлүүд</span>
               </button>
               <button
@@ -231,13 +231,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onSelectView('exams');
                   onCloseMobile();
                 }}
-                className={`py-2 ${showPlan ? 'px-1 text-[11px]' : 'px-2.5 text-xs space-x-1.5'} rounded-lg font-bold flex items-center justify-center transition-all cursor-pointer ${
+                className={`py-2 ${showHome ? 'px-1 text-[11px]' : 'px-2.5 text-xs space-x-1.5'} rounded-lg font-bold flex items-center justify-center transition-all cursor-pointer ${
                   activeView === 'exams'
                     ? 'bg-amber-500 text-stone-950 shadow-xs'
                     : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
                 }`}
               >
-                {!showPlan && <Award className="w-3.5 h-3.5" />}
+                {!showHome && <Award className="w-3.5 h-3.5" />}
                 <span>Шалгалтууд</span>
               </button>
             </div>
@@ -264,7 +264,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               const isSelected = grade === selectedGrade;
               // Plan topics can be in any grade; each topic is gated on its own
               const isAllowed =
-                (!isAdmin && learningPlan.hasPlan()) ||
+                (!isAdmin && learningPlan.isGated()) ||
                 userPermissionsService.isGradeAllowed(currentUser?.userId, grade, isAdmin);
               return (
                 <button

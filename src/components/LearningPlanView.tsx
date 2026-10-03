@@ -9,8 +9,6 @@ import {
   useLearningPlanVersion,
 } from '../services/learningPlan';
 import { ProgressRing } from './ProgressRing';
-
-const TIER_NAMES = ['Анхан', 'Дунд', 'Ахисан'];
 import {
   EMPTY_PAYMENT_SETTINGS,
   formatMoney,
@@ -22,6 +20,8 @@ import {
   transferNote,
 } from '../services/payments';
 
+const TIER_NAMES = ['Анхан', 'Дунд', 'Ахисан'];
+
 interface LearningPlanViewProps {
   uid: string;
   currentUser: AuthUser;
@@ -32,21 +32,11 @@ interface LearningPlanViewProps {
 /** The student's own plan: topics from the placement test, payment and progress. */
 export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, currentUser, onOpenTopic, onOpenExam }) => {
   useLearningPlanVersion();
-  const [settings, setSettings] = useState<PaymentSettings>(EMPTY_PAYMENT_SETTINGS);
-  const [requests, setRequests] = useState<PaymentRequest[]>([]);
-  const [payOpen, setPayOpen] = useState(false);
-
-  useEffect(() => subscribePaymentSettings(setSettings), []);
-  useEffect(() => subscribeMyPaymentRequests(uid, setRequests), [uid]);
-
   const result = learningPlan.state.result;
   if (!result) return null;
 
   const attempts = learningPlan.state.attempts;
   const paid = learningPlan.isPaid();
-  const paidUntil = learningPlan.paidUntil();
-  const pending = requests.find((r) => r.status === 'pending');
-  const lastRejected = requests[0]?.status === 'rejected' ? requests[0] : null;
   const doneCount = result.plan.filter((p) => learningPlan.isDone(p.topicId)).length;
   const total = result.plan.length;
   const overall = total ? Math.round(result.plan.reduce((sum, p) => sum + learningPlan.progress(p.topicId), 0) / total) : 0;
@@ -67,42 +57,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, current
         </p>
       </div>
 
-      {/* Payment */}
-      <div
-        className={`p-4 rounded-xl border flex flex-wrap items-center justify-between gap-3 ${
-          paid ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'
-        }`}
-        data-testid="plan-payment"
-      >
-        <div className="text-sm">
-          {paid ? (
-            <span className="text-emerald-900">
-              <b>Төлбөр төлөгдсөн.</b> Хичээлүүд {new Date(paidUntil!).toLocaleDateString()} хүртэл нээлттэй.
-            </span>
-          ) : pending ? (
-            <span className="text-amber-900">
-              <b>Төлбөрийг шалгаж байна</b> ({pending.months} сар, {formatMoney(pending.amount)}). Админ баталгаажуулмагц
-              хичээлүүд нээгдэнэ.
-            </span>
-          ) : (
-            <span className="text-amber-900">
-              {paidUntil ? <b>Төлбөрийн хугацаа дууссан. </b> : null}
-              Төлбөр төлсний дараа төлөвлөгөөний хичээлүүд нээгдэнэ.
-              {lastRejected && <span className="block text-red-700 mt-0.5">Сүүлийн төлбөр баталгаажаагүй. Админд хандана уу.</span>}
-            </span>
-          )}
-        </div>
-        {!pending && (
-          <button
-            type="button"
-            onClick={() => setPayOpen(true)}
-            className="px-4 py-2 rounded-lg bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-          >
-            <CreditCard className="w-4 h-4 text-amber-400" />
-            {paid ? 'Хугацаа сунгах' : 'Төлбөр төлөх'}
-          </button>
-        )}
-      </div>
+      <PaymentStatusCard uid={uid} currentUser={currentUser} />
 
       {/* Progress */}
       {total > 0 && (
@@ -196,15 +151,64 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, current
         </div>
       )}
 
-      {payOpen && (
-        <PaymentDialog
-          uid={uid}
-          currentUser={currentUser}
-          settings={settings}
-          onClose={() => setPayOpen(false)}
-        />
-      )}
     </div>
+  );
+};
+
+/** The student's payment status with a button to pay or extend. */
+export const PaymentStatusCard: React.FC<{ uid: string; currentUser: AuthUser }> = ({ uid, currentUser }) => {
+  useLearningPlanVersion();
+  const [settings, setSettings] = useState<PaymentSettings>(EMPTY_PAYMENT_SETTINGS);
+  const [requests, setRequests] = useState<PaymentRequest[]>([]);
+  const [payOpen, setPayOpen] = useState(false);
+
+  useEffect(() => subscribePaymentSettings(setSettings), []);
+  useEffect(() => subscribeMyPaymentRequests(uid, setRequests), [uid]);
+
+  const paid = learningPlan.isPaid();
+  const paidUntil = learningPlan.paidUntil();
+  const pending = requests.find((r) => r.status === 'pending');
+  const lastRejected = requests[0]?.status === 'rejected' ? requests[0] : null;
+
+  return (
+    <>
+      <div
+        className={`p-4 rounded-xl border flex flex-wrap items-center justify-between gap-3 ${
+          paid ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'
+        }`}
+        data-testid="plan-payment"
+      >
+        <div className="text-sm">
+          {paid ? (
+            <span className="text-emerald-900">
+              <b>Төлбөр төлөгдсөн.</b> Хичээлүүд {new Date(paidUntil!).toLocaleDateString()} хүртэл нээлттэй.
+            </span>
+          ) : pending ? (
+            <span className="text-amber-900">
+              <b>Төлбөрийг шалгаж байна</b> ({pending.months} сар, {formatMoney(pending.amount)}). Админ баталгаажуулмагц
+              хичээлүүд нээгдэнэ.
+            </span>
+          ) : (
+            <span className="text-amber-900">
+              {paidUntil ? <b>Төлбөрийн хугацаа дууссан. </b> : null}
+              Төлбөр төлсний дараа төлөвлөгөөний хичээлүүд нээгдэнэ.
+              {lastRejected && <span className="block text-red-700 mt-0.5">Сүүлийн төлбөр баталгаажаагүй. Админд хандана уу.</span>}
+            </span>
+          )}
+        </div>
+        {!pending && (
+          <button
+            type="button"
+            onClick={() => setPayOpen(true)}
+            className="px-4 py-2 rounded-lg bg-stone-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+          >
+            <CreditCard className="w-4 h-4 text-amber-400" />
+            {paid ? 'Хугацаа сунгах' : 'Төлбөр төлөх'}
+          </button>
+        )}
+      </div>
+      {payOpen && <PaymentDialog uid={uid} currentUser={currentUser} settings={settings} onClose={() => setPayOpen(false)} />}
+    </>
   );
 };
 

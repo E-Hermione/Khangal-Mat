@@ -348,10 +348,16 @@ export const TopicPage: React.FC<TopicPageProps> = ({
             <Lock className="w-7 h-7" />
           </div>
           <h2 className="text-lg font-black text-stone-900">
-            {planGate === 'unpaid' ? 'Төлбөр төлсний дараа нээгдэнэ' : 'Энэ сэдэв таны төлөвлөгөөнд ороогүй'}
+            {planGate === 'needs-placement'
+              ? 'Эхлээд түвшин тогтоох сорил өгнө үү'
+              : planGate === 'unpaid'
+              ? 'Төлбөр төлсний дараа нээгдэнэ'
+              : 'Энэ сэдэв таны төлөвлөгөөнд ороогүй'}
           </h2>
           <p className="text-sm text-stone-600">
-            {planGate === 'unpaid'
+            {planGate === 'needs-placement'
+              ? 'Сорилын дүнгээр танд зориулсан сургалтын төлөвлөгөө гарч, хичээлүүд тэр дагуу нээгдэнэ.'
+              : planGate === 'unpaid'
               ? 'Энэ сэдэв таны сургалтын төлөвлөгөөнд байгаа. Төлбөрөө төлөөд үзээрэй.'
               : 'Түвшин тогтоох шалгалтын дүнгээр гарсан төлөвлөгөөнийхөө сэдвүүдийг үзнэ үү.'}
           </p>
@@ -361,7 +367,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
               onClick={onOpenPlan}
               className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-sm font-bold cursor-pointer"
             >
-              Миний төлөвлөгөө
+              Нүүр хуудас руу очих
             </button>
           )}
         </div>

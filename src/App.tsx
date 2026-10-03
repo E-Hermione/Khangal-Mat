@@ -15,6 +15,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { ExamsHub } from './components/ExamsHub';
 import { PlacementTestView } from './components/PlacementTestView';
 import { LearningPlanView } from './components/LearningPlanView';
+import { StudentHome } from './components/StudentHome';
 import { learningPlan, startLearningPlan, stopLearningPlan, topicMeta, useLearningPlanVersion } from './services/learningPlan';
 import { AuthUser } from './types';
 import { clearStoredAuth, saveStoredAuth } from './utils/deviceManager';
@@ -53,7 +54,7 @@ export default function App() {
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [previewAsUser, setPreviewAsUser] = useState<boolean>(false);
-  const [activeView, setActiveView] = useState<'topics' | 'exams' | 'plan'>('topics');
+  const [activeView, setActiveView] = useState<'home' | 'topics' | 'exams' | 'plan' | 'placement'>('topics');
   useLearningPlanVersion();
   const [topics, setTopics] = useState<TopicPackage[]>([]);
   const [selectedGrade, setSelectedGrade] = useState<GradeNumber>(6);
@@ -137,6 +138,7 @@ export default function App() {
       // Students follow a placement test and a personal learning plan
       if (!session.isAdmin && session.profile?.accountType === 'student') {
         startLearningPlan(fbUser.uid, session.user.userId!, session.profile.grades?.[0] ?? null);
+        setActiveView('home');
       } else {
         stopLearningPlan();
       }
@@ -206,9 +208,16 @@ export default function App() {
 
   // A student with a learning plan starts on it
   const hasPlan = learningPlan.hasPlan();
+  const isStudent = currentUser?.role !== 'admin' && !!learningPlan.state.uid;
+  // Right after finishing the placement test, show the plan it produced
+  const hadNoResult = React.useRef(false);
   useEffect(() => {
-    if (hasPlan) setActiveView('plan');
-  }, [hasPlan]);
+    if (learningPlan.state.result === null) hadNoResult.current = true;
+    else if (hasPlan && hadNoResult.current) {
+      hadNoResult.current = false;
+      setActiveView('plan');
+    }
+  }, [hasPlan, learningPlan.state.result]);
 
   // Opens a topic from the plan in its grade
   const openPlanTopic = (topicId: string, view: 'topics' | 'exams') => {
@@ -447,7 +456,11 @@ export default function App() {
               {mobileSidebarOpen ? <X className="w-5 h-5 text-stone-900" /> : <Menu className="w-5 h-5" />}
             </button>
 
-            <div className="flex items-center space-x-2">
+            <div
+              className={`flex items-center space-x-2 ${isStudent ? 'cursor-pointer' : ''}`}
+              onClick={isStudent ? () => setActiveView('home') : undefined}
+              title={isStudent ? 'Нүүр хуудас' : undefined}
+            >
               <span className="w-7 h-7 rounded-md bg-stone-900 text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
                 ∑
               </span>
@@ -578,7 +591,7 @@ export default function App() {
           isAdmin={currentUser?.role === 'admin' && !previewAsUser}
           activeView={activeView}
           onSelectView={setActiveView}
-          showPlan={hasPlan && currentUser.role !== 'admin'}
+          showHome={isStudent}
         />
 
         {/* Main Content Area */}
@@ -592,8 +605,18 @@ export default function App() {
           )}
           {currentUser.role !== 'admin' && learningPlan.isLoading() ? (
             <div className="text-center py-20 text-sm text-stone-500">Ачаалж байна...</div>
-          ) : currentUser.role !== 'admin' && learningPlan.needsPlacement() ? (
+          ) : isStudent && activeView === 'placement' && learningPlan.needsPlacement() ? (
             <PlacementTestView uid={getFirebaseAuth().currentUser!.uid} grade={learningPlan.state.grade!} />
+          ) : isStudent && (activeView === 'home' || activeView === 'placement') ? (
+            <StudentHome
+              uid={getFirebaseAuth().currentUser!.uid}
+              currentUser={currentUser}
+              onStartPlacement={() => setActiveView('placement')}
+              onOpenPlan={() => setActiveView('plan')}
+              onOpenLessons={() => setActiveView('topics')}
+              onOpenExams={() => setActiveView('exams')}
+              onOpenTopic={(topicId) => openPlanTopic(topicId, 'topics')}
+            />
           ) : activeView === 'plan' && hasPlan ? (
             <LearningPlanView
               uid={getFirebaseAuth().currentUser!.uid}
@@ -625,7 +648,7 @@ export default function App() {
               }}
               onOpenAdmin={() => setAdminModalOpen(true)}
               onPreviewAsUser={() => setPreviewAsUser(true)}
-              onOpenPlan={() => setActiveView('plan')}
+              onOpenPlan={() => setActiveView('home')}
               onOpenExamsHub={(topicId) => {
                 if (topicId) setSelectedTopicId(topicId);
                 setActiveView('exams');

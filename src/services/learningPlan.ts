@@ -287,8 +287,13 @@ export const learningPlan = {
   inPlan(topicId: string): boolean {
     return !!state.result?.plan.some((p) => p.topicId === topicId);
   },
-  /** For students with a plan: 'open', or why the topic is closed. null for everyone else. */
-  topicGate(topicId: string): 'open' | 'unpaid' | 'not-in-plan' | null {
+  /** Students whose access follows the placement test (taken, or still to take). */
+  isGated(): boolean {
+    return this.hasPlan() || this.needsPlacement();
+  },
+  /** For those students: 'open', or why the topic is closed. null for everyone else. */
+  topicGate(topicId: string): 'open' | 'needs-placement' | 'unpaid' | 'not-in-plan' | null {
+    if (this.needsPlacement()) return 'needs-placement';
     if (!this.hasPlan()) return null;
     if (!this.inPlan(topicId)) return 'not-in-plan';
     return this.isPaid() ? 'open' : 'unpaid';
