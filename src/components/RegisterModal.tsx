@@ -81,6 +81,10 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
+          <p className="text-xs font-bold text-red-600" data-testid="register-warning">
+            Та өөрийн мэдээллээ үнэн зөв оруулна уу.
+          </p>
+
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
               {error}
@@ -93,7 +97,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="bagsh@gmail.com"
+              placeholder="name@gmail.com"
               className={inputClass}
               autoComplete="username"
               autoFocus
