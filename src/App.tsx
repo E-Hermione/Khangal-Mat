@@ -621,7 +621,7 @@ export default function App() {
           showHome={isStudent || currentUser.role === 'admin'}
           examFilter={examFilter}
           onExamFilter={setExamFilter}
-          onOpenPlan={() => setActiveView(learningPlan.hasPlan() ? 'plan' : 'home')}
+          onOpenPlan={() => setActiveView('plan')}
         />
 
         {/* Main Content Area */}
@@ -652,12 +652,21 @@ export default function App() {
               onOpenExams={() => setActiveView('exams')}
               onOpenTopic={(topicId) => openPlanTopic(topicId, 'topics')}
             />
-          ) : activeView === 'plan' && hasPlan ? (
+          ) : activeView === 'plan' && isStudent ? (
             <LearningPlanView
               uid={getFirebaseAuth().currentUser!.uid}
               currentUser={currentUser}
               onOpenTopic={(topicId) => openPlanTopic(topicId, 'topics')}
               onOpenExam={(topicId) => openPlanTopic(topicId, 'exams')}
+              onStartPlacement={() => {
+                const own = learningPlan.state.grade;
+                if (own && learningPlan.canTakePlacement(own)) {
+                  setPlacementGrade(own);
+                  setActiveView('placement');
+                } else {
+                  setActiveView('home');
+                }
+              }}
             />
           ) : activeView === 'exams' ? (
             <ExamsHub

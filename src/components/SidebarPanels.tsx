@@ -78,6 +78,14 @@ const MemberHome: React.FC<{ uid?: string; userId?: string; onOpenPlan: () => vo
             <ClipboardCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             Түвшин тогтоох сорил өгөхөд танд зориулсан сургалтын төлөвлөгөө гарна.
           </div>
+          <button
+            type="button"
+            onClick={onOpenPlan}
+            className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold cursor-pointer"
+            data-testid="open-plan"
+          >
+            Миний төлөвлөгөө харах
+          </button>
         </Panel>
       )}
     </div>

@@ -27,13 +27,40 @@ interface LearningPlanViewProps {
   currentUser: AuthUser;
   onOpenTopic: (topicId: string) => void;
   onOpenExam: (topicId: string) => void;
+  // Users without a plan yet: start the placement test
+  onStartPlacement?: () => void;
 }
 
 /** The student's own plan: topics from the placement test, payment and progress. */
-export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, currentUser, onOpenTopic, onOpenExam }) => {
+export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic, onOpenExam, onStartPlacement }) => {
   useLearningPlanVersion();
   const results = learningPlan.state.results || [];
-  if (results.length === 0) return null;
+  // No placement test yet: explain the four steps
+  if (results.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-5" data-testid="learning-plan-intro">
+        <div>
+          <h1 className="text-2xl font-black text-stone-950 flex items-center gap-2">
+            <Route className="w-6 h-6 text-amber-600" />
+            Миний сургалтын төлөвлөгөө
+          </h1>
+          <p className="text-sm text-stone-600 mt-1">
+            Танд зориулсан төлөвлөгөө түвшин тогтоох сорил өгсний дараа гарна. Доорх 4 алхмаар явна.
+          </p>
+        </div>
+        <HowItWorks paid={false} placementDone={false} />
+        {onStartPlacement && (
+          <button
+            type="button"
+            onClick={onStartPlacement}
+            className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-sm cursor-pointer"
+          >
+            Түвшин тогтоох сорил өгөх (үнэгүй)
+          </button>
+        )}
+      </div>
+    );
+  }
   const plan = learningPlan.plan();
 
   const attempts = learningPlan.state.attempts;
@@ -62,7 +89,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, current
         </p>
       </div>
 
-      <HowItWorks paid={paid} />
+      <TierGuide />
 
       {/* Topics */}
       {total === 0 ? (
@@ -75,10 +102,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, current
             const meta = topicMeta(p.topicId);
             const done = learningPlan.isDone(p.topicId);
             const progress = learningPlan.progress(p.topicId);
-            const tierResults = ([1, 2, 3] as const)
-              .map((t) => ({ t, pct: tierPercent(p.topicId, t, attempts) }))
-              .filter((x) => x.pct !== null)
-              .map((x) => `${TIER_NAMES[x.t - 1]} ${x.pct}%${x.pct! >= PASS_PERCENT ? ' ✓' : ''}`);
+            const unlocked = learningPlan.unlockedTiers(p.topicId);
             return (
               <div
                 key={p.topicId}
@@ -105,7 +129,30 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, current
                   </div>
                   <div className="text-[11px] text-stone-500">
                     {meta.grade}-р анги • {meta.category} • {p.grade}-р ангийн сорилын {p.missed.join(', ')}-р бодлого алдсан
-                    {tierResults.length > 0 && ` • ${tierResults.join(', ')}`}
+                  </div>
+                  {/* Each test tier: passed, open (with best score) or still locked */}
+                  <div className="flex flex-wrap gap-1.5 mt-1.5" data-testid="tier-chips">
+                    {([1, 2, 3] as const).map((t) => {
+                      const pct = tierPercent(p.topicId, t, attempts);
+                      const passed = (pct ?? 0) >= PASS_PERCENT;
+                      const open = unlocked.includes(t);
+                      return (
+                        <span
+                          key={t}
+                          className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                            passed
+                              ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                              : open
+                              ? 'bg-amber-50 border-amber-300 text-amber-900'
+                              : 'bg-stone-50 border-stone-200 text-stone-400'
+                          }`}
+                        >
+                          {passed ? <Check className="w-3 h-3" /> : !open && <Lock className="w-3 h-3" />}
+                          {TIER_NAMES[t - 1]}
+                          {pct !== null ? ` ${pct}%` : open ? ' • нээлттэй' : ''}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
                 {paid ? (
@@ -407,12 +454,7 @@ export const PlanSteps: React.FC<{
 };
 
 /** Step-by-step guide to the plan: what to do first, then next, and what the marks mean. */
-const HowItWorks: React.FC<{ paid: boolean }> = ({ paid }) => {
-  const tiers = [
-    { name: 'Анхан', pct: 35 },
-    { name: 'Дунд', pct: 70 },
-    { name: 'Ахисан', pct: 100 },
-  ];
+const HowItWorks: React.FC<{ paid: boolean; placementDone: boolean }> = ({ paid, placementDone }) => {
 
   return (
     <div className="bg-white rounded-2xl border border-stone-200 p-5 space-y-5" data-testid="how-it-works">
@@ -421,9 +463,22 @@ const HowItWorks: React.FC<{ paid: boolean }> = ({ paid }) => {
         <p className="text-xs text-stone-500">4 алхмаар сэдвээ эзэмшинэ</p>
       </div>
 
-      <PlanSteps placementDone paid={paid} />
+      <PlanSteps placementDone={placementDone} paid={paid} />
 
-      <div className="rounded-xl bg-stone-50 border border-stone-200 p-4 space-y-3">
+      <TierGuide />
+    </div>
+  );
+};
+
+/** How the three test tiers of a topic open one after another. */
+const TierGuide: React.FC = () => {
+  const tiers = [
+    { name: 'Анхан', pct: 35 },
+    { name: 'Дунд', pct: 70 },
+    { name: 'Ахисан', pct: 100 },
+  ];
+  return (
+      <div className="rounded-xl bg-white border border-stone-200 p-4 space-y-3" data-testid="tier-guide">
         <div>
           <div className="text-sm font-black text-stone-900">Сорилын шатууд</div>
           <div className="text-xs text-stone-500">
@@ -459,6 +514,5 @@ const HowItWorks: React.FC<{ paid: boolean }> = ({ paid }) => {
           </span>
         </div>
       </div>
-    </div>
   );
 };
