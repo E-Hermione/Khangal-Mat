@@ -25,6 +25,7 @@ import {
   FolderOpen,
   Award,
   CheckCircle2,
+  Home,
 } from 'lucide-react';
 import { learningPlan, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
 import { ProgressRing } from './ProgressRing';
@@ -205,59 +206,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Primary View Switcher: Lessons vs Exams */}
+        {/* Primary view switcher: icon tiles */}
         {onSelectView && (
           <div className="p-3 pb-0 shrink-0">
             <div
-              className={`grid ${showHome ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 bg-stone-950 p-1 rounded-xl border border-stone-800`}
+              className={`grid ${showHome ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 bg-stone-950/80 p-1.5 rounded-2xl border border-stone-800`}
+              data-testid="view-tabs"
             >
-              {showHome && (
+              {(
+                [
+                  ...(showHome
+                    ? [{ key: 'home', label: 'Нүүр', icon: Home, active: activeView === 'home' || activeView === 'plan' || activeView === 'placement' }]
+                    : []),
+                  { key: 'topics', label: 'Хичээл', icon: BookOpen, active: activeView === 'topics' },
+                  { key: 'exams', label: 'Сэдэвчилсэн сорил', icon: Award, active: activeView === 'exams' },
+                ] as const
+              ).map(({ key, label, icon: Icon, active }) => (
                 <button
+                  key={key}
                   type="button"
                   onClick={() => {
-                    onSelectView('home');
+                    onSelectView(key);
                     onCloseMobile();
                   }}
-                  className={`py-2 px-1 rounded-lg text-[11px] font-bold flex items-center justify-center transition-all cursor-pointer ${
-                    activeView === 'home' || activeView === 'plan' || activeView === 'placement'
-                      ? 'bg-amber-500 text-stone-950 shadow-xs'
-                      : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
+                  className={`h-[60px] px-1 pt-2.5 rounded-xl flex flex-col items-center justify-start gap-1 transition-all cursor-pointer ${
+                    active
+                      ? 'bg-gradient-to-b from-amber-400 to-amber-500 text-stone-950 shadow-md shadow-amber-500/20'
+                      : 'text-stone-400 hover:text-white hover:bg-stone-800/80'
                   }`}
+                  aria-current={active ? 'page' : undefined}
                 >
-                  
-                  <span>Нүүр</span>
+                  <Icon className={`w-[18px] h-[18px] ${active ? 'text-stone-900' : ''}`} />
+                  <span className="text-[10.5px] font-bold leading-tight text-center">{label}</span>
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  onSelectView('topics');
-                  onCloseMobile();
-                }}
-                className={`py-2 ${showHome ? 'px-1 text-[11px]' : 'px-2.5 text-xs space-x-1.5'} rounded-lg font-bold flex items-center justify-center transition-all cursor-pointer ${
-                  activeView === 'topics'
-                    ? 'bg-amber-500 text-stone-950 shadow-xs'
-                    : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
-                }`}
-              >
-                {!showHome && <BookOpen className="w-3.5 h-3.5" />}
-                <span>Хичээл</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  onSelectView('exams');
-                  onCloseMobile();
-                }}
-                className={`py-2 ${showHome ? 'px-1 text-[11px]' : 'px-2.5 text-xs space-x-1.5'} rounded-lg font-bold flex items-center justify-center transition-all cursor-pointer ${
-                  activeView === 'exams'
-                    ? 'bg-amber-500 text-stone-950 shadow-xs'
-                    : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
-                }`}
-              >
-                {!showHome && <Award className="w-3.5 h-3.5" />}
-                <span className="leading-tight text-center">Сэдэвчилсэн сорил</span>
-              </button>
+              ))}
             </div>
           </div>
         )}
