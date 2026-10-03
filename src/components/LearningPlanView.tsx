@@ -244,6 +244,64 @@ export const PaymentStatusCard: React.FC<{ uid: string; currentUser: AuthUser }>
   );
 };
 
+/** Payment status and button inside the "Төлбөр төлөх" step card on the home page. */
+export const PaymentStepContent: React.FC<{ uid: string; currentUser: AuthUser; enabled: boolean }> = ({
+  uid,
+  currentUser,
+  enabled,
+}) => {
+  useLearningPlanVersion();
+  const [settings, setSettings] = useState<PaymentSettings>(EMPTY_PAYMENT_SETTINGS);
+  const [requests, setRequests] = useState<PaymentRequest[]>([]);
+  const [payOpen, setPayOpen] = useState(false);
+
+  useEffect(() => subscribePaymentSettings(setSettings), []);
+  useEffect(() => subscribeMyPaymentRequests(uid, setRequests), [uid]);
+
+  const paid = learningPlan.isPaid();
+  const paidUntil = learningPlan.paidUntil();
+  const pending = requests.find((r) => r.status === 'pending');
+  const lastRejected = requests[0]?.status === 'rejected' ? requests[0] : null;
+
+  return (
+    <div className="space-y-2.5" data-testid="plan-payment" onClick={(e) => e.stopPropagation()}>
+      <div className="text-xs text-stone-600 leading-relaxed">
+        {!enabled ? (
+          'Түвшин тогтоох сорил өгсний дараа төлбөрөө төлж хичээлийн эрх авна.'
+        ) : paid ? (
+          <>
+            Хичээлүүд <b className="text-emerald-800">{new Date(paidUntil!).toLocaleDateString()}</b> хүртэл нээлттэй.
+          </>
+        ) : pending ? (
+          <>
+            <b className="text-amber-900">Шалгаж байна</b> ({pending.months} сар, {formatMoney(pending.amount)}). Админ
+            баталгаажуулмагц хичээлүүд нээгдэнэ.
+          </>
+        ) : (
+          <>
+            {paidUntil ? <b className="text-red-700">Хугацаа дууссан. </b> : null}
+            Хугацаагаа сонгоод дансанд шилжүүлнэ. Админ баталгаажуулмагц хичээлүүд нээгдэнэ.
+            {lastRejected && <span className="block text-red-700 mt-0.5">Сүүлийн төлбөр баталгаажаагүй. Админд хандана уу.</span>}
+          </>
+        )}
+      </div>
+      {enabled && !pending && (
+        <button
+          type="button"
+          onClick={() => setPayOpen(true)}
+          className={`w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer ${
+            paid ? 'bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-50' : 'bg-stone-900 hover:bg-black text-white'
+          }`}
+        >
+          <CreditCard className={`w-4 h-4 ${paid ? '' : 'text-amber-400'}`} />
+          {paid ? 'Хугацаа сунгах' : 'Төлбөр төлөх'}
+        </button>
+      )}
+      {payOpen && <PaymentDialog uid={uid} currentUser={currentUser} settings={settings} onClose={() => setPayOpen(false)} />}
+    </div>
+  );
+};
+
 const PaymentDialog: React.FC<{
   uid: string;
   currentUser: AuthUser;
@@ -390,7 +448,9 @@ export const PlanSteps: React.FC<{
   placementDone: boolean;
   paid: boolean;
   onStep?: (step: number) => void;
-}> = ({ placementDone, paid, onStep }) => {
+  // Shown in the payment step card instead of its text (home page: status and pay button)
+  paymentContent?: React.ReactNode;
+}> = ({ placementDone, paid, onStep, paymentContent }) => {
   const steps: { icon: React.ReactNode; title: string; text: string; state: 'done' | 'now' | 'later' }[] = [
     {
       icon: <ClipboardCheck className="w-5 h-5" />,
@@ -421,13 +481,16 @@ export const PlanSteps: React.FC<{
       <div className="grid sm:grid-cols-3 gap-3">
         {steps.map((st, i) => {
           const style = stateStyle[st.state];
+          // The payment card has its own button, so the card itself is not clickable
+          const withContent = i === 1 && !!paymentContent;
+          const clickable = !!onStep && !withContent;
           return (
             <div
               key={st.title}
-              role={onStep ? 'button' : undefined}
-              tabIndex={onStep ? 0 : undefined}
-              onClick={onStep ? () => onStep(i + 1) : undefined}
-              className={`relative rounded-xl border p-3.5 ${style.card} ${onStep ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+              role={clickable ? 'button' : undefined}
+              tabIndex={clickable ? 0 : undefined}
+              onClick={clickable ? () => onStep!(i + 1) : undefined}
+              className={`relative rounded-xl border p-3.5 flex flex-col ${style.card} ${clickable ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
               data-testid={`plan-step-${i + 1}`}
             >
               <div className="flex items-center justify-between mb-2.5">
@@ -438,7 +501,11 @@ export const PlanSteps: React.FC<{
               </div>
               <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{i + 1}-р алхам</div>
               <div className={`text-sm font-black ${st.state === 'later' ? 'text-stone-500' : 'text-stone-900'}`}>{st.title}</div>
-              <div className="text-xs text-stone-600 mt-1 leading-relaxed">{st.text}</div>
+              {withContent ? (
+                <div className="mt-1.5 flex-1 flex flex-col justify-between">{paymentContent}</div>
+              ) : (
+                <div className="text-xs text-stone-600 mt-1 leading-relaxed">{st.text}</div>
+              )}
             </div>
           );
         })}

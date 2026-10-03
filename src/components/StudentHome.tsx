@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Award, BookOpen, ClipboardCheck, CreditCard, Lock, Pencil, Settings, X } from 'lucide-react';
+import { ArrowRight, BookOpen, ClipboardCheck, CreditCard, Lock, Pencil, Settings, X } from 'lucide-react';
 import { AuthUser, GradeNumber } from '../types';
 import {
   GRADES,
@@ -16,7 +16,7 @@ import {
   PaymentSettings,
   subscribePaymentSettings,
 } from '../services/payments';
-import { PaymentStatusCard, PlanSteps } from './LearningPlanView';
+import { PaymentStepContent, PlanSteps } from './LearningPlanView';
 import { PaymentSettingsForm } from './PaymentsTab';
 import { PlacementAdminTab } from './PlacementAdminTab';
 import { ProgressRing } from './ProgressRing';
@@ -202,7 +202,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
     ? Math.round(plan.reduce((sum, p) => sum + learningPlan.progress(p.topicId), 0) / plan.length)
     : 0;
   const next = plan.find((p) => !learningPlan.isDone(p.topicId));
-  const testsPassed = plan.reduce((sum, p) => sum + tiersPassed(p.topicId, attempts), 0);
   const firstName = (currentUser.name || '').split(' ').pop();
   // Retaking replaces that grade's result, so ask first
   const startPlacement = (g: GradeNumber) => {
@@ -225,7 +224,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
       else if (hasPlan) onOpenPlan();
     } else if (step === 2) {
       document.getElementById('home-access')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else {
+    } else if (step === 3) {
       onOpenPlan();
     }
   };
@@ -253,11 +252,14 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
             placementDone={hasPlan}
             paid={paid}
             onStep={goToStep}
+            paymentContent={
+              !editable && uid ? <PaymentStepContent uid={uid} currentUser={currentUser} enabled={hasPlan} /> : undefined
+            }
           />
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-2 gap-4">
         <Card
           icon={<ClipboardCheck className="w-5 h-5" />}
           title={content.placementTitle}
@@ -354,44 +356,18 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
             <span className="whitespace-pre-wrap">{content.lessonsText}</span>
           )}
         </Card>
-
-        <Card
-          icon={<Award className="w-5 h-5" />}
-          title={content.examsTitle}
-          testId="home-exams"
-          onEdit={edit('exams')}
-          editor={
-            editing === 'exams' && (
-              <TextEditor
-                fields={[
-                  { key: 'examsTitle', label: 'Гарчиг' },
-                  { key: 'examsText', label: 'Тайлбар', multiline: true },
-                ]}
-                content={content}
-                onDone={done}
-              />
-            )
-          }
-          locked={needsPlacement ? 'Түвшин тогтоох сорилын дараа нээгдэнэ' : undefined}
-          action={{ label: 'Сорил өгөх', onClick: onOpenExams }}
-        >
-          <span className="whitespace-pre-wrap">{content.examsText}</span>
-          {hasPlan && (
-            <span className="block mt-1 text-xs text-stone-500">
-              Давсан шат: <b>{testsPassed}</b>/{plan.length * 3}
-            </span>
-          )}
-        </Card>
       </div>
 
+      {/* Admin: bank account, prices and texts (users pay from the step card above) */}
+      {editable && (
       <div className="space-y-2" id="home-access">
         <div className="flex items-center gap-1.5">
           <h2 className="text-sm font-black text-stone-800 flex items-center gap-1.5 flex-1">
             <CreditCard className="w-4 h-4 text-amber-600" /> {content.accessTitle}
           </h2>
-          {editable && <EditButton onClick={() => setEditing('payment')} title="Төлбөрийн данс, үнэ засах" />}
+          <EditButton onClick={() => setEditing('payment')} title="Төлбөрийн данс, үнэ засах" />
         </div>
-        {editable ? (
+        {
           <div className="p-4 rounded-xl border border-stone-200 bg-white text-sm text-stone-700 space-y-2" data-testid="home-payment-admin">
             {editing === 'access' ? (
               <TextEditor
@@ -419,14 +395,9 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               )}
             </div>
           </div>
-        ) : hasPlan && uid ? (
-          <PaymentStatusCard uid={uid} currentUser={currentUser} />
-        ) : (
-          <div className="p-4 rounded-xl border border-stone-200 bg-white text-sm text-stone-600 whitespace-pre-wrap">
-            {content.accessText}
-          </div>
-        )}
+        }
       </div>
+      )}
 
       {editing === 'payment' && (
         <Modal title="Төлбөрийн данс ба үнэ" onClose={done}>
