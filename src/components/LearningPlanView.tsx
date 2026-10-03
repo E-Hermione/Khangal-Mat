@@ -38,9 +38,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, current
 
   const attempts = learningPlan.state.attempts;
   const paid = learningPlan.isPaid();
-  const doneCount = plan.filter((p) => learningPlan.isDone(p.topicId)).length;
   const total = plan.length;
-  const overall = total ? Math.round(plan.reduce((sum, p) => sum + learningPlan.progress(p.topicId), 0) / total) : 0;
 
   return (
     <div className="max-w-4xl mx-auto space-y-5" data-testid="learning-plan">
@@ -64,24 +62,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, current
         </p>
       </div>
 
-      <PaymentStatusCard uid={uid} currentUser={currentUser} />
-
       <HowItWorks paid={paid} />
-
-      {/* Progress */}
-      {total > 0 && (
-        <div className="bg-white rounded-xl border border-stone-200 p-4">
-          <div className="flex justify-between text-xs font-bold text-stone-600 mb-1.5">
-            <span>Явц</span>
-            <span>
-              {overall}% • {doneCount}/{total} сэдэв үзсэн
-            </span>
-          </div>
-          <div className="h-2 rounded-full bg-stone-100 overflow-hidden">
-            <div className="h-full bg-blue-500 transition-all" style={{ width: `${overall}%` }} />
-          </div>
-        </div>
-      )}
 
       {/* Topics */}
       {total === 0 ? (
@@ -367,7 +348,7 @@ const HowItWorks: React.FC<{ paid: boolean }> = ({ paid }) => {
     },
     {
       title: 'Төлбөр төлж эрх авна',
-      text: 'Дээрх «Төлбөр төлөх» товчоор хугацаагаа сонгоод шилжүүлэг хийнэ. Админ баталгаажуулмагц сэдвүүд нээгдэнэ.',
+      text: 'Нүүр хуудасны «Эрх авах» хэсгийн «Төлбөр төлөх» товчоор хугацаагаа сонгоод шилжүүлэг хийнэ. Админ баталгаажуулмагц сэдвүүд нээгдэнэ.',
       state: paid ? 'done' : 'now',
     },
     {
