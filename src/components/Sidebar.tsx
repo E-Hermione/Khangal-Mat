@@ -26,7 +26,7 @@ import {
   Award,
   CheckCircle2,
 } from 'lucide-react';
-import { learningPlan, useLearningPlanVersion } from '../services/learningPlan';
+import { learningPlan, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
 import { ProgressRing } from './ProgressRing';
 import { ExamFilter, ExamsPanel, HomePanel } from './SidebarPanels';
 import { getFirebaseAuth } from '../services/firebase';
@@ -77,6 +77,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const showLessonNav = !onSelectView || activeView === 'topics';
   const showExamNav = !!onSelectView && activeView === 'exams';
+  // Lessons can be listed by grade (all topics) or as the user's plan (plan topics of every grade)
+  const [lessonMode, setLessonMode] = useState<'all' | 'plan'>('all');
+  const canPlanView = !isAdmin && learningPlan.hasPlan();
+  const planMode = showLessonNav && canPlanView && lessonMode === 'plan';
   useLearningPlanVersion();
   const [, setTrigger] = useState(0);
 
@@ -257,7 +261,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Lessons: grades + topics. Exams: grades + filters and results. Home: progress and news */}
         {showLessonNav || showExamNav ? (
           <>
-        {/* Grades Selector Tabs */}
+        {showLessonNav && canPlanView && (
+          <div className="px-3 pt-3 shrink-0">
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-stone-950 border border-stone-800" data-testid="lesson-mode">
+              {(
+                [
+                  ['all', 'Бүх сэдэв'],
+                  ['plan', 'Миний төлөвлөгөө'],
+                ] as const
+              ).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setLessonMode(mode)}
+                  className={`py-1.5 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                    lessonMode === mode ? 'bg-stone-700 text-white' : 'text-stone-400 hover:text-stone-200'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!planMode && (
+        /* Grades Selector Tabs */
         <div className="p-3 border-b border-stone-800/80 bg-stone-950/40 shrink-0">
           <div className="flex items-center justify-between mb-2 px-1">
             <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">
@@ -314,10 +343,57 @@ export const Sidebar: React.FC<SidebarProps> = ({
             })}
           </div>
         </div>
+        )}
 
         {showExamNav ? (
           <div className="flex-1 overflow-y-auto">
             <ExamsPanel filter={examFilter} onFilter={(f) => onExamFilter?.(f)} onSelectGrade={onSelectGrade} />
+          </div>
+        ) : planMode ? (
+          <div className="flex-1 overflow-y-auto p-3 space-y-3" data-testid="plan-topic-list">
+            {GRADES_LIST.filter((g) => learningPlan.plan().some((p) => topicMeta(p.topicId).grade === g)).map((g) => (
+              <div key={g}>
+                <div className="px-1 mb-1 text-[11px] font-bold text-stone-400 uppercase tracking-wider">{g}-р анги</div>
+                <div className="rounded-xl border border-stone-800/90 bg-stone-950/40 p-1 space-y-0.5">
+                  {learningPlan
+                    .plan()
+                    .filter((p) => topicMeta(p.topicId).grade === g)
+                    .map((p) => {
+                      const meta = topicMeta(p.topicId);
+                      const isSelected = p.topicId === selectedTopicId;
+                      const open = learningPlan.topicGate(p.topicId) === 'open';
+                      return (
+                        <button
+                          key={p.topicId}
+                          type="button"
+                          onClick={() => {
+                            onSelectGrade(meta.grade);
+                            onSelectTopic(p.topicId);
+                            onCloseMobile();
+                          }}
+                          className={`w-full text-left pl-3 pr-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                            isSelected
+                              ? 'bg-stone-800 text-amber-400 border border-stone-700 font-bold'
+                              : 'text-stone-300 hover:bg-stone-800/60 hover:text-white font-medium'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2 min-w-0">
+                            {learningPlan.isDone(p.topicId) ? (
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                            ) : !open ? (
+                              <Lock className="w-3 h-3 text-amber-500 shrink-0" />
+                            ) : (
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                            )}
+                            <span className="truncate">{meta.title}</span>
+                          </span>
+                          <ProgressRing percent={learningPlan.progress(p.topicId)} size={16} />
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
         /* Topics List with Hierarchical Accordion (Агуулгын аймаг -> Дэд сэдэв) */
