@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, BookOpen, ClipboardCheck, CreditCard, Lock, Pencil, Settings, X } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, ClipboardCheck, CreditCard, Lock, Pencil, Settings, X } from 'lucide-react';
 import { AuthUser, GradeNumber } from '../types';
 import {
   GRADES,
@@ -280,40 +280,64 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
           }
           action={retakeGrade ? { label: 'Дахин түвшин тест бөглөх', onClick: () => startPlacement(retakeGrade) } : null}
         >
-          <span className="inline-block text-[10px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 mb-2">
-            Үнэгүй
-          </span>
-          <span className="block text-xs text-stone-500 mb-2 whitespace-pre-wrap">{content.placementText}</span>
-          <div className="grid grid-cols-2 gap-1.5" data-testid="placement-grades">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className="text-xs text-stone-500 whitespace-pre-wrap">{content.placementText}</span>
+            <span className="text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0">
+              Үнэгүй
+            </span>
+          </div>
+          <div className="grid grid-cols-4 gap-2" data-testid="placement-grades">
             {GRADES.map((g) => {
               const taken = learningPlan.resultFor(g);
               const open = learningPlan.canTakePlacement(g);
               const count = placementSize(g).questions;
+              const mine = g === grade;
               return (
                 <button
                   key={g}
                   type="button"
                   disabled={!open}
                   onClick={() => startPlacement(g)}
-                  className={`px-2 py-1.5 rounded-lg border text-left text-xs transition-colors ${
+                  title={taken ? 'Дахин өгөх' : open ? 'Сорил эхлэх' : 'Удахгүй'}
+                  className={`relative rounded-xl border px-1 pt-2 pb-1.5 flex flex-col items-center gap-1 transition-all ${
                     taken
-                      ? `border-emerald-200 bg-emerald-50 text-emerald-900 ${open ? 'cursor-pointer hover:bg-emerald-100' : ''}`
+                      ? 'border-emerald-200 bg-emerald-50/70 hover:border-emerald-400 cursor-pointer'
                       : open
-                      ? `cursor-pointer hover:bg-amber-50 ${g === grade ? 'border-amber-400 bg-amber-50' : 'border-stone-200'}`
-                      : count && editable
-                      ? 'border-stone-200 text-stone-700'
-                      : 'border-stone-100 text-stone-400'
-                  }`}
+                      ? 'border-stone-200 bg-white hover:border-amber-400 hover:bg-amber-50 hover:-translate-y-0.5 cursor-pointer'
+                      : 'border-dashed border-stone-200 bg-stone-50/60'
+                  } ${mine ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}
                 >
-                  <b>{g}-р анги</b>
-                  {g === grade && !taken && <span className="text-amber-700"> (таны)</span>}
-                  <span className="block text-[10px]">
-                    {taken ? `✓ ${taken.correct}/${taken.total} зөв • дахин өгөх` : count ? `${count} бодлого` : 'Удахгүй'}
+                  {mine && (
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] font-black px-1.5 rounded-full bg-amber-400 text-stone-950">
+                      Таны
+                    </span>
+                  )}
+                  <span className={`text-lg font-black leading-none ${open || taken ? 'text-stone-900' : 'text-stone-300'}`}>
+                    {g}
+                    <span className="text-[10px] font-bold ml-0.5">-р</span>
+                  </span>
+                  <span className={`text-[10px] leading-none ${open || taken ? 'text-stone-500' : 'text-stone-300'}`}>анги</span>
+                  <span className="h-5 flex items-center">
+                    {taken ? (
+                      <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-0.5">
+                        <Check className="w-3 h-3" />
+                        {taken.correct}/{taken.total} зөв
+                      </span>
+                    ) : open ? (
+                      <span className="text-[10px] font-bold text-amber-700">{count} бодлого</span>
+                    ) : (
+                      <span className="text-[10px] text-stone-300">Удахгүй</span>
+                    )}
                   </span>
                 </button>
               );
             })}
           </div>
+          {learningPlan.state.results && learningPlan.state.results.length > 0 && (
+            <div className="mt-2.5 text-[11px] text-stone-500 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" /> Өгсөн ангиа дарж дахин өгч болно
+            </div>
+          )}
           {editable && (
             <button
               type="button"
