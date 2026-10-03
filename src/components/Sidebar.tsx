@@ -67,6 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectView,
   showHome = false,
 }) => {
+  const showLessonNav = !onSelectView || activeView === 'topics';
   useLearningPlanVersion();
   const [, setTrigger] = useState(0);
 
@@ -244,6 +245,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
+        {/* Grades and topics only on the lessons view; the exams page has its own grade picker */}
+        {showLessonNav ? (
+          <>
         {/* Grades Selector Tabs */}
         <div className="p-3 border-b border-stone-800/80 bg-stone-950/40 shrink-0">
           <div className="flex items-center justify-between mb-2 px-1">
@@ -452,6 +456,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
         </div>
+          </>
+        ) : (
+          <div className="flex-1" />
+        )}
 
         {/* Quick Tools & Settings Navigation */}
         <div className="p-3 border-t border-stone-800 space-y-1.5 bg-stone-950/60 shrink-0">

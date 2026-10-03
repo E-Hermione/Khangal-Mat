@@ -177,6 +177,7 @@ export function generateTopicTests(
 export const ExamsHub: React.FC<ExamsHubProps> = ({
   topics,
   selectedGrade,
+  onSelectGrade,
   onSelectTopic,
   isAdmin = false,
   userId,
@@ -334,6 +335,24 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
 
   return (
     <div className="w-full animate-in fade-in duration-150">
+      {/* Grade picker (the sidebar shows grades only on the lessons view) */}
+      <div className="flex flex-wrap gap-1.5 mb-4" data-testid="exam-grades">
+        {([6, 7, 8, 9, 10, 11, 12] as GradeNumber[]).map((g) => (
+          <button
+            key={g}
+            type="button"
+            onClick={() => onSelectGrade(g)}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+              g === selectedGrade
+                ? 'bg-amber-500 border-amber-500 text-stone-950'
+                : 'bg-white border-stone-200 text-stone-700 hover:bg-stone-50'
+            }`}
+          >
+            {g}-р анги
+          </button>
+        ))}
+      </div>
+
       {/* Styled Table: One row per topic, clean level selector, centered action buttons, fits without cut off */}
       <div className="bg-white rounded-2xl shadow-sm border border-stone-200/90 overflow-hidden ring-1 ring-stone-900/5">
         <div className="overflow-x-auto">
