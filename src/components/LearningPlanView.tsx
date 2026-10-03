@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Award, BookOpen, Check, CheckCircle2, Copy, CreditCard, Lock, Route, X } from 'lucide-react';
+import { Award, BookOpen, Check, CheckCircle2, ChevronRight, ClipboardCheck, Copy, CreditCard, Lock, Route, X } from 'lucide-react';
 import { AuthUser } from '../types';
 import {
   learningPlan,
@@ -340,75 +340,97 @@ const PaymentDialog: React.FC<{
 
 /** Step-by-step guide to the plan: what to do first, then next, and what the marks mean. */
 const HowItWorks: React.FC<{ paid: boolean }> = ({ paid }) => {
-  const steps: { title: string; text: React.ReactNode; state: 'done' | 'now' | 'later' }[] = [
+  const steps: { icon: React.ReactNode; title: string; text: string; state: 'done' | 'now' | 'later' }[] = [
     {
-      title: 'Түвшин тогтоох сорил өгнө',
-      text: 'Сорилд алдсан бодлогуудын сэдвүүдээр танд зориулсан төлөвлөгөө гарна. Доорх жагсаалт бол таны үзэх ёстой сэдвүүд.',
+      icon: <ClipboardCheck className="w-5 h-5" />,
+      title: 'Түвшин тогтоох сорил',
+      text: 'Алдсан бодлогуудаар танд үзэх сэдвүүд гарна.',
       state: 'done',
     },
     {
-      title: 'Төлбөр төлж эрх авна',
-      text: 'Нүүр хуудасны «Эрх авах» хэсгийн «Төлбөр төлөх» товчоор хугацаагаа сонгоод шилжүүлэг хийнэ. Админ баталгаажуулмагц сэдвүүд нээгдэнэ.',
+      icon: <CreditCard className="w-5 h-5" />,
+      title: 'Төлбөр төлөх',
+      text: 'Нүүр хуудасны «Эрх авах» хэсгээс төлнө. Админ баталгаажуулмагц нээгдэнэ.',
       state: paid ? 'done' : 'now',
     },
     {
-      title: 'Сэдвээ үзнэ',
-      text: 'Сэдэв бүрийн «Үзэх» товчоор онол, жишээ, дасгалыг дараалан үзэж, дасгалаа бодно.',
+      icon: <BookOpen className="w-5 h-5" />,
+      title: 'Сэдвээ үзэх',
+      text: '«Үзэх» товчоор онол, жишээ, дасгалаа дараалан үзнэ.',
       state: paid ? 'now' : 'later',
     },
     {
-      title: 'Сорилоор ахина',
-      text: (
-        <>
-          «Сорил өгөх» товчоор эхлээд <b>Анхан</b> шатны сорил өгнө. {PASS_PERCENT}%-иас дээш авбал <b>Дунд</b> шат нээгдэнэ, Дунд
-          шатанд {PASS_PERCENT}%+ авбал <b>Ахисан</b> шат нээгдэнэ.
-        </>
-      ),
+      icon: <Award className="w-5 h-5" />,
+      title: 'Сорил өгөх',
+      text: '«Сорил өгөх» товчоор шат шатаар ахина.',
       state: paid ? 'now' : 'later',
     },
   ];
+  const stateStyle = {
+    done: { card: 'border-emerald-200 bg-emerald-50/60', icon: 'bg-emerald-500 text-white', pill: 'bg-emerald-100 text-emerald-800', label: 'Хийсэн' },
+    now: { card: 'border-amber-300 bg-amber-50 ring-2 ring-amber-100', icon: 'bg-amber-500 text-stone-950', pill: 'bg-amber-500 text-stone-950', label: 'Одоо' },
+    later: { card: 'border-stone-200 bg-white', icon: 'bg-stone-100 text-stone-400', pill: 'bg-stone-100 text-stone-500', label: 'Дараа' },
+  };
+  const tiers = [
+    { name: 'Анхан', pct: 35 },
+    { name: 'Дунд', pct: 70 },
+    { name: 'Ахисан', pct: 100 },
+  ];
 
   return (
-    <div className="bg-white rounded-xl border border-stone-200 p-4 space-y-4" data-testid="how-it-works">
-      <h2 className="text-sm font-black text-stone-900">Хэрхэн ажиллах вэ?</h2>
-      <ol className="space-y-3">
-        {steps.map((st, i) => (
-          <li key={st.title} className="flex gap-3">
-            <span
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
-                st.state === 'done'
-                  ? 'bg-emerald-500 text-white'
-                  : st.state === 'now'
-                  ? 'bg-amber-500 text-stone-950 ring-4 ring-amber-100'
-                  : 'bg-stone-100 text-stone-500'
-              }`}
-            >
-              {st.state === 'done' ? <Check className="w-4 h-4" /> : i + 1}
-            </span>
-            <div className="min-w-0">
-              <div className={`text-sm font-bold ${st.state === 'later' ? 'text-stone-500' : 'text-stone-900'}`}>{st.title}</div>
-              <div className="text-xs text-stone-600 leading-relaxed">{st.text}</div>
-            </div>
-          </li>
-        ))}
-      </ol>
+    <div className="bg-white rounded-2xl border border-stone-200 p-5 space-y-5" data-testid="how-it-works">
+      <div>
+        <h2 className="text-base font-black text-stone-900">Хэрхэн ажиллах вэ?</h2>
+        <p className="text-xs text-stone-500">4 алхмаар сэдвээ эзэмшинэ</p>
+      </div>
 
-      <div className="rounded-lg bg-stone-50 border border-stone-200 p-3 space-y-2">
-        <div className="text-xs font-bold text-stone-700">Сэдвийн явц юу гэсэн үг вэ?</div>
-        <div className="grid sm:grid-cols-4 gap-2 text-[11px] text-stone-600">
-          {[
-            { pct: 0, text: 'Сорил өгөөгүй' },
-            { pct: 35, text: 'Анхан шатыг давсан' },
-            { pct: 70, text: 'Дунд шатыг давсан' },
-            { pct: 100, text: 'Ахисан шатыг давсан — сэдэв үзсэн ✓' },
-          ].map((x) => (
-            <div key={x.pct} className="flex items-center gap-2">
-              <ProgressRing percent={x.pct} size={20} />
-              <span>{x.text}</span>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {steps.map((st, i) => {
+          const style = stateStyle[st.state];
+          return (
+            <div key={st.title} className={`relative rounded-xl border p-3.5 ${style.card}`}>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className={`w-9 h-9 rounded-xl flex items-center justify-center ${style.icon}`}>
+                  {st.state === 'done' ? <Check className="w-5 h-5" /> : st.icon}
+                </span>
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${style.pill}`}>{style.label}</span>
+              </div>
+              <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{i + 1}-р алхам</div>
+              <div className={`text-sm font-black ${st.state === 'later' ? 'text-stone-500' : 'text-stone-900'}`}>{st.title}</div>
+              <div className="text-xs text-stone-600 mt-1 leading-relaxed">{st.text}</div>
             </div>
+          );
+        })}
+      </div>
+
+      <div className="rounded-xl bg-stone-50 border border-stone-200 p-4 space-y-3">
+        <div>
+          <div className="text-sm font-black text-stone-900">Сорилын шатууд</div>
+          <div className="text-xs text-stone-500">
+            Шат бүрд <b>{PASS_PERCENT}%-иас дээш</b> авбал дараагийн шат нээгдэж, сэдвийн явц нэмэгдэнэ.
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row sm:items-stretch gap-2">
+          {tiers.map((t, i) => (
+            <React.Fragment key={t.name}>
+              <div className="flex-1 rounded-xl bg-white border border-stone-200 px-3 py-2.5 flex items-center gap-3">
+                <ProgressRing percent={t.pct} size={30} />
+                <div className="text-xs leading-tight">
+                  <div className="font-black text-stone-900">{t.name} шат</div>
+                  <div className="text-stone-500">
+                    {PASS_PERCENT}%+ авбал {t.pct === 100 ? <b className="text-emerald-700">сэдэв үзсэн ✓</b> : `явц ${t.pct}%`}
+                  </div>
+                </div>
+              </div>
+              {i < tiers.length - 1 && (
+                <div className="hidden sm:flex items-center text-stone-300">
+                  <ChevronRight className="w-5 h-5" />
+                </div>
+              )}
+            </React.Fragment>
           ))}
         </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-stone-600 pt-1">
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-stone-600">
           <span className="flex items-center gap-1">
             <Lock className="w-3.5 h-3.5 text-stone-400" /> Төлбөрийн дараа нээгдэнэ
           </span>
