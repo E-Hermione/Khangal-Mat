@@ -204,6 +204,17 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   const next = plan.find((p) => !learningPlan.isDone(p.topicId));
   const testsPassed = plan.reduce((sum, p) => sum + tiersPassed(p.topicId, attempts), 0);
   const firstName = (currentUser.name || '').split(' ').pop();
+  // Retaking replaces that grade's result, so ask first
+  const startPlacement = (g: GradeNumber) => {
+    if (learningPlan.resultFor(g) && !window.confirm(`${g}-р ангийн түвшин тогтоох сорилыг дахин өгөх үү? Өмнөх дүн шинэ дүнгээр солигдоно.`)) return;
+    onStartPlacement(g);
+  };
+  // "Take it again" opens the user's own grade, else the last grade they took
+  const retakeGrade = hasPlan
+    ? ([grade, ...[...(learningPlan.state.results || [])].sort((x, y) => y.takenAt - x.takenAt).map((r) => r.grade)].find(
+        (g): g is GradeNumber => !!g && learningPlan.canTakePlacement(g)
+      ) ?? null)
+    : null;
   const edit = (target: EditTarget) => (editable ? () => setEditing(target) : undefined);
   const done = () => setEditing(null);
 
@@ -256,6 +267,71 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
 
       <div className="grid md:grid-cols-3 gap-4">
         <Card
+          icon={<ClipboardCheck className="w-5 h-5" />}
+          title={content.placementTitle}
+          highlight={needsPlacement}
+          testId="home-placement"
+          onEdit={edit('placement')}
+          editor={
+            editing === 'placement' && (
+              <TextEditor
+                fields={[
+                  { key: 'placementTitle', label: 'Гарчиг' },
+                  { key: 'placementText', label: 'Тайлбар', multiline: true },
+                ]}
+                content={content}
+                onDone={done}
+              />
+            )
+          }
+          action={retakeGrade ? { label: 'Дахин түвшин тест бөглөх', onClick: () => startPlacement(retakeGrade) } : null}
+        >
+          <span className="inline-block text-[10px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 mb-2">
+            Үнэгүй
+          </span>
+          <span className="block text-xs text-stone-500 mb-2 whitespace-pre-wrap">{content.placementText}</span>
+          <div className="grid grid-cols-2 gap-1.5" data-testid="placement-grades">
+            {GRADES.map((g) => {
+              const taken = learningPlan.resultFor(g);
+              const open = learningPlan.canTakePlacement(g);
+              const count = placementSize(g).questions;
+              return (
+                <button
+                  key={g}
+                  type="button"
+                  disabled={!open}
+                  onClick={() => startPlacement(g)}
+                  className={`px-2 py-1.5 rounded-lg border text-left text-xs transition-colors ${
+                    taken
+                      ? `border-emerald-200 bg-emerald-50 text-emerald-900 ${open ? 'cursor-pointer hover:bg-emerald-100' : ''}`
+                      : open
+                      ? `cursor-pointer hover:bg-amber-50 ${g === grade ? 'border-amber-400 bg-amber-50' : 'border-stone-200'}`
+                      : count && editable
+                      ? 'border-stone-200 text-stone-700'
+                      : 'border-stone-100 text-stone-400'
+                  }`}
+                >
+                  <b>{g}-р анги</b>
+                  {g === grade && !taken && <span className="text-amber-700"> (таны)</span>}
+                  <span className="block text-[10px]">
+                    {taken ? `✓ ${taken.correct}/${taken.total} зөв • дахин өгөх` : count ? `${count} бодлого` : 'Удахгүй'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {editable && (
+            <button
+              type="button"
+              onClick={() => setEditing('placement-settings')}
+              className="mt-2 text-xs font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 cursor-pointer"
+            >
+              <Settings className="w-3.5 h-3.5" /> Сорилын тохиргоо
+            </button>
+          )}
+        </Card>
+
+        <Card
           icon={<BookOpen className="w-5 h-5" />}
           title={content.lessonsTitle}
           testId="home-lessons"
@@ -285,71 +361,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
             </div>
           ) : (
             <span className="whitespace-pre-wrap">{content.lessonsText}</span>
-          )}
-        </Card>
-
-        <Card
-          icon={<ClipboardCheck className="w-5 h-5" />}
-          title={content.placementTitle}
-          highlight={needsPlacement}
-          testId="home-placement"
-          onEdit={edit('placement')}
-          editor={
-            editing === 'placement' && (
-              <TextEditor
-                fields={[
-                  { key: 'placementTitle', label: 'Гарчиг' },
-                  { key: 'placementText', label: 'Тайлбар', multiline: true },
-                ]}
-                content={content}
-                onDone={done}
-              />
-            )
-          }
-          action={hasPlan ? { label: 'Дүн, төлөвлөгөө', onClick: onOpenPlan } : null}
-        >
-          <span className="inline-block text-[10px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 mb-2">
-            Үнэгүй
-          </span>
-          <span className="block text-xs text-stone-500 mb-2 whitespace-pre-wrap">{content.placementText}</span>
-          <div className="grid grid-cols-2 gap-1.5" data-testid="placement-grades">
-            {GRADES.map((g) => {
-              const taken = learningPlan.resultFor(g);
-              const open = learningPlan.canTakePlacement(g);
-              const count = placementSize(g).questions;
-              return (
-                <button
-                  key={g}
-                  type="button"
-                  disabled={!open}
-                  onClick={() => onStartPlacement(g)}
-                  className={`px-2 py-1.5 rounded-lg border text-left text-xs transition-colors ${
-                    taken
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                      : open
-                      ? `cursor-pointer hover:bg-amber-50 ${g === grade ? 'border-amber-400 bg-amber-50' : 'border-stone-200'}`
-                      : count && editable
-                      ? 'border-stone-200 text-stone-700'
-                      : 'border-stone-100 text-stone-400'
-                  }`}
-                >
-                  <b>{g}-р анги</b>
-                  {g === grade && !taken && <span className="text-amber-700"> (таны)</span>}
-                  <span className="block text-[10px]">
-                    {taken ? `✓ ${taken.correct}/${taken.total} зөв` : count ? `${count} бодлого` : 'Удахгүй'}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          {editable && (
-            <button
-              type="button"
-              onClick={() => setEditing('placement-settings')}
-              className="mt-2 text-xs font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 cursor-pointer"
-            >
-              <Settings className="w-3.5 h-3.5" /> Сорилын тохиргоо
-            </button>
           )}
         </Card>
 

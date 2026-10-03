@@ -20,7 +20,7 @@ export const DEFAULT_HOME_CONTENT: HomeContent = {
   lessonsTitle: 'Хичээл',
   lessonsText: 'Онол, жишээ, дасгалтай сэдвүүд.',
   placementTitle: 'Түвшин тогтоох сорил',
-  placementText: 'Ангиа сонгоод сорилоо өгнө. Анги бүрийнх нэг удаа.',
+  placementText: 'Ангиа сонгоод сорилоо өгнө.',
   examsTitle: 'Сэдэвчилсэн сорил',
   examsText: 'Сэдэв бүр дээр Анхан → Дунд → Ахисан. 85%-иас дээш авбал дараагийн шат нээгдэнэ.',
   accessTitle: 'Эрх авах',

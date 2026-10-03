@@ -13,7 +13,7 @@ import { getQuestionOptions, hasMadeUpOptions, isOptionCorrect } from '../utils/
  * Placement test and personal learning plan.
  * A grade's placement test is drawn at random from the basic and middle tests of that grade's
  * topics, a few questions per topic.
- * Placement tests are free and every grade's (6-12) is open to every student, once each.
+ * Placement tests are free and every grade's (6-12) is open to every student; retaking one replaces its result.
  * - users/{uid}/placement/g{grade}: the student's answers on that grade's test and the topics of
  *   the questions they got wrong. Together these topics are their plan. Those topics are their plan; they open once the student has paid (an access period
  *   set on their permissions).
@@ -284,13 +284,12 @@ export const learningPlan = {
   isLoading(): boolean {
     return !!state.uid && state.results === undefined;
   },
-  /** A grade's placement test exists and the student has not taken it yet. */
+  /** A grade's placement test exists (it can be taken again; the new result replaces the old). */
   canTakePlacement(grade: GradeNumber): boolean {
     return (
       !!state.uid &&
       !!state.results &&
       cloud.getAppSettings().placementEnabled &&
-      !state.results.some((r) => r.grade === grade) &&
       placementSize(grade).questions > 0
     );
   },

@@ -234,14 +234,17 @@ export default function App() {
   // Exams page filter, chosen in the sidebar
   const [examFilter, setExamFilter] = useState<ExamFilter>('all');
   // Right after finishing a placement test, show the plan it produced
-  const placementCount = learningPlan.state.results?.length;
-  const prevPlacementCount = React.useRef<number | undefined>(undefined);
+  // (a new or a retaken test both change the latest result time)
+  const latestPlacement = learningPlan.state.results
+    ? Math.max(0, ...learningPlan.state.results.map((r) => r.takenAt))
+    : undefined;
+  const prevLatestPlacement = React.useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (placementCount !== undefined && prevPlacementCount.current !== undefined && placementCount > prevPlacementCount.current) {
+    if (latestPlacement !== undefined && prevLatestPlacement.current !== undefined && latestPlacement > prevLatestPlacement.current) {
       setActiveView('plan');
     }
-    prevPlacementCount.current = placementCount;
-  }, [placementCount]);
+    prevLatestPlacement.current = latestPlacement;
+  }, [latestPlacement]);
 
   // Opens a topic from the plan in its grade
   const openPlanTopic = (topicId: string, view: 'topics' | 'exams') => {

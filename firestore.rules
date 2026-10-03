@@ -99,7 +99,7 @@ service cloud.firestore {
       // remove it so the student takes the test again
       match /placement/{docId} {
         allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
-        allow create: if signedIn() && request.auth.uid == uid;
+        allow create, update: if signedIn() && request.auth.uid == uid;
         allow delete: if isAdmin();
       }
 
