@@ -252,7 +252,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }`}
               >
                 {!showHome && <Award className="w-3.5 h-3.5" />}
-                <span>Шалгалтууд</span>
+                <span className="leading-tight text-center">Сэдэвчилсэн сорил</span>
               </button>
             </div>
           </div>
