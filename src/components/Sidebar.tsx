@@ -248,9 +248,79 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Lessons: grades + topics. Exams: grades + filters and results. Home: progress and news */}
         {showLessonNav || showExamNav ? (
           <>
+        {/* Grades Selector Tabs */}
+        <div className="p-3 border-b border-stone-800/80 bg-stone-950/40 shrink-0">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">
+              Анги сонгох
+            </div>
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              className="p-1 rounded-md text-stone-400 hover:text-white hover:bg-stone-800 lg:hidden cursor-pointer"
+              aria-label="Хаах"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-4 gap-1.5">
+            {GRADES_LIST.map((grade) => {
+              const isSelected = grade === selectedGrade;
+              // A user works in their own grade only; the other grades stay greyed out
+              const ownGrade = isAdmin ? null : learningPlan.state.grade;
+              const notOwn = !!ownGrade && grade !== ownGrade;
+              // Plan topics can be in any grade; each topic is gated on its own
+              const isAllowed =
+                !notOwn &&
+                ((!isAdmin && learningPlan.isGated()) ||
+                  userPermissionsService.isGradeAllowed(currentUser?.userId, grade, isAdmin));
+              return (
+                <button
+                  key={grade}
+                  type="button"
+                  disabled={notOwn}
+                  onClick={() => {
+                    if (!isAllowed) {
+                      alert(`${grade}-р ангийн хичээлийг үзэх эрх таны бүртгэлд олгогдоогүй байна. Админд хандаж нээлгэнэ үү.`);
+                      return;
+                    }
+                    onSelectGrade(grade);
+                    // auto pick first available topic for this grade
+                    const topics = GRADE_TOPICS_CATALOG[grade] || [];
+                    const firstAvailable = isAdmin
+                      ? topics[0]
+                      : topics.find((t) => visibilityService.getTopicAccessMode(t.id) !== 'hidden');
+                    if (firstAvailable) {
+                      onSelectTopic(firstAvailable.id);
+                    }
+                  }}
+                  className={`py-1.5 px-2 rounded-md text-xs font-bold transition-all text-center cursor-pointer relative ${
+                    isSelected
+                      ? 'bg-amber-500 text-stone-950 shadow-xs scale-102'
+                      : notOwn
+                      ? 'bg-stone-800/40 text-stone-600 opacity-50 !cursor-default'
+                      : isAllowed
+                      ? 'bg-stone-800/80 text-stone-300 hover:bg-stone-700 hover:text-white'
+                      : 'bg-stone-900/60 text-stone-500 opacity-60 border border-stone-800'
+                  }`}
+                  title={notOwn ? 'Зөвхөн өөрийн ангийн хичээлийг үзнэ' : !isAllowed ? `${grade}-р анги (Эрх олгогдоогүй)` : undefined}
+                >
+                  <span>{grade}-р анги</span>
+                  {!isAllowed && !notOwn && <Lock className="w-2.5 h-2.5 inline-block ml-0.5 text-stone-500" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Grade's content: all topics / tests, or the user's plan topics as a flat list */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          <div className="px-1 mb-1 text-[11px] font-bold text-stone-400 uppercase tracking-wider">
+            {selectedGrade}-р ангийн {showExamNav ? 'сорил' : 'агуулга'}
+          </div>
         {canPlanView && (
-          <div className="px-3 pt-3 shrink-0">
-            <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-stone-950 border border-stone-800" data-testid="lesson-mode">
+          <div>
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-stone-950 border border-stone-800 mb-1" data-testid="lesson-mode">
               {(
                 [
                   ['all', showExamNav ? 'Бүх сорил' : 'Бүх сэдэв'],
@@ -272,142 +342,66 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {!planMode && (
-        /* Grades Selector Tabs */
-        <div className="p-3 border-b border-stone-800/80 bg-stone-950/40 shrink-0">
-          <div className="flex items-center justify-between mb-2 px-1">
-            <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">
-              Анги сонгох
-            </div>
-            <button
-              type="button"
-              onClick={onCloseMobile}
-              className="p-1 rounded-md text-stone-400 hover:text-white hover:bg-stone-800 lg:hidden cursor-pointer"
-              aria-label="Хаах"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="grid grid-cols-4 gap-1.5">
-            {GRADES_LIST.map((grade) => {
-              const isSelected = grade === selectedGrade;
-              // Plan topics can be in any grade; each topic is gated on its own
-              const isAllowed =
-                (!isAdmin && learningPlan.isGated()) ||
-                userPermissionsService.isGradeAllowed(currentUser?.userId, grade, isAdmin);
-              return (
-                <button
-                  key={grade}
-                  type="button"
-                  onClick={() => {
-                    if (!isAllowed) {
-                      alert(`${grade}-р ангийн хичээлийг үзэх эрх таны бүртгэлд олгогдоогүй байна. Админд хандаж нээлгэнэ үү.`);
-                      return;
-                    }
-                    onSelectGrade(grade);
-                    // auto pick first available topic for this grade
-                    const topics = GRADE_TOPICS_CATALOG[grade] || [];
-                    const firstAvailable = isAdmin
-                      ? topics[0]
-                      : topics.find((t) => visibilityService.getTopicAccessMode(t.id) !== 'hidden');
-                    if (firstAvailable) {
-                      onSelectTopic(firstAvailable.id);
-                    }
-                  }}
-                  className={`py-1.5 px-2 rounded-md text-xs font-bold transition-all text-center cursor-pointer relative ${
-                    isSelected
-                      ? 'bg-amber-500 text-stone-950 shadow-xs scale-102'
-                      : isAllowed
-                      ? 'bg-stone-800/80 text-stone-300 hover:bg-stone-700 hover:text-white'
-                      : 'bg-stone-900/60 text-stone-500 opacity-60 border border-stone-800'
-                  }`}
-                  title={!isAllowed ? `${grade}-р анги (Эрх олгогдоогүй)` : undefined}
-                >
-                  <span>{grade}-р анги</span>
-                  {!isAllowed && <Lock className="w-2.5 h-2.5 inline-block ml-0.5 text-stone-500" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        )}
 
-        {planMode ? (
-          <div className="flex-1 overflow-y-auto p-3 space-y-3" data-testid="plan-topic-list">
-            {learningPlan.plan().length === 0 && (
-              <div className="rounded-xl border border-stone-800 bg-stone-950/40 p-3 text-xs text-stone-400 leading-relaxed">
-                {isAdmin
-                  ? 'Хэрэглэгч бүрд түвшин тогтоох сорилын дүнгээр гарсан өөрийн төлөвлөгөөний сэдвүүд энд харагдана.'
-                  : learningPlan.hasPlan()
-                  ? 'Таны төлөвлөгөөнд сэдэв алга.'
-                  : 'Түвшин тогтоох сорил өгсний дараа танд зориулсан сэдвүүд энд гарна.'}
-                {!isAdmin && !learningPlan.hasPlan() && onOpenPlan && (
+          {planMode ? (
+            <div className="space-y-1" data-testid="plan-topic-list">
+              {learningPlan.plan().length === 0 && (
+                <div className="rounded-xl border border-stone-800 bg-stone-950/40 p-3 text-xs text-stone-400 leading-relaxed">
+                  {isAdmin
+                    ? 'Хэрэглэгч бүрд түвшин тогтоох сорилын дүнгээр гарсан өөрийн төлөвлөгөөний сэдвүүд энд харагдана.'
+                    : learningPlan.hasPlan()
+                    ? 'Таны төлөвлөгөөнд сэдэв алга.'
+                    : 'Түвшин тогтоох сорил өгсний дараа танд зориулсан сэдвүүд энд гарна.'}
+                  {!isAdmin && !learningPlan.hasPlan() && onOpenPlan && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenPlan();
+                        onCloseMobile();
+                      }}
+                      className="mt-2 w-full py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold cursor-pointer"
+                    >
+                      Сорил өгөх
+                    </button>
+                  )}
+                </div>
+              )}
+              {learningPlan.plan().map((p) => {
+                const meta = topicMeta(p.topicId);
+                const isSelected = p.topicId === selectedTopicId;
+                const open = learningPlan.topicGate(p.topicId) === 'open';
+                return (
                   <button
+                    key={p.topicId}
                     type="button"
                     onClick={() => {
-                      onOpenPlan();
+                      onSelectGrade(meta.grade);
+                      onSelectTopic(p.topicId);
                       onCloseMobile();
                     }}
-                    className="mt-2 w-full py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold cursor-pointer"
+                    className={`w-full text-left pl-3 pr-2.5 py-2 rounded-lg text-xs transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                      isSelected
+                        ? 'bg-stone-800 text-amber-400 border border-stone-700 font-bold'
+                        : 'text-stone-300 hover:bg-stone-800/60 hover:text-white font-medium'
+                    }`}
                   >
-                    Сорил өгөх
+                    <span className="flex items-center gap-2 min-w-0">
+                      {learningPlan.isDone(p.topicId) ? (
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                      ) : !open ? (
+                        <Lock className="w-3 h-3 text-amber-500 shrink-0" />
+                      ) : (
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? 'bg-amber-400' : 'bg-stone-400'}`} />
+                      )}
+                      <span className="truncate">{meta.title}</span>
+                    </span>
+                    <ProgressRing percent={learningPlan.progress(p.topicId)} size={16} />
                   </button>
-                )}
-              </div>
-            )}
-            {GRADES_LIST.filter((g) => learningPlan.plan().some((p) => topicMeta(p.topicId).grade === g)).map((g) => (
-              <div key={g}>
-                <div className="px-1 mb-1 text-[11px] font-bold text-stone-400 uppercase tracking-wider">{g}-р анги</div>
-                <div className="rounded-xl border border-stone-800/90 bg-stone-950/40 p-1 space-y-0.5">
-                  {learningPlan
-                    .plan()
-                    .filter((p) => topicMeta(p.topicId).grade === g)
-                    .map((p) => {
-                      const meta = topicMeta(p.topicId);
-                      const isSelected = p.topicId === selectedTopicId;
-                      const open = learningPlan.topicGate(p.topicId) === 'open';
-                      return (
-                        <button
-                          key={p.topicId}
-                          type="button"
-                          onClick={() => {
-                            onSelectGrade(meta.grade);
-                            onSelectTopic(p.topicId);
-                            // On the exams page this opens that grade's plan tests
-                            onCloseMobile();
-                          }}
-                          className={`w-full text-left pl-3 pr-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center justify-between gap-2 cursor-pointer ${
-                            isSelected
-                              ? 'bg-stone-800 text-amber-400 border border-stone-700 font-bold'
-                              : 'text-stone-300 hover:bg-stone-800/60 hover:text-white font-medium'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2 min-w-0">
-                            {learningPlan.isDone(p.topicId) ? (
-                              <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
-                            ) : !open ? (
-                              <Lock className="w-3 h-3 text-amber-500 shrink-0" />
-                            ) : (
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                            )}
-                            <span className="truncate">{meta.title}</span>
-                          </span>
-                          <ProgressRing percent={learningPlan.progress(p.topicId)} size={16} />
-                        </button>
-                      );
-                    })}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : showExamNav ? (
-          <div className="flex-1" />
-        ) : (
-        /* Topics List with Hierarchical Accordion (Агуулгын аймаг -> Дэд сэдэв) */
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
-          <div className="px-1 mb-1 text-[11px] font-bold text-stone-400 uppercase tracking-wider">
-            {selectedGrade}-р ангийн агуулга
-          </div>
+                );
+              })}
+            </div>
+          ) : showExamNav ? null : (
+          <>
 
           {categoryGroups.length === 0 ? (
             <div className="text-center py-8 text-stone-500 text-xs">
@@ -546,8 +540,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               })}
             </div>
           )}
+          </>
+          )}
         </div>
-        )}
           </>
         ) : (
           <div className="flex-1 overflow-y-auto">

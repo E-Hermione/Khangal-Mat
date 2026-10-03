@@ -139,6 +139,13 @@ export default function App() {
       // Users follow placement tests and a personal learning plan; everyone starts on the home page
       if (!session.isAdmin) {
         startLearningPlan(fbUser.uid, session.user.userId!, session.profile?.grades?.[0] ?? null);
+        // Start in the user's own grade
+        const ownGrade = session.profile?.grades?.[0];
+        if (ownGrade) {
+          setSelectedGrade(ownGrade);
+          const first = GRADE_TOPICS_CATALOG[ownGrade]?.[0];
+          if (first) setSelectedTopicId(first.id);
+        }
       } else {
         stopLearningPlan();
       }

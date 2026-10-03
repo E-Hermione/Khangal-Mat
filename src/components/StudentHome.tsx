@@ -222,12 +222,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
 
   return (
     <div className="max-w-5xl mx-auto space-y-6" data-testid="student-home">
-      {editable && (
-        <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
-          Хэрэглэгчдэд харагдах нүүр хуудас. <Pencil className="w-3 h-3 inline" /> товчоор бичвэр, төлбөр, сорилын тохиргоог засна.
-        </div>
-      )}
-
       <div>
         <h1 className="text-2xl font-black text-stone-950">Сайн байна уу{firstName ? `, ${firstName}` : ''}!</h1>
         {editing === 'intro' ? (
