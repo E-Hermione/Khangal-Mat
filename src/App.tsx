@@ -135,13 +135,13 @@ export default function App() {
 
       // Load data first: the site-wide settings decide whether the device limit applies
       await startCloudSync({ isAdmin: session.isAdmin, userId: session.user.userId });
-      // Students follow a placement test and a personal learning plan
-      if (!session.isAdmin && session.profile?.accountType === 'student') {
-        startLearningPlan(fbUser.uid, session.user.userId!, session.profile.grades?.[0] ?? null);
-        setActiveView('home');
+      // Users follow placement tests and a personal learning plan; everyone starts on the home page
+      if (!session.isAdmin) {
+        startLearningPlan(fbUser.uid, session.user.userId!, session.profile?.grades?.[0] ?? null);
       } else {
         stopLearningPlan();
       }
+      setActiveView('home');
 
       // Device tracking must never block sign-in (e.g. before the rules are deployed)
       const device = await registerCurrentDevice(fbUser.uid).catch((err) => {
@@ -217,7 +217,7 @@ export default function App() {
       setActiveView('home');
     } else {
       stopLearningPlan();
-      setActiveView((v) => (v === 'home' || v === 'plan' || v === 'placement' ? 'topics' : v));
+      setActiveView((v) => (v === 'plan' || v === 'placement' ? 'home' : v));
     }
   }, [previewAsUser, currentUser?.role]);
   const isStudent = (currentUser?.role !== 'admin' || isAdminPreview) && !!learningPlan.state.uid;
@@ -471,9 +471,9 @@ export default function App() {
             </button>
 
             <div
-              className={`flex items-center space-x-2 ${isStudent ? 'cursor-pointer' : ''}`}
-              onClick={isStudent ? () => setActiveView('home') : undefined}
-              title={isStudent ? 'Нүүр хуудас' : undefined}
+              className="flex items-center space-x-2 cursor-pointer"
+              onClick={() => setActiveView('home')}
+              title="Нүүр хуудас"
             >
               <span className="w-7 h-7 rounded-md bg-stone-900 text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
                 ∑
@@ -605,7 +605,7 @@ export default function App() {
           isAdmin={currentUser?.role === 'admin' && !previewAsUser}
           activeView={activeView}
           onSelectView={setActiveView}
-          showHome={isStudent}
+          showHome={isStudent || currentUser.role === 'admin'}
         />
 
         {/* Main Content Area */}
@@ -621,10 +621,12 @@ export default function App() {
             <div className="text-center py-20 text-sm text-stone-500">Ачаалж байна...</div>
           ) : isStudent && activeView === 'placement' && learningPlan.canTakePlacement(placementGrade) ? (
             <PlacementTestView key={placementGrade} uid={getFirebaseAuth().currentUser!.uid} grade={placementGrade} />
-          ) : isStudent && (activeView === 'home' || activeView === 'placement') ? (
+          ) : (isStudent && (activeView === 'home' || activeView === 'placement')) ||
+            (currentUser.role === 'admin' && !previewAsUser && activeView === 'home') ? (
             <StudentHome
-              uid={getFirebaseAuth().currentUser!.uid}
+              uid={getFirebaseAuth().currentUser?.uid}
               currentUser={currentUser}
+              editable={currentUser.role === 'admin' && !previewAsUser}
               onStartPlacement={(grade) => {
                 setPlacementGrade(grade);
                 setActiveView('placement');

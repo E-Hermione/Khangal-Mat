@@ -161,7 +161,7 @@ export interface ApprovedAccount {
   lastName?: string;
   firstName?: string;
   school?: string;
-  // Chosen at self-registration: a student picks their grade, a teacher picks "Багш"
+  // Chosen at self-registration (older accounts may say teacher; everyone is treated as a student)
   accountType?: 'student' | 'teacher';
   grades?: GradeNumber[];
   approvedAt: number;

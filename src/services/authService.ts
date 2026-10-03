@@ -103,7 +103,7 @@ export interface RegistrationData {
   lastName: string;
   firstName: string;
   phoneNumber: string;
-  grade: GradeNumber | 'teacher' | null;
+  grade: GradeNumber | null;
   school: string;
 }
 
@@ -139,8 +139,8 @@ export async function registerAccount(data: RegistrationData): Promise<void> {
       firstName,
       fullName: `${lastName} ${firstName}`,
       school,
-      accountType: grade === 'teacher' ? 'teacher' : 'student',
-      grades: grade === 'teacher' ? [] : [grade],
+      accountType: 'student',
+      grades: [grade],
       active: true,
       createdAt: Date.now(),
     });

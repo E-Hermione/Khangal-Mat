@@ -300,7 +300,7 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
               <div><span className="text-stone-500">Сургууль:</span> {user.school || '—'}</div>
               <div>
                 <span className="text-stone-500">Төрөл:</span>{' '}
-                {user.accountType === 'teacher' ? 'Багш' : user.grades?.length ? `Сурагч, ${user.grades.join(', ')}-р анги` : 'Сурагч'}
+                {user.grades?.length ? `${user.grades.join(', ')}-р анги` : '—'}
               </div>
               <div><span className="text-stone-500">Бүртгүүлсэн:</span> {formatDate(user.approvedAt)}</div>
               <div>
@@ -364,49 +364,47 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
             )}
           </Section>
 
-          {user.accountType === 'student' && (
-            <Section icon={<Route className="w-4 h-4 text-blue-600" />} title="Түвшин тогтоох ба төлөвлөгөө">
-              {placement === undefined ? (
-                <div className="text-xs text-stone-400">Ачаалж байна…</div>
-              ) : placement.length === 0 ? (
-                <div className="text-xs text-stone-500">Түвшин тогтоох сорил өгөөгүй.</div>
-              ) : (
-                <div className="space-y-2" data-testid="lookup-plan">
-                  {placement.map((r) => (
-                    <div key={r.grade} className="text-xs text-stone-700">
-                      {r.grade}-р ангийн сорил, {formatDate(r.takenAt)}:{' '}
-                      <b>
-                        {r.correct}/{r.total}
-                      </b>{' '}
-                      зөв
-                    </div>
-                  ))}
-                  {combinedPlan(placement).length === 0 ? (
-                    <div className="text-xs text-stone-500">Бүх бодлогыг зөв бодсон.</div>
-                  ) : (
-                    <div className="space-y-1">
-                      {combinedPlan(placement).map((p) => (
-                        <div key={p.topicId} className="flex items-center gap-2 text-xs">
-                          <ProgressRing percent={topicProgress(p.topicId, attempts)} size={18} />
-                          <span className="font-bold text-stone-900">{topicMeta(p.topicId).title}</span>
-                          <span className="text-stone-500">
-                            ({topicMeta(p.topicId).grade}-р анги • {p.grade}-р ангийн сорилд алдсан: {p.missed.join(', ')})
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleResetPlacement}
-                    className="px-3 py-1.5 rounded-lg border border-stone-300 text-xs font-bold text-stone-700 hover:bg-stone-50 cursor-pointer"
-                  >
-                    Сорилуудыг дахин өгүүлэх
-                  </button>
-                </div>
-              )}
-            </Section>
-          )}
+          <Section icon={<Route className="w-4 h-4 text-blue-600" />} title="Түвшин тогтоох ба төлөвлөгөө">
+            {placement === undefined ? (
+              <div className="text-xs text-stone-400">Ачаалж байна…</div>
+            ) : placement.length === 0 ? (
+              <div className="text-xs text-stone-500">Түвшин тогтоох сорил өгөөгүй.</div>
+            ) : (
+              <div className="space-y-2" data-testid="lookup-plan">
+                {placement.map((r) => (
+                  <div key={r.grade} className="text-xs text-stone-700">
+                    {r.grade}-р ангийн сорил, {formatDate(r.takenAt)}:{' '}
+                    <b>
+                      {r.correct}/{r.total}
+                    </b>{' '}
+                    зөв
+                  </div>
+                ))}
+                {combinedPlan(placement).length === 0 ? (
+                  <div className="text-xs text-stone-500">Бүх бодлогыг зөв бодсон.</div>
+                ) : (
+                  <div className="space-y-1">
+                    {combinedPlan(placement).map((p) => (
+                      <div key={p.topicId} className="flex items-center gap-2 text-xs">
+                        <ProgressRing percent={topicProgress(p.topicId, attempts)} size={18} />
+                        <span className="font-bold text-stone-900">{topicMeta(p.topicId).title}</span>
+                        <span className="text-stone-500">
+                          ({topicMeta(p.topicId).grade}-р анги • {p.grade}-р ангийн сорилд алдсан: {p.missed.join(', ')})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleResetPlacement}
+                  className="px-3 py-1.5 rounded-lg border border-stone-300 text-xs font-bold text-stone-700 hover:bg-stone-50 cursor-pointer"
+                >
+                  Сорилуудыг дахин өгүүлэх
+                </button>
+              </div>
+            )}
+          </Section>
 
           <Section icon={<History className="w-4 h-4 text-stone-600" />} title="Эрхийн түүх">
             {!perms?.history?.length ? (

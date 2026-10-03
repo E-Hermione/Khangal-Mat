@@ -80,7 +80,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ notice, onRegistered }) =>
             Математикийн сургалтын сан
           </h1>
           <p className="text-xs text-stone-400 mt-1">
-            Багш, сурагчдын нэвтрэх хэсэг
+            Сурагчдын нэвтрэх хэсэг
           </p>
         </div>
 

@@ -464,12 +464,8 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                           {account.phoneNumber && <span>{account.phoneNumber}</span>}
                           {account.email && <span>• {account.email}</span>}
                           {account.school && <span>• {account.school}</span>}
-                          {account.accountType === 'teacher' ? (
-                            <span>• Багш</span>
-                          ) : (
-                            account.grades && account.grades.length > 0 && (
-                              <span>• {account.grades.join(', ')}-р анги</span>
-                            )
+                          {account.grades && account.grades.length > 0 && (
+                            <span>• {account.grades.join(', ')}-р анги</span>
                           )}
                         </div>
                       </div>

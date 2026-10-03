@@ -25,7 +25,6 @@ export const AnnouncementsTab: React.FC = () => {
   const [body, setBody] = useState('');
   const [audience, setAudience] = useState<Audience>('all');
   const [grades, setGrades] = useState<GradeNumber[]>([]);
-  const [teachers, setTeachers] = useState(false);
   const [idsInput, setIdsInput] = useState('');
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
@@ -57,11 +56,9 @@ export const AnnouncementsTab: React.FC = () => {
     if (audience === 'grades') {
       const chosen = members.filter(
         (u) =>
-          (teachers && u.accountType === 'teacher') ||
-          (u.accountType === 'student' && (u.grades || []).some((g) => grades.includes(g)))
+          (u.grades || []).some((g) => grades.includes(g))
       );
       const parts = [...grades].sort((a, b) => a - b).map((g) => `${g}-р анги`);
-      if (teachers) parts.push('Багш нар');
       return { uids: chosen.map((u) => u.uid), label: parts.join(', '), unknown: [], count: chosen.length };
     }
     const tokens = idsInput.split(/[,\s;]+/).map((t) => t.trim()).filter(Boolean);
@@ -78,7 +75,7 @@ export const AnnouncementsTab: React.FC = () => {
     const ids = uids.map((uid) => members.find((u) => u.uid === uid)!.userId);
     const label = ids.length <= 3 ? ids.join(', ') : `${ids.length} хэрэглэгч`;
     return { uids, label, unknown, count: uids.length };
-  }, [audience, members, grades, teachers, idsInput]);
+  }, [audience, members, grades, idsInput]);
 
   const canSend = title.trim() !== '' && body.trim() !== '' && (audience === 'all' || target.count > 0) && !sending;
 
@@ -172,9 +169,6 @@ export const AnnouncementsTab: React.FC = () => {
                   {g}-р анги
                 </button>
               ))}
-              <button type="button" className={chip(teachers)} onClick={() => setTeachers((v) => !v)}>
-                Багш нар
-              </button>
             </div>
           )}
 

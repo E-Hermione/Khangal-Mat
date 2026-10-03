@@ -21,7 +21,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
   const [lastName, setLastName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [grade, setGrade] = useState<GradeNumber | 'teacher' | null>(null);
+  const [grade, setGrade] = useState<GradeNumber | null>(null);
   const [school, setSchool] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -148,7 +148,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
                 value={grade ?? ''}
                 onChange={(e) => {
                   const v = e.target.value;
-                  setGrade(v === '' ? null : v === 'teacher' ? 'teacher' : (Number(v) as GradeNumber));
+                  setGrade(v === '' ? null : (Number(v) as GradeNumber));
                 }}
                 className={`${inputClass} appearance-none pr-9 cursor-pointer ${grade === null ? 'text-stone-400' : ''}`}
               >
@@ -160,7 +160,6 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, o
                     {g}-р анги
                   </option>
                 ))}
-                <option value="teacher">Багш</option>
               </select>
               <ChevronDown className="w-4 h-4 text-stone-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
