@@ -217,7 +217,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {(
                 [
                   ...(showHome
-                    ? [{ key: 'home', label: 'Нүүр', icon: Home, active: activeView === 'home' || activeView === 'plan' || activeView === 'placement' }]
+                    ? [{ key: 'home', label: 'Нүүр хуудас', icon: Home, active: activeView === 'home' || activeView === 'plan' || activeView === 'placement' }]
                     : []),
                   { key: 'topics', label: 'Хичээл', icon: BookOpen, active: activeView === 'topics' },
                   { key: 'exams', label: 'Сэдэвчилсэн сорил', icon: Award, active: activeView === 'exams' },
