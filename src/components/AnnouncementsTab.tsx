@@ -10,6 +10,7 @@ import {
   sendAnnouncement,
 } from '../services/announcements';
 import { ADMIN_EMAIL } from '../services/authService';
+import { matchesUserToken } from '../services/userPermissionsService';
 import { GradeNumber, UserProfile } from '../types';
 
 type Audience = 'all' | 'grades' | 'users';
@@ -81,7 +82,7 @@ export const AnnouncementsTab: React.FC = () => {
     const uids: string[] = [];
     const unknown: string[] = [];
     for (const token of tokens) {
-      const user = members.find((u) => u.userId.toUpperCase() === token.toUpperCase() || u.phoneNumber === token);
+      const user = members.find((u) => matchesUserToken(u.userId, u.phoneNumber, token));
       if (user) {
         if (!uids.includes(user.uid)) uids.push(user.uid);
       } else {
@@ -240,7 +241,7 @@ export const AnnouncementsTab: React.FC = () => {
               <input
                 value={idsInput}
                 onChange={(e) => setIdsInput(e.target.value)}
-                placeholder="ID эсвэл утасны дугаарууд, таслалаар: USR-1234, 99112233"
+                placeholder="ID-ийн тоо эсвэл утас, таслалаар: 1234, 99112233"
                 className="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
               />
               {target.unknown.length > 0 && (

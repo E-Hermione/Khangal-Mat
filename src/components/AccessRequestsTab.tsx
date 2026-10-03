@@ -27,7 +27,7 @@ import {
   ClipboardCheck,
 } from 'lucide-react';
 import { accessRequestService } from '../services/accessRequestService';
-import { userPermissionsService } from '../services/userPermissionsService';
+import { userPermissionsService, matchesUserToken } from '../services/userPermissionsService';
 import { AccessRequest, ApprovedAccount, UserPermissions, DefaultPermissionsConfig, GradeNumber } from '../types';
 import { UserLookupTab } from './UserLookupTab';
 import { AnnouncementsTab } from './AnnouncementsTab';
@@ -165,8 +165,7 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
     const found: string[] = [];
     const unknown: string[] = [];
     for (const token of tokens) {
-      const t = token.toUpperCase();
-      const user = allUsersList.find((u) => u.userId.toUpperCase() === t || u.phone === token);
+      const user = allUsersList.find((u) => matchesUserToken(u.userId, u.phone, token));
       if (user) {
         if (!found.includes(user.userId)) found.push(user.userId);
       } else {
@@ -684,7 +683,7 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSelectBulk();
                 }}
-                placeholder="Олон хэрэглэгч: USR-1234, USR-5678, 99112233 (таслалаар тусгаарлана)"
+                placeholder="Олон хэрэглэгч: 1234, 5678, 99112233 (ID-ийн тоо эсвэл утас, таслалаар)"
                 className="flex-1 text-xs px-3 py-2 bg-white border border-stone-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-amber-500"
               />
               <button

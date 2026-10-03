@@ -197,3 +197,14 @@ class UserPermissionsService {
 }
 
 export const userPermissionsService = new UserPermissionsService();
+
+/**
+ * True if a typed token names this user: the number of their ID ("2789" for USR-2789), the full ID,
+ * or their phone number.
+ */
+export function matchesUserToken(userId: string, phone: string | undefined, token: string): boolean {
+  const t = token.trim().toUpperCase();
+  if (!t) return false;
+  const id = userId.toUpperCase();
+  return id === t || id === `USR-${t}` || (!!phone && phone === t);
+}
