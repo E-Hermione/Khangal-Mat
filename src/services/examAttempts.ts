@@ -9,6 +9,9 @@ import { getDb } from './firebase';
 export interface ExamAttempt {
   answers: Record<string, string>;
   score?: number;
+  // Highest score over all tries and what the test is out of (decides whether a topic is done)
+  bestScore?: number;
+  maxPoints?: number;
   finishedAt?: number;
 }
 

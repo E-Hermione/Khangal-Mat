@@ -95,6 +95,14 @@ service cloud.firestore {
         allow read, delete: if isAdmin();
       }
 
+      // Placement test result (the learning plan): the student saves it once; the admin can
+      // remove it so the student takes the test again
+      match /placement/{docId} {
+        allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+        allow create: if signedIn() && request.auth.uid == uid;
+        allow delete: if isAdmin();
+      }
+
       // Exam results: the owner writes, the admin can review
       match /examAttempts/{examId} {
         allow read, write: if signedIn() && request.auth.uid == uid;
@@ -111,6 +119,17 @@ service cloud.firestore {
     // The admin counts who read each announcement
     match /{path=**}/announcementReads/{announcementId} {
       allow read, delete: if isAdmin();
+    }
+
+    // Bank transfer reports: the student says they paid, the admin confirms or rejects
+    match /paymentRequests/{requestId} {
+      allow create: if isMember()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.userId == myProfile().userId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly(['uid', 'userId', 'phoneNumber', 'fullName', 'months', 'amount', 'note', 'status', 'createdAt']);
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
 
     match /phones/{phone} {

@@ -13,6 +13,9 @@ import { AnnouncementsBell } from './components/AnnouncementsBell';
 import { CopyProtection } from './components/CopyProtection';
 import { SettingsModal } from './components/SettingsModal';
 import { ExamsHub } from './components/ExamsHub';
+import { PlacementTestView } from './components/PlacementTestView';
+import { LearningPlanView } from './components/LearningPlanView';
+import { learningPlan, startLearningPlan, stopLearningPlan, topicMeta, useLearningPlanVersion } from './services/learningPlan';
 import { AuthUser } from './types';
 import { clearStoredAuth, saveStoredAuth } from './utils/deviceManager';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -50,7 +53,8 @@ export default function App() {
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [previewAsUser, setPreviewAsUser] = useState<boolean>(false);
-  const [activeView, setActiveView] = useState<'topics' | 'exams'>('topics');
+  const [activeView, setActiveView] = useState<'topics' | 'exams' | 'plan'>('topics');
+  useLearningPlanVersion();
   const [topics, setTopics] = useState<TopicPackage[]>([]);
   const [selectedGrade, setSelectedGrade] = useState<GradeNumber>(6);
   const [selectedTopicId, setSelectedTopicId] = useState<string>('g6-divisibility');
@@ -130,6 +134,12 @@ export default function App() {
 
       // Load data first: the site-wide settings decide whether the device limit applies
       await startCloudSync({ isAdmin: session.isAdmin, userId: session.user.userId });
+      // Students follow a placement test and a personal learning plan
+      if (!session.isAdmin && session.profile?.accountType === 'student') {
+        startLearningPlan(fbUser.uid, session.user.userId!, session.profile.grades?.[0] ?? null);
+      } else {
+        stopLearningPlan();
+      }
 
       // Device tracking must never block sign-in (e.g. before the rules are deployed)
       const device = await registerCurrentDevice(fbUser.uid).catch((err) => {
@@ -186,12 +196,26 @@ export default function App() {
       } else {
         stopCloudSync();
         stopDeviceWatch();
+        stopLearningPlan();
         setUnverifiedEmail(null);
         setCurrentUser(null);
       }
       setAuthLoading(false);
     });
   }, [openSession]);
+
+  // A student with a learning plan starts on it
+  const hasPlan = learningPlan.hasPlan();
+  useEffect(() => {
+    if (hasPlan) setActiveView('plan');
+  }, [hasPlan]);
+
+  // Opens a topic from the plan in its grade
+  const openPlanTopic = (topicId: string, view: 'topics' | 'exams') => {
+    setSelectedGrade(topicMeta(topicId).grade);
+    setSelectedTopicId(topicId);
+    setActiveView(view);
+  };
 
   const reloadSession = () => {
     const fbUser = getFirebaseAuth().currentUser;
@@ -554,18 +578,30 @@ export default function App() {
           isAdmin={currentUser?.role === 'admin' && !previewAsUser}
           activeView={activeView}
           onSelectView={setActiveView}
+          showPlan={hasPlan && currentUser.role !== 'admin'}
         />
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 md:p-6 lg:p-8 min-w-0">
-          {currentUser.role !== 'admin' && userPermissionsService.isExpired(currentUser.userId) && (
+          {currentUser.role !== 'admin' && !hasPlan && userPermissionsService.isExpired(currentUser.userId) && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800 font-medium" data-testid="access-expired">
               Таны хичээл үзэх эрхийн хугацаа{' '}
               {new Date(userPermissionsService.getUserPermissions(currentUser.userId!).expiresAt!).toLocaleDateString()}-нд
               дууссан байна. Сунгуулахын тулд админд хандана уу.
             </div>
           )}
-          {activeView === 'exams' ? (
+          {currentUser.role !== 'admin' && learningPlan.isLoading() ? (
+            <div className="text-center py-20 text-sm text-stone-500">Ачаалж байна...</div>
+          ) : currentUser.role !== 'admin' && learningPlan.needsPlacement() ? (
+            <PlacementTestView uid={getFirebaseAuth().currentUser!.uid} grade={learningPlan.state.grade!} />
+          ) : activeView === 'plan' && hasPlan ? (
+            <LearningPlanView
+              uid={getFirebaseAuth().currentUser!.uid}
+              currentUser={currentUser}
+              onOpenTopic={(topicId) => openPlanTopic(topicId, 'topics')}
+              onOpenExam={(topicId) => openPlanTopic(topicId, 'exams')}
+            />
+          ) : activeView === 'exams' ? (
             <ExamsHub
               topics={topics}
               selectedGrade={selectedGrade}
@@ -589,6 +625,7 @@ export default function App() {
               }}
               onOpenAdmin={() => setAdminModalOpen(true)}
               onPreviewAsUser={() => setPreviewAsUser(true)}
+              onOpenPlan={() => setActiveView('plan')}
               onOpenExamsHub={(topicId) => {
                 if (topicId) setSelectedTopicId(topicId);
                 setActiveView('exams');

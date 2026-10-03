@@ -14,6 +14,8 @@ import {
 import { backdropClose } from '../utils/backdrop';
 import { getQuestionOptions, isOptionCorrect } from '../utils/examGrading';
 import { visibilityService } from '../services/visibilityService';
+import { learningPlan } from '../services/learningPlan';
+import { ProgressRing } from './ProgressRing';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { subscribeAttempts, saveAttempt as saveAttemptCloud, AttemptMap, ExamAttempt } from '../services/examAttempts';
 
@@ -188,7 +190,9 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
     const bump = () => setSettingsVersion((v) => v + 1);
     window.addEventListener('visibility-settings-updated', bump);
     window.addEventListener('user-permissions-updated', bump);
+    window.addEventListener('learning-plan-updated', bump);
     return () => {
+      window.removeEventListener('learning-plan-updated', bump);
       window.removeEventListener('visibility-settings-updated', bump);
       window.removeEventListener('user-permissions-updated', bump);
     };
@@ -198,12 +202,16 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
   // the tests the admin switched on for them
   const allowedTiers = (topicId: string): (1 | 2 | 3)[] => {
     if (isAdmin) return [1, 2, 3];
+    // Students with a learning plan: paid plan topics only, each tier after passing the previous one
+    const gate = learningPlan.topicGate(topicId);
+    if (gate) return gate === 'open' ? learningPlan.unlockedTiers(topicId) : [];
     if (visibilityService.getTopicAccessMode(topicId) !== 'visible') return [];
     const v = visibilityService.getTopicVisibility(topicId);
     return ([1, 2, 3] as const).filter((n) => v[`test${n}` as 'test1' | 'test2' | 'test3']);
   };
   const examsAllowed =
     isAdmin ||
+    learningPlan.hasPlan() ||
     (userPermissionsService.isGradeAllowed(userId, selectedGrade, false) &&
       userPermissionsService.isSectionAllowed(userId, 'exams', false));
 
@@ -410,6 +418,9 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
                         >
                           {topic.title}
                         </button>
+                        {!isAdmin && learningPlan.inPlan(topic.id) && (
+                          <ProgressRing percent={learningPlan.progress(topic.id)} size={18} className="mt-1" />
+                        )}
                       </td>
 
                       {/* Түвшин: 3-tier Interactive Selector */}
@@ -606,7 +617,14 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
           initialAnswers={attempts[activeExam.id]?.answers || {}}
           onClose={() => setActiveExam(null)}
           onFinish={(answers, score) => {
-            saveAttempt(activeExam.id, { answers, score, finishedAt: Date.now() });
+            const prev = attempts[activeExam.id];
+            saveAttempt(activeExam.id, {
+              answers,
+              score,
+              bestScore: Math.max(score, prev?.bestScore ?? prev?.score ?? 0),
+              maxPoints: activeExam.totalPoints,
+              finishedAt: Date.now(),
+            });
             setActiveExam(null);
             setViewScoreExam({ exam: activeExam, score, maxScore: activeExam.totalPoints });
           }}

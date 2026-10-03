@@ -23,18 +23,23 @@ import {
   Sliders,
   Sparkles,
   Megaphone,
+  CreditCard,
+  ClipboardCheck,
 } from 'lucide-react';
 import { accessRequestService } from '../services/accessRequestService';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { AccessRequest, ApprovedAccount, UserPermissions, DefaultPermissionsConfig, GradeNumber } from '../types';
 import { UserLookupTab } from './UserLookupTab';
 import { AnnouncementsTab } from './AnnouncementsTab';
+import { PaymentsTab } from './PaymentsTab';
+import { PlacementAdminTab } from './PlacementAdminTab';
+import { subscribeAllPaymentRequests } from '../services/payments';
 
 interface AccessRequestsTabProps {
   onCountChange?: (count: number) => void;
 }
 
-type MainTab = 'lookup' | 'requests' | 'user-permissions' | 'default-permissions' | 'announcements';
+type MainTab = 'lookup' | 'requests' | 'user-permissions' | 'default-permissions' | 'announcements' | 'payments' | 'placement';
 
 export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountChange }) => {
   const [mainTab, setMainTab] = useState<MainTab>('requests');
@@ -55,6 +60,13 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
     userPermissionsService.getDefaultConfig()
   );
   const [defaultSaveStatus, setDefaultSaveStatus] = useState<string | null>(null);
+
+  // Bank transfers waiting for the admin to confirm
+  const [pendingPayments, setPendingPayments] = useState(0);
+  useEffect(
+    () => subscribeAllPaymentRequests((list) => setPendingPayments(list.filter((r) => r.status === 'pending').length)),
+    []
+  );
 
   const loadData = () => {
     const list = accessRequestService.getRequests();
@@ -323,6 +335,37 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
           <Megaphone className="w-4 h-4" />
           <span>Зарлал</span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab('payments')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all cursor-pointer ${
+            mainTab === 'payments'
+              ? 'bg-stone-900 text-amber-400 shadow-xs'
+              : 'bg-stone-100 text-stone-600 hover:text-stone-900 hover:bg-stone-200/80'
+          }`}
+        >
+          <CreditCard className="w-4 h-4" />
+          <span>Төлбөр</span>
+          {pendingPayments > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-stone-950">
+              {pendingPayments}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab('placement')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all cursor-pointer ${
+            mainTab === 'placement'
+              ? 'bg-stone-900 text-amber-400 shadow-xs'
+              : 'bg-stone-100 text-stone-600 hover:text-stone-900 hover:bg-stone-200/80'
+          }`}
+        >
+          <ClipboardCheck className="w-4 h-4" />
+          <span>Түвшин тогтоох</span>
+        </button>
       </div>
 
       {/* ========================================================================= */}
@@ -333,6 +376,8 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
       )}
 
       {mainTab === 'announcements' && <AnnouncementsTab />}
+      {mainTab === 'payments' && <PaymentsTab />}
+      {mainTab === 'placement' && <PlacementAdminTab />}
 
       {mainTab === 'requests' && (
         <div className="space-y-4">

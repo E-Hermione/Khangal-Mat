@@ -7,6 +7,7 @@ import { PrintControlPanel } from './PrintControlPanel';
 import { ItemEditorModal, ItemEditorType } from './ItemEditorModal';
 import { visibilityService, TopicSectionVisibility, TopicAccessMode } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
+import { learningPlan, useLearningPlanVersion } from '../services/learningPlan';
 import { accessRequestService } from '../services/accessRequestService';
 import { getFirebaseAuth } from '../services/firebase';
 import { AuthUser } from '../types';
@@ -32,6 +33,8 @@ interface TopicPageProps {
   onOpenAdmin?: () => void;
   onPreviewAsUser?: () => void;
   onOpenExamsHub?: (topicId?: string) => void;
+  // Students with a learning plan: back to the plan
+  onOpenPlan?: () => void;
 }
 
 export const TopicPage: React.FC<TopicPageProps> = ({
@@ -41,7 +44,11 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   onUpdateTopic,
   onOpenAdmin,
   onOpenExamsHub,
+  onOpenPlan,
 }) => {
+  useLearningPlanVersion();
+  // Students with a learning plan see paid plan topics in full and nothing else
+  const planGate = isAdmin ? null : learningPlan.topicGate(topic.id);
   // Selection for core lesson sections: Theory, Examples, Practice
   const [selection, setSelection] = useState<PrintSectionsSelection>({
     theory: true,
@@ -115,10 +122,11 @@ export const TopicPage: React.FC<TopicPageProps> = ({
     });
   };
 
-  const isTheoryAllowed = isAdmin || (userVisibility.theory && userPermissionsService.isSectionAllowed(currentUser?.userId, 'theory', isAdmin));
-  const isExamplesAllowed = isAdmin || (userVisibility.examples && userPermissionsService.isSectionAllowed(currentUser?.userId, 'examples', isAdmin));
-  const isPracticeAllowed = isAdmin || (userVisibility.practice && userPermissionsService.isSectionAllowed(currentUser?.userId, 'practice', isAdmin));
-  const isExamsAllowed = isAdmin || userPermissionsService.isSectionAllowed(currentUser?.userId, 'exams', isAdmin);
+  const planOpen = planGate === 'open';
+  const isTheoryAllowed = isAdmin || planOpen || (userVisibility.theory && userPermissionsService.isSectionAllowed(currentUser?.userId, 'theory', isAdmin));
+  const isExamplesAllowed = isAdmin || planOpen || (userVisibility.examples && userPermissionsService.isSectionAllowed(currentUser?.userId, 'examples', isAdmin));
+  const isPracticeAllowed = isAdmin || planOpen || (userVisibility.practice && userPermissionsService.isSectionAllowed(currentUser?.userId, 'practice', isAdmin));
+  const isExamsAllowed = isAdmin || planOpen || userPermissionsService.isSectionAllowed(currentUser?.userId, 'exams', isAdmin);
 
   const anyAdminSectionSelected =
     selection.theory ||
@@ -334,7 +342,30 @@ export const TopicPage: React.FC<TopicPageProps> = ({
       ) : null}
 
       {/* MAIN DOCUMENT CANVAS */}
-      {!isAdmin && accessMode === 'hidden' ? (
+      {planGate && planGate !== 'open' ? (
+        <div className="py-16 px-6 max-w-xl mx-auto text-center bg-white rounded-2xl border border-stone-200 shadow-sm my-6 space-y-3" data-testid="plan-locked">
+          <div className="w-14 h-14 bg-amber-100 text-amber-800 rounded-2xl flex items-center justify-center mx-auto">
+            <Lock className="w-7 h-7" />
+          </div>
+          <h2 className="text-lg font-black text-stone-900">
+            {planGate === 'unpaid' ? 'Төлбөр төлсний дараа нээгдэнэ' : 'Энэ сэдэв таны төлөвлөгөөнд ороогүй'}
+          </h2>
+          <p className="text-sm text-stone-600">
+            {planGate === 'unpaid'
+              ? 'Энэ сэдэв таны сургалтын төлөвлөгөөнд байгаа. Төлбөрөө төлөөд үзээрэй.'
+              : 'Түвшин тогтоох шалгалтын дүнгээр гарсан төлөвлөгөөнийхөө сэдвүүдийг үзнэ үү.'}
+          </p>
+          {onOpenPlan && (
+            <button
+              type="button"
+              onClick={onOpenPlan}
+              className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-sm font-bold cursor-pointer"
+            >
+              Миний төлөвлөгөө
+            </button>
+          )}
+        </div>
+      ) : !isAdmin && !planOpen && accessMode === 'hidden' ? (
         <div className="py-20 text-center bg-white rounded-2xl border border-stone-200 p-8 shadow-xs">
           <div className="w-14 h-14 bg-stone-100 rounded-2xl flex items-center justify-center mx-auto mb-3.5 text-stone-400">
             <Lock className="w-7 h-7" />
@@ -346,7 +377,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
             Багш энэхүү хичээлийн агуулгыг хэрэглэгчдэд нээсний дараа энд харагдах болно.
           </p>
         </div>
-      ) : !isAdmin && accessMode === 'locked' ? (
+      ) : !isAdmin && !planOpen && accessMode === 'locked' ? (
         <div className="py-16 px-6 max-w-xl mx-auto text-center bg-white rounded-2xl border-2 border-amber-300 shadow-sm my-6 space-y-4">
           <div className="w-16 h-16 bg-amber-100 text-amber-800 rounded-2xl flex items-center justify-center mx-auto shadow-2xs ring-4 ring-amber-50">
             <Lock className="w-8 h-8" />

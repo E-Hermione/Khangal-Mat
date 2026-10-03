@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
-import { Search, User, Smartphone, ShieldCheck, ClipboardList, Send, Laptop, Tablet, History } from 'lucide-react';
+import { Search, User, Smartphone, ShieldCheck, ClipboardList, Send, Laptop, Tablet, History, Route } from 'lucide-react';
 import { accessRequestService } from '../services/accessRequestService';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { storageService } from '../services/storageService';
@@ -12,6 +12,14 @@ import { ApprovedAccount, GradeNumber, TestPackage } from '../types';
 import { generateTopicTests } from './ExamsHub';
 import { getQuestionOptions, isOptionCorrect } from '../utils/examGrading';
 import { MathRenderer } from './MathRenderer';
+import { ProgressRing } from './ProgressRing';
+import {
+  loadPlacementResult,
+  PlacementResult,
+  resetPlacementResult,
+  topicMeta,
+  topicProgress,
+} from '../services/learningPlan';
 
 interface UserLookupTabProps {
   // Opens the permissions editor for this user id
@@ -123,6 +131,8 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [openExamId, setOpenExamId] = useState<string | null>(null);
+  // undefined while loading, null if the student has not taken the placement test
+  const [placement, setPlacement] = useState<PlacementResult | null | undefined>(undefined);
 
   useEffect(() => {
     const refresh = () => setAccounts(accessRequestService.getApprovedAccounts());
@@ -151,6 +161,10 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
     setLoadError(null);
     setAttempts({});
     setDevices([]);
+    setPlacement(undefined);
+    loadPlacementResult(selectedUid)
+      .then((r) => !cancelled && setPlacement(r))
+      .catch(() => !cancelled && setPlacement(null));
     Promise.all([
       loadUserAttempts(selectedUid).catch(() => null),
       getDocs(collection(getDb(), 'users', selectedUid, 'devices'))
@@ -167,6 +181,17 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
       cancelled = true;
     };
   }, [selectedUid]);
+
+  const handleResetPlacement = async () => {
+    if (!selectedUid || !window.confirm('Түвшин тогтоох шалгалтын дүнг устгаж, дахин өгүүлэх үү? Төлөвлөгөө нь шинээр гарна.')) return;
+    try {
+      await resetPlacementResult(selectedUid);
+      setPlacement(null);
+    } catch (err) {
+      console.error(err);
+      alert('Устгаж чадсангүй.');
+    }
+  };
 
   const handleToggleActive = () => {
     if (!user) return;
@@ -336,6 +361,48 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
               </div>
             )}
           </Section>
+
+          {user.accountType === 'student' && (
+            <Section icon={<Route className="w-4 h-4 text-blue-600" />} title="Түвшин тогтоох ба төлөвлөгөө">
+              {placement === undefined ? (
+                <div className="text-xs text-stone-400">Ачаалж байна…</div>
+              ) : placement === null ? (
+                <div className="text-xs text-stone-500">Түвшин тогтоох шалгалт өгөөгүй.</div>
+              ) : (
+                <div className="space-y-2" data-testid="lookup-plan">
+                  <div className="text-xs text-stone-700">
+                    {placement.grade}-р ангийн шалгалт, {formatDate(placement.takenAt)}:{' '}
+                    <b>
+                      {placement.correct}/{placement.total}
+                    </b>{' '}
+                    зөв
+                  </div>
+                  {placement.plan.length === 0 ? (
+                    <div className="text-xs text-stone-500">Бүх бодлогыг зөв бодсон.</div>
+                  ) : (
+                    <div className="space-y-1">
+                      {placement.plan.map((p) => (
+                        <div key={p.topicId} className="flex items-center gap-2 text-xs">
+                          <ProgressRing percent={topicProgress(p.topicId, attempts)} size={18} />
+                          <span className="font-bold text-stone-900">{topicMeta(p.topicId).title}</span>
+                          <span className="text-stone-500">
+                            ({topicMeta(p.topicId).grade}-р анги • алдсан: {p.missed.join(', ')})
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleResetPlacement}
+                    className="px-3 py-1.5 rounded-lg border border-stone-300 text-xs font-bold text-stone-700 hover:bg-stone-50 cursor-pointer"
+                  >
+                    Шалгалтыг дахин өгүүлэх
+                  </button>
+                </div>
+              )}
+            </Section>
+          )}
 
           <Section icon={<History className="w-4 h-4 text-stone-600" />} title="Эрхийн түүх">
             {!perms?.history?.length ? (

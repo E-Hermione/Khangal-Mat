@@ -24,7 +24,10 @@ import {
   Folder,
   FolderOpen,
   Award,
+  CheckCircle2,
 } from 'lucide-react';
+import { learningPlan, useLearningPlanVersion } from '../services/learningPlan';
+import { ProgressRing } from './ProgressRing';
 
 interface SidebarProps {
   selectedGrade: GradeNumber;
@@ -40,8 +43,10 @@ interface SidebarProps {
   pendingRequestsCount?: number;
   onOpenAccessRequests?: () => void;
   isAdmin: boolean;
-  activeView?: 'topics' | 'exams';
-  onSelectView?: (view: 'topics' | 'exams') => void;
+  activeView?: 'topics' | 'exams' | 'plan';
+  onSelectView?: (view: 'topics' | 'exams' | 'plan') => void;
+  // Students with a learning plan get a third tab for it
+  showPlan?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -60,7 +65,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isAdmin,
   activeView = 'topics',
   onSelectView,
+  showPlan = false,
 }) => {
+  useLearningPlanVersion();
   const [, setTrigger] = useState(0);
 
   // Active single expanded category (нэг нь нээлттэй байх үед бусдыг автоматаар хаана)
@@ -114,6 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const displayedTopics = useMemo(() => {
     return allTopicsForGrade.filter((t) => {
       if (isAdmin) return true;
+      if (learningPlan.inPlan(t.id)) return true;
       const mode = visibilityService.getTopicAccessMode(t.id);
       return mode !== 'hidden';
     });
@@ -182,20 +190,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Primary View Switcher: Lessons vs Exams */}
         {onSelectView && (
           <div className="p-3 pb-0 shrink-0">
-            <div className="grid grid-cols-2 gap-1.5 bg-stone-950 p-1 rounded-xl border border-stone-800">
+            <div
+              className={`grid ${showPlan ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 bg-stone-950 p-1 rounded-xl border border-stone-800`}
+            >
+              {showPlan && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectView('plan');
+                    onCloseMobile();
+                  }}
+                  className={`py-2 px-1 rounded-lg text-[11px] font-bold flex items-center justify-center transition-all cursor-pointer ${
+                    activeView === 'plan'
+                      ? 'bg-amber-500 text-stone-950 shadow-xs'
+                      : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
+                  }`}
+                >
+                  
+                  <span>Төлөвлөгөө</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
                   onSelectView('topics');
                   onCloseMobile();
                 }}
-                className={`py-2 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                className={`py-2 ${showPlan ? 'px-1 text-[11px]' : 'px-2.5 text-xs space-x-1.5'} rounded-lg font-bold flex items-center justify-center transition-all cursor-pointer ${
                   activeView === 'topics'
                     ? 'bg-amber-500 text-stone-950 shadow-xs'
                     : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
                 }`}
               >
-                <BookOpen className="w-3.5 h-3.5" />
+                {!showPlan && <BookOpen className="w-3.5 h-3.5" />}
                 <span>Хичээлүүд</span>
               </button>
               <button
@@ -204,13 +231,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onSelectView('exams');
                   onCloseMobile();
                 }}
-                className={`py-2 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                className={`py-2 ${showPlan ? 'px-1 text-[11px]' : 'px-2.5 text-xs space-x-1.5'} rounded-lg font-bold flex items-center justify-center transition-all cursor-pointer ${
                   activeView === 'exams'
                     ? 'bg-amber-500 text-stone-950 shadow-xs'
                     : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
                 }`}
               >
-                <Award className="w-3.5 h-3.5" />
+                {!showPlan && <Award className="w-3.5 h-3.5" />}
                 <span>Шалгалтууд</span>
               </button>
             </div>
@@ -235,7 +262,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="grid grid-cols-4 gap-1.5">
             {GRADES_LIST.map((grade) => {
               const isSelected = grade === selectedGrade;
-              const isAllowed = userPermissionsService.isGradeAllowed(currentUser?.userId, grade, isAdmin);
+              // Plan topics can be in any grade; each topic is gated on its own
+              const isAllowed =
+                (!isAdmin && learningPlan.hasPlan()) ||
+                userPermissionsService.isGradeAllowed(currentUser?.userId, grade, isAdmin);
               return (
                 <button
                   key={grade}
@@ -327,7 +357,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         {group.topics.map((topic) => {
                           const isSelected = topic.id === selectedTopicId;
                           const accessMode = visibilityService.getTopicAccessMode(topic.id);
-                          const isLocked = accessMode === 'locked';
+                          // Students with a plan: locked unless it is a paid plan topic; ticked once done
+                          const planGate = isAdmin ? null : learningPlan.topicGate(topic.id);
+                          const isDone = planGate !== null && learningPlan.inPlan(topic.id) && learningPlan.isDone(topic.id);
+                          const isLocked = planGate ? planGate !== 'open' : accessMode === 'locked';
                           const isHidden = accessMode === 'hidden';
 
                           return (
@@ -345,7 +378,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               }`}
                             >
                               <div className="flex items-center space-x-2 truncate">
-                                {isLocked ? (
+                                {isDone ? (
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                                ) : isLocked ? (
                                   <Lock className="w-3 h-3 text-amber-500 shrink-0" />
                                 ) : (
                                   <span
@@ -359,6 +394,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   />
                                 )}
                                 <span className="truncate">{topic.title}</span>
+                                {planGate && learningPlan.inPlan(topic.id) && (
+                                  <ProgressRing percent={learningPlan.progress(topic.id)} size={16} />
+                                )}
                               </div>
 
                               <div className="flex items-center space-x-1 shrink-0 ml-1">
@@ -382,7 +420,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   </span>
                                 )}
 
-                                {!isAdmin && isLocked && (
+                                {!isAdmin && isLocked && !planGate && (
                                   <span className="text-[9px] px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded flex items-center space-x-0.5">
                                     <Lock className="w-2.5 h-2.5" />
                                     <span>Хүсэлт</span>

@@ -27,9 +27,21 @@ export interface AppSettings {
   screenProtection: boolean;
   deviceLimit: boolean;
   copyProtection: boolean;
+  // New students first take a placement test drawn at random from the topics' tests
+  placementEnabled: boolean;
+  placementPerTopic: number;
+  // Also check the topics of the grades below the student's own
+  placementLowerGrades: boolean;
 }
 
-export const DEFAULT_APP_SETTINGS: AppSettings = { screenProtection: false, deviceLimit: true, copyProtection: false };
+export const DEFAULT_APP_SETTINGS: AppSettings = {
+  screenProtection: false,
+  deviceLimit: true,
+  copyProtection: false,
+  placementEnabled: true,
+  placementPerTopic: 1,
+  placementLowerGrades: true,
+};
 
 interface CloudState {
   topics: TopicPackage[];
