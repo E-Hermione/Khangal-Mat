@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, Lock, CheckSquare, Square, ShieldCheck, Copy, Check, Unlock } from 'lucide-react';
-import { visibilityService, TopicSectionVisibility, TopicAccessMode } from '../services/visibilityService';
+import { Eye, EyeOff, Lock, ShieldCheck, Unlock } from 'lucide-react';
+import { visibilityService, TopicAccessMode } from '../services/visibilityService';
 
 interface UserVisibilityPanelProps {
   topicId: string;
@@ -13,73 +13,18 @@ export const UserVisibilityPanel: React.FC<UserVisibilityPanelProps> = ({
   topicTitle,
   onPreviewAsUser,
 }) => {
-  const [visibility, setVisibility] = useState<TopicSectionVisibility>(() =>
-    visibilityService.getTopicVisibility(topicId)
-  );
   const [accessMode, setAccessMode] = useState<TopicAccessMode>(() =>
     visibilityService.getTopicAccessMode(topicId)
   );
-  const [copiedMessage, setCopiedMessage] = useState(false);
 
   useEffect(() => {
-    setVisibility(visibilityService.getTopicVisibility(topicId));
     setAccessMode(visibilityService.getTopicAccessMode(topicId));
   }, [topicId]);
-
-  const handleToggle = (key: keyof TopicSectionVisibility) => {
-    const updated = { ...visibility, [key]: !visibility[key] };
-    setVisibility(updated);
-    visibilityService.setTopicVisibility(topicId, updated);
-  };
 
   const handleSetMode = (mode: TopicAccessMode) => {
     setAccessMode(mode);
     visibilityService.setTopicAccessMode(topicId, mode);
   };
-
-  const handleSelectAll = () => {
-    const allOn: TopicSectionVisibility = {
-      theory: true,
-      examples: true,
-      practice: true,
-      test1: true,
-      test2: true,
-      test3: true,
-      answers: true,
-    };
-    setVisibility(allOn);
-    visibilityService.setTopicVisibility(topicId, allOn);
-  };
-
-  const handleStandardOnly = () => {
-    const standard: TopicSectionVisibility = {
-      theory: true,
-      examples: true,
-      practice: true,
-      test1: false,
-      test2: false,
-      test3: false,
-      answers: false,
-    };
-    setVisibility(standard);
-    visibilityService.setTopicVisibility(topicId, standard);
-  };
-
-  const handleApplyToAll = () => {
-    visibilityService.applyAsDefault(topicId);
-    setCopiedMessage(true);
-    setTimeout(() => setCopiedMessage(false), 3000);
-  };
-
-  const sections: { key: keyof TopicSectionVisibility; label: string; desc: string }[] = [
-    { key: 'theory', label: 'Онол, дүрэм', desc: 'Үндсэн тодорхойлолт, томьёо' },
-    { key: 'examples', label: 'Бодолттой жишээ', desc: 'Алхамчилсан бодолтууд' },
-    { key: 'practice', label: 'Бие даах дасгал', desc: 'Сурагчийн бодлогууд' },
-    { key: 'test1', label: 'Сорил 1 (Анхан)', desc: '10 онооны анхан сорил' },
-    { key: 'test2', label: 'Сорил 2 (Дунд)', desc: '10 онооны дунд сорил' },
-    { key: 'test3', label: 'Сорил 3 (Гүнзгий)', desc: '10 онооны гүнзгий сорил' },
-    { key: 'answers', label: 'Хариу ба бодолт', desc: 'Бүх бодлогын эцсийн хариу' },
-  ];
 
   return (
     <div className="no-print mb-5 bg-gradient-to-r from-amber-500/10 via-amber-50/50 to-stone-50 border-2 border-amber-300/80 rounded-2xl p-4 md:p-5 shadow-xs transition-all space-y-4">
@@ -144,7 +89,7 @@ export const UserVisibilityPanel: React.FC<UserVisibilityPanelProps> = ({
             <div>
               <div className="text-xs font-bold">1. Нээлттэй</div>
               <div className="text-[10px] text-stone-500 mt-0.5 leading-snug">
-                Хэрэглэгч шууд үзнэ (доорх чеклэсэн хэсгүүдээр)
+                Хэрэглэгч онол, жишээ, дасгал, сорилыг бүгдийг үзнэ
               </div>
             </div>
           </button>
@@ -193,83 +138,6 @@ export const UserVisibilityPanel: React.FC<UserVisibilityPanelProps> = ({
         </div>
       </div>
 
-      {/* Checkbox Pills Grid (only active if mode is visible) */}
-      <div className={`pt-1 transition-opacity ${accessMode === 'hidden' ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-stone-700">
-            Хичээл дундаас нээх тусгай хэсгүүд:
-          </span>
-          <div className="flex items-center space-x-2 text-[11px]">
-            <button
-              type="button"
-              onClick={handleStandardOnly}
-              className="text-stone-600 hover:text-stone-900 font-semibold underline underline-offset-2 cursor-pointer"
-            >
-              Зөвхөн онол, дасгал
-            </button>
-            <span className="text-stone-300">•</span>
-            <button
-              type="button"
-              onClick={handleSelectAll}
-              className="text-stone-600 hover:text-stone-900 font-semibold underline underline-offset-2 cursor-pointer"
-            >
-              Бүгдийг нээх
-            </button>
-            <span className="text-stone-300">•</span>
-            <button
-              type="button"
-              onClick={handleApplyToAll}
-              className="text-amber-800 hover:text-amber-950 font-bold flex items-center space-x-1 cursor-pointer"
-              title="Энэ сонголтыг бусад бүх сэдвүүдийн анхдагч болгож тохируулах"
-            >
-              {copiedMessage ? (
-                <>
-                  <Check className="w-3 h-3 text-emerald-600" />
-                  <span className="text-emerald-700">Бүх сэдэвт хадгалагдлаа</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3 h-3" />
-                  <span>Бүх сэдэвт хуулах</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          {sections.map(({ key, label, desc }) => {
-            const checked = visibility[key];
-            return (
-              <label
-                key={key}
-                onClick={() => handleToggle(key)}
-                className={`flex items-start space-x-2.5 p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
-                  checked
-                    ? 'bg-white border-amber-400 shadow-2xs text-stone-950 ring-1 ring-amber-400/50'
-                    : 'bg-stone-100/80 border-stone-200 text-stone-500 hover:bg-white hover:border-stone-300'
-                }`}
-              >
-                <div className="pt-0.5 shrink-0">
-                  {checked ? (
-                    <CheckSquare className="w-4 h-4 text-amber-600" />
-                  ) : (
-                    <Square className="w-4 h-4 text-stone-400" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <div className={`text-xs font-bold leading-tight ${checked ? 'text-stone-950' : 'text-stone-600'}`}>
-                    {label}
-                  </div>
-                  <div className="text-[10px] text-stone-400 truncate mt-0.5">
-                    {desc}
-                  </div>
-                </div>
-              </label>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 };

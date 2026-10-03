@@ -27,13 +27,6 @@ interface UserLookupTabProps {
 }
 
 const TIER_NAMES: Record<string, string> = { '1': 'Анхан', '2': 'Дунд', '3': 'Ахисан' };
-const SECTION_NAMES: Record<string, string> = {
-  theory: 'Онол',
-  examples: 'Жишээ',
-  practice: 'Дасгал',
-  exams: 'Сорил',
-};
-
 function topicTitle(topicId: string): string {
   const saved = storageService.getTopics().find((t) => t.id === topicId);
   const catalog = Object.values(GRADE_TOPICS_CATALOG).flat().find((t) => t.id === topicId);
@@ -292,13 +285,6 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
                   {perms.allowedGrades.length ? perms.allowedGrades.sort((a, b) => a - b).join(', ') : 'Байхгүй'}
                 </div>
                 <div>
-                  <span className="text-stone-500">Нээлттэй хэсгүүд:</span>{' '}
-                  {Object.entries(perms.sections)
-                    .filter(([, on]) => on)
-                    .map(([k]) => SECTION_NAMES[k] || k)
-                    .join(', ') || 'Байхгүй'}
-                </div>
-                <div>
                   <span className="text-stone-500">Хугацаа:</span>{' '}
                   {typeof perms.expiresAt === 'number' ? (
                     Date.now() > perms.expiresAt ? (
@@ -375,14 +361,6 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
                     ) : (
                       <span className="text-stone-800">
                         Ангиуд: <b>{h.allowedGrades?.length ? [...h.allowedGrades].sort((a, b) => a - b).join(', ') : 'байхгүй'}</b>
-                        {' • '}
-                        Хэсэг:{' '}
-                        <b>
-                          {Object.entries(h.sections || {})
-                            .filter(([, on]) => on)
-                            .map(([k]) => SECTION_NAMES[k] || k)
-                            .join(', ') || 'байхгүй'}
-                        </b>
                         {' • '}
                         Хугацаа:{' '}
                         <b>{typeof h.expiresAt === 'number' ? `${new Date(h.expiresAt).toLocaleDateString()} хүртэл` : 'хязгааргүй'}</b>

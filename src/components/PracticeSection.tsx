@@ -7,6 +7,8 @@ interface PracticeSectionProps {
   practice: PracticeProblem[];
   includeWorkSpace?: boolean;
   teacherVersion?: boolean;
+  // Students never see practice answers or solutions
+  allowSolutions?: boolean;
   isEditable?: boolean;
   onEditPractice?: (problem: PracticeProblem) => void;
   onDeletePractice?: (problemId: string) => void;
@@ -17,6 +19,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
   practice,
   includeWorkSpace = true,
   teacherVersion = false,
+  allowSolutions = false,
   isEditable = false,
   onEditPractice,
   onDeletePractice,
@@ -57,6 +60,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
             </button>
           )}
 
+          {allowSolutions && (
           <button
             type="button"
             onClick={() => setShowSolutionsOnScreen(!showSolutionsOnScreen)}
@@ -74,6 +78,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
               </>
             )}
           </button>
+          )}
         </div>
       </div>
 
@@ -98,7 +103,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
         <div className="space-y-4 print:space-y-3.5">
           {practice.map((item, idx) => {
             const diff = difficultyLabels[item.difficulty] || difficultyLabels.medium;
-            const showSol = teacherVersion || showSolutionsOnScreen;
+            const showSol = allowSolutions && (teacherVersion || showSolutionsOnScreen);
 
             return (
               <div

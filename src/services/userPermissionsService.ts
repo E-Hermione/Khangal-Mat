@@ -161,6 +161,16 @@ class UserPermissionsService {
   }
 
   /**
+   * True if the user's access is live (not blocked, not expired). An open topic then shows all of its
+   * parts: theory, examples, practice and tests.
+   */
+  hasAccess(userId: string | undefined, isAdmin: boolean): boolean {
+    if (isAdmin) return true;
+    if (!userId) return true;
+    return !this.getUserPermissions(userId).isBlocked && !this.isExpired(userId);
+  }
+
+  /**
    * Check if a section is allowed for a user
    */
   isSectionAllowed(

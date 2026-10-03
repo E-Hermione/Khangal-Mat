@@ -5,7 +5,7 @@ import { WorkedExamplesSection } from './WorkedExamplesSection';
 import { PracticeSection } from './PracticeSection';
 import { PrintControlPanel } from './PrintControlPanel';
 import { ItemEditorModal, ItemEditorType } from './ItemEditorModal';
-import { visibilityService, TopicSectionVisibility, TopicAccessMode } from '../services/visibilityService';
+import { visibilityService, TopicAccessMode } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { learningPlan, useLearningPlanVersion } from '../services/learningPlan';
 import { accessRequestService } from '../services/accessRequestService';
@@ -72,9 +72,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   const [activeEditorTarget, setActiveEditorTarget] = useState<ItemEditorType | null>(null);
 
   // User visibility config for this topic (read from storage)
-  const [userVisibility, setUserVisibility] = useState<TopicSectionVisibility>(() =>
-    visibilityService.getTopicVisibility(topic.id)
-  );
   const [accessMode, setAccessMode] = useState<TopicAccessMode>(() =>
     visibilityService.getTopicAccessMode(topic.id)
   );
@@ -90,7 +87,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
 
   useEffect(() => {
     const handleUpdate = () => {
-      setUserVisibility(visibilityService.getTopicVisibility(topic.id));
       setAccessMode(visibilityService.getTopicAccessMode(topic.id));
     };
 
@@ -123,10 +119,12 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   };
 
   const planOpen = planGate === 'open';
-  const isTheoryAllowed = isAdmin || planOpen || (userVisibility.theory && userPermissionsService.isSectionAllowed(currentUser?.userId, 'theory', isAdmin));
-  const isExamplesAllowed = isAdmin || planOpen || (userVisibility.examples && userPermissionsService.isSectionAllowed(currentUser?.userId, 'examples', isAdmin));
-  const isPracticeAllowed = isAdmin || planOpen || (userVisibility.practice && userPermissionsService.isSectionAllowed(currentUser?.userId, 'practice', isAdmin));
-  const isExamsAllowed = isAdmin || planOpen || userPermissionsService.isSectionAllowed(currentUser?.userId, 'exams', isAdmin);
+  // An open topic shows all its parts; the hidden/locked cases are handled below
+  const allOpen = isAdmin || planOpen || userPermissionsService.hasAccess(currentUser?.userId, isAdmin);
+  const isTheoryAllowed = allOpen;
+  const isExamplesAllowed = allOpen;
+  const isPracticeAllowed = allOpen;
+  const isExamsAllowed = allOpen;
 
   const anyAdminSectionSelected =
     selection.theory ||
@@ -493,6 +491,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
               practice={topic.practice}
               includeWorkSpace={isAdmin ? options.includeWorkSpace : false}
               teacherVersion={isAdmin ? options.teacherVersion : false}
+              allowSolutions={isAdmin}
               isEditable={isAdmin && isEditMode}
               onAddPractice={handleOpenAddPractice}
               onEditPractice={handleOpenEditPractice}

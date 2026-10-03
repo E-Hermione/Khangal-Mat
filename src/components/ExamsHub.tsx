@@ -210,15 +210,14 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
     // Students with a learning plan: paid plan topics only, each tier after passing the previous one
     const gate = learningPlan.topicGate(topicId);
     if (gate) return gate === 'open' ? learningPlan.unlockedTiers(topicId) : [];
-    if (visibilityService.getTopicAccessMode(topicId) !== 'visible') return [];
-    const v = visibilityService.getTopicVisibility(topicId);
-    return ([1, 2, 3] as const).filter((n) => v[`test${n}` as 'test1' | 'test2' | 'test3']);
+    // An open topic has all its tests
+    return visibilityService.getTopicAccessMode(topicId) === 'visible' ? [1, 2, 3] : [];
   };
   const examsAllowed =
     isAdmin ||
     learningPlan.isGated() ||
     (userPermissionsService.isGradeAllowed(userId, selectedGrade, false) &&
-      userPermissionsService.isSectionAllowed(userId, 'exams', false));
+      userPermissionsService.hasAccess(userId, false));
 
   // Active taking exam modal
   const [activeExam, setActiveExam] = useState<ExamRowItem | null>(null);
