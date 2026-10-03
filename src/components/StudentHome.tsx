@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, BookOpen, Check, ClipboardCheck, CreditCard, Lock, Pencil, Settings, X } from 'lucide-react';
+import { ArrowRight, BookOpen, ClipboardCheck, CreditCard, Lock, Pencil, Settings, X } from 'lucide-react';
 import { AuthUser, GradeNumber } from '../types';
 import {
   GRADES,
@@ -298,8 +298,14 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                   type="button"
                   disabled={!open}
                   onClick={() => startPlacement(g)}
-                  title={taken ? 'Дахин өгөх' : open ? 'Сорил эхлэх' : 'Удахгүй'}
-                  className={`relative rounded-xl border px-1 pt-2 pb-1.5 flex flex-col items-center gap-1 transition-all ${
+                  title={
+                    taken
+                      ? `${g}-р анги: ${taken.correct}/${taken.total} зөв • дахин өгөх`
+                      : open
+                      ? `${g}-р анги: ${count} бодлого • сорил эхлэх`
+                      : `${g}-р анги: удахгүй`
+                  }
+                  className={`relative rounded-xl border py-3 flex items-center justify-center transition-all ${
                     taken
                       ? 'border-emerald-200 bg-emerald-50/70 hover:border-emerald-400 cursor-pointer'
                       : open
@@ -307,37 +313,11 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                       : 'border-dashed border-stone-200 bg-stone-50/60'
                   } ${mine ? 'ring-2 ring-amber-400 ring-offset-1' : ''}`}
                 >
-                  {mine && (
-                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] font-black px-1.5 rounded-full bg-amber-400 text-stone-950">
-                      Таны
-                    </span>
-                  )}
-                  <span className={`text-lg font-black leading-none ${open || taken ? 'text-stone-900' : 'text-stone-300'}`}>
-                    {g}
-                    <span className="text-[10px] font-bold ml-0.5">-р</span>
-                  </span>
-                  <span className={`text-[10px] leading-none ${open || taken ? 'text-stone-500' : 'text-stone-300'}`}>анги</span>
-                  <span className="h-5 flex items-center">
-                    {taken ? (
-                      <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-0.5">
-                        <Check className="w-3 h-3" />
-                        {taken.correct}/{taken.total} зөв
-                      </span>
-                    ) : open ? (
-                      <span className="text-[10px] font-bold text-amber-700">{count} бодлого</span>
-                    ) : (
-                      <span className="text-[10px] text-stone-300">Удахгүй</span>
-                    )}
-                  </span>
+                  <span className={`text-lg font-black leading-none ${open || taken ? 'text-stone-900' : 'text-stone-300'}`}>{g}</span>
                 </button>
               );
             })}
           </div>
-          {learningPlan.state.results && learningPlan.state.results.length > 0 && (
-            <div className="mt-2.5 text-[11px] text-stone-500 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" /> Өгсөн ангиа дарж дахин өгч болно
-            </div>
-          )}
           {editable && (
             <button
               type="button"
