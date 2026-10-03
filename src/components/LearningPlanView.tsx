@@ -12,6 +12,7 @@ import { ProgressRing } from './ProgressRing';
 import {
   EMPTY_PAYMENT_SETTINGS,
   formatMoney,
+  paymentOptions,
   PaymentRequest,
   PaymentSettings,
   submitPaymentRequest,
@@ -230,9 +231,10 @@ const PaymentDialog: React.FC<{
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const option = settings.options.find((o) => o.months === months);
+  const options = paymentOptions(settings);
+  const option = options.find((o) => o.months === months);
   const note = transferNote(currentUser.userId || '', currentUser.phoneNumber || '');
-  const configured = settings.accountNumber && settings.options.length > 0;
+  const configured = settings.accountNumber && options.length > 0;
 
   const copy = (key: string, text: string) => {
     navigator.clipboard?.writeText(text).catch(() => {});
@@ -299,8 +301,8 @@ const PaymentDialog: React.FC<{
           <div className="p-5 space-y-4">
             <div>
               <div className="text-xs font-bold text-stone-600 mb-2">Хэдэн сараар сунгах вэ?</div>
-              <div className="grid grid-cols-2 gap-2">
-                {settings.options.map((o) => (
+              <div className="grid grid-cols-3 gap-2" data-testid="payment-options">
+                {options.map((o) => (
                   <button
                     key={o.months}
                     type="button"
