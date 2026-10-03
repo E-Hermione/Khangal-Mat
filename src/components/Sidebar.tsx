@@ -217,10 +217,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {(
                 [
                   ...(showHome
-                    ? [{ key: 'home', label: 'Нүүр хуудас', icon: Home, active: activeView === 'home' || activeView === 'plan' || activeView === 'placement' }]
+                    ? [{ key: 'home', label: 'Нүүр\nхуудас', icon: Home, active: activeView === 'home' || activeView === 'plan' || activeView === 'placement' }]
                     : []),
                   { key: 'topics', label: 'Хичээл', icon: BookOpen, active: activeView === 'topics' },
-                  { key: 'exams', label: 'Сэдэвчилсэн сорил', icon: Award, active: activeView === 'exams' },
+                  { key: 'exams', label: 'Сэдэвчилсэн\nсорил', icon: Award, active: activeView === 'exams' },
                 ] as const
               ).map(({ key, label, icon: Icon, active }) => (
                 <button
@@ -238,7 +238,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   aria-current={active ? 'page' : undefined}
                 >
                   <Icon className={`w-[18px] h-[18px] ${active ? 'text-stone-900' : ''}`} />
-                  <span className="text-[10.5px] font-bold leading-tight text-center">{label}</span>
+                  <span className="text-[10.5px] font-bold leading-tight text-center whitespace-pre-line">{label}</span>
                 </button>
               ))}
             </div>
