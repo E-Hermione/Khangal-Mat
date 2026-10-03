@@ -14,9 +14,10 @@ import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect } fr
 import { MathRenderer } from './MathRenderer';
 import { ProgressRing } from './ProgressRing';
 import {
-  loadPlacementResult,
+  combinedPlan,
+  loadPlacementResults,
   PlacementResult,
-  resetPlacementResult,
+  resetPlacementResults,
   topicMeta,
   topicProgress,
 } from '../services/learningPlan';
@@ -132,8 +133,8 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [openExamId, setOpenExamId] = useState<string | null>(null);
-  // undefined while loading, null if the student has not taken the placement test
-  const [placement, setPlacement] = useState<PlacementResult | null | undefined>(undefined);
+  // The student's placement test results; undefined while loading
+  const [placement, setPlacement] = useState<PlacementResult[] | undefined>(undefined);
 
   useEffect(() => {
     const refresh = () => setAccounts(accessRequestService.getApprovedAccounts());
@@ -163,9 +164,9 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
     setAttempts({});
     setDevices([]);
     setPlacement(undefined);
-    loadPlacementResult(selectedUid)
+    loadPlacementResults(selectedUid)
       .then((r) => !cancelled && setPlacement(r))
-      .catch(() => !cancelled && setPlacement(null));
+      .catch(() => !cancelled && setPlacement([]));
     Promise.all([
       loadUserAttempts(selectedUid).catch(() => null),
       getDocs(collection(getDb(), 'users', selectedUid, 'devices'))
@@ -184,10 +185,10 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
   }, [selectedUid]);
 
   const handleResetPlacement = async () => {
-    if (!selectedUid || !window.confirm('Түвшин тогтоох шалгалтын дүнг устгаж, дахин өгүүлэх үү? Төлөвлөгөө нь шинээр гарна.')) return;
+    if (!selectedUid || !window.confirm('Түвшин тогтоох сорилын бүх дүнг устгаж, дахин өгүүлэх үү? Төлөвлөгөө нь шинээр гарна.')) return;
     try {
-      await resetPlacementResult(selectedUid);
-      setPlacement(null);
+      await resetPlacementResults(selectedUid);
+      setPlacement([]);
     } catch (err) {
       console.error(err);
       alert('Устгаж чадсангүй.');
@@ -367,27 +368,29 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
             <Section icon={<Route className="w-4 h-4 text-blue-600" />} title="Түвшин тогтоох ба төлөвлөгөө">
               {placement === undefined ? (
                 <div className="text-xs text-stone-400">Ачаалж байна…</div>
-              ) : placement === null ? (
-                <div className="text-xs text-stone-500">Түвшин тогтоох шалгалт өгөөгүй.</div>
+              ) : placement.length === 0 ? (
+                <div className="text-xs text-stone-500">Түвшин тогтоох сорил өгөөгүй.</div>
               ) : (
                 <div className="space-y-2" data-testid="lookup-plan">
-                  <div className="text-xs text-stone-700">
-                    {placement.grade}-р ангийн шалгалт, {formatDate(placement.takenAt)}:{' '}
-                    <b>
-                      {placement.correct}/{placement.total}
-                    </b>{' '}
-                    зөв
-                  </div>
-                  {placement.plan.length === 0 ? (
+                  {placement.map((r) => (
+                    <div key={r.grade} className="text-xs text-stone-700">
+                      {r.grade}-р ангийн сорил, {formatDate(r.takenAt)}:{' '}
+                      <b>
+                        {r.correct}/{r.total}
+                      </b>{' '}
+                      зөв
+                    </div>
+                  ))}
+                  {combinedPlan(placement).length === 0 ? (
                     <div className="text-xs text-stone-500">Бүх бодлогыг зөв бодсон.</div>
                   ) : (
                     <div className="space-y-1">
-                      {placement.plan.map((p) => (
+                      {combinedPlan(placement).map((p) => (
                         <div key={p.topicId} className="flex items-center gap-2 text-xs">
                           <ProgressRing percent={topicProgress(p.topicId, attempts)} size={18} />
                           <span className="font-bold text-stone-900">{topicMeta(p.topicId).title}</span>
                           <span className="text-stone-500">
-                            ({topicMeta(p.topicId).grade}-р анги • алдсан: {p.missed.join(', ')})
+                            ({topicMeta(p.topicId).grade}-р анги • {p.grade}-р ангийн сорилд алдсан: {p.missed.join(', ')})
                           </span>
                         </div>
                       ))}
@@ -398,7 +401,7 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
                     onClick={handleResetPlacement}
                     className="px-3 py-1.5 rounded-lg border border-stone-300 text-xs font-bold text-stone-700 hover:bg-stone-50 cursor-pointer"
                   >
-                    Шалгалтыг дахин өгүүлэх
+                    Сорилуудыг дахин өгүүлэх
                   </button>
                 </div>
               )}

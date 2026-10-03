@@ -1,7 +1,8 @@
 import React from 'react';
 import { ArrowRight, Award, BookOpen, ClipboardCheck, CreditCard, Lock } from 'lucide-react';
-import { AuthUser } from '../types';
+import { AuthUser, GradeNumber } from '../types';
 import {
+  GRADES,
   learningPlan,
   placementSize,
   tiersPassed,
@@ -14,7 +15,7 @@ import { ProgressRing } from './ProgressRing';
 interface StudentHomeProps {
   uid: string;
   currentUser: AuthUser;
-  onStartPlacement: () => void;
+  onStartPlacement: (grade: GradeNumber) => void;
   onOpenPlan: () => void;
   onOpenLessons: () => void;
   onOpenExams: () => void;
@@ -78,11 +79,13 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   onOpenTopic,
 }) => {
   useLearningPlanVersion();
-  const { result, grade, attempts } = learningPlan.state;
+  const { results = [], grade, attempts } = learningPlan.state;
   const needsPlacement = learningPlan.needsPlacement();
   const hasPlan = learningPlan.hasPlan();
   const paid = learningPlan.isPaid();
-  const plan = result?.plan || [];
+  const plan = learningPlan.plan();
+  // The test suggested first: the student's own grade if it can be taken, else any open one
+  const suggested = [grade, ...GRADES].find((g): g is GradeNumber => !!g && learningPlan.canTakePlacement(g));
   const overall = plan.length
     ? Math.round(plan.reduce((sum, p) => sum + learningPlan.progress(p.topicId), 0) / plan.length)
     : 0;
@@ -92,7 +95,11 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
 
   // The one thing to do now
   const nextStep = needsPlacement
-    ? { text: 'Эхлээд түвшин тогтоох сорил өгнө үү. Дүнгээр нь танд зориулсан сургалтын төлөвлөгөө гарна.', label: 'Сорил эхлэх', onClick: onStartPlacement }
+    ? {
+        text: 'Эхлээд түвшин тогтоох сорил өгнө үү (үнэгүй). Дүнгээр нь танд зориулсан сургалтын төлөвлөгөө гарна.',
+        label: suggested ? `${suggested}-р ангийн сорил эхлэх` : null,
+        onClick: suggested ? () => onStartPlacement(suggested) : null,
+      }
     : hasPlan && !paid
     ? { text: 'Төлөвлөгөө тань бэлэн боллоо. Төлбөрөө төлж эрх аваад хичээлээ эхлээрэй.', label: null, onClick: null }
     : hasPlan && next
@@ -145,25 +152,40 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
           title="Түвшин тогтоох сорил"
           highlight={needsPlacement}
           testId="home-placement"
-          action={
-            needsPlacement
-              ? { label: 'Сорил эхлэх', onClick: onStartPlacement }
-              : hasPlan
-              ? { label: 'Дүн харах', onClick: onOpenPlan }
-              : null
-          }
+          action={hasPlan ? { label: 'Дүн, төлөвлөгөө', onClick: onOpenPlan } : null}
         >
-          {needsPlacement ? (
-            <>
-              {grade}-р ангийн {placementSize(grade!).questions} бодлоготой сорил. Мэдэхгүй бодлогоо хоосон үлдээгээрэй.
-            </>
-          ) : result ? (
-            <>
-              Өгсөн: <b>{result.correct}/{result.total}</b> зөв ({new Date(result.takenAt).toLocaleDateString()}).
-            </>
-          ) : (
-            'Одоогоор сорил алга.'
-          )}
+          <span className="inline-block text-[10px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 mb-2">
+            Үнэгүй
+          </span>
+          <span className="block text-xs text-stone-500 mb-2">Ангиа сонгоод сорилоо өгнө. Анги бүрийнх нэг удаа.</span>
+          <div className="grid grid-cols-2 gap-1.5" data-testid="placement-grades">
+            {GRADES.map((g) => {
+              const taken = learningPlan.resultFor(g);
+              const open = learningPlan.canTakePlacement(g);
+              const count = placementSize(g).questions;
+              return (
+                <button
+                  key={g}
+                  type="button"
+                  disabled={!open}
+                  onClick={() => onStartPlacement(g)}
+                  className={`px-2 py-1.5 rounded-lg border text-left text-xs transition-colors ${
+                    taken
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                      : open
+                      ? `cursor-pointer hover:bg-amber-50 ${g === grade ? 'border-amber-400 bg-amber-50' : 'border-stone-200'}`
+                      : 'border-stone-100 text-stone-400'
+                  }`}
+                >
+                  <b>{g}-р анги</b>
+                  {g === grade && !taken && <span className="text-amber-700"> (таны)</span>}
+                  <span className="block text-[10px]">
+                    {taken ? `✓ ${taken.correct}/${taken.total} зөв` : count ? `${count} бодлого` : 'Удахгүй'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </Card>
 
         <Card

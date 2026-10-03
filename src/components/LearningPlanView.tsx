@@ -32,14 +32,15 @@ interface LearningPlanViewProps {
 /** The student's own plan: topics from the placement test, payment and progress. */
 export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, currentUser, onOpenTopic, onOpenExam }) => {
   useLearningPlanVersion();
-  const result = learningPlan.state.result;
-  if (!result) return null;
+  const results = learningPlan.state.results || [];
+  if (results.length === 0) return null;
+  const plan = learningPlan.plan();
 
   const attempts = learningPlan.state.attempts;
   const paid = learningPlan.isPaid();
-  const doneCount = result.plan.filter((p) => learningPlan.isDone(p.topicId)).length;
-  const total = result.plan.length;
-  const overall = total ? Math.round(result.plan.reduce((sum, p) => sum + learningPlan.progress(p.topicId), 0) / total) : 0;
+  const doneCount = plan.filter((p) => learningPlan.isDone(p.topicId)).length;
+  const total = plan.length;
+  const overall = total ? Math.round(plan.reduce((sum, p) => sum + learningPlan.progress(p.topicId), 0) / total) : 0;
 
   return (
     <div className="max-w-4xl mx-auto space-y-5" data-testid="learning-plan">
@@ -49,10 +50,16 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, current
           Миний сургалтын төлөвлөгөө
         </h1>
         <p className="text-sm text-stone-600 mt-1">
-          Түвшин тогтоох шалгалт ({result.grade}-р анги, {new Date(result.takenAt).toLocaleDateString()}):{' '}
-          <b>
-            {result.correct}/{result.total}
-          </b>{' '}
+          Түвшин тогтоох сорил:{' '}
+          {results.map((r, i) => (
+            <span key={r.grade}>
+              {i > 0 && ', '}
+              {r.grade}-р анги{' '}
+              <b>
+                {r.correct}/{r.total}
+              </b>
+            </span>
+          ))}{' '}
           зөв. Алдсан бодлогуудаас нь харахад танд доорх сэдвүүдийг үзэхийг зөвлөж байна.
         </p>
       </div>
@@ -86,7 +93,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, current
         </div>
       ) : (
         <div className="space-y-2" data-testid="plan-topics">
-          {result.plan.map((p, i) => {
+          {plan.map((p, i) => {
             const meta = topicMeta(p.topicId);
             const done = learningPlan.isDone(p.topicId);
             const progress = learningPlan.progress(p.topicId);
@@ -119,7 +126,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, current
                     )}
                   </div>
                   <div className="text-[11px] text-stone-500">
-                    {meta.grade}-р анги • {meta.category} • Алдсан бодлого: {p.missed.join(', ')}
+                    {meta.grade}-р анги • {meta.category} • {p.grade}-р ангийн сорилын {p.missed.join(', ')}-р бодлого алдсан
                     {tierResults.length > 0 && ` • ${tierResults.join(', ')}`}
                   </div>
                 </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { deleteDoc, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, onSnapshot, setDoc } from 'firebase/firestore';
 import { getDb } from './firebase';
 import { subscribeAttempts, AttemptMap } from './examAttempts';
 import { userPermissionsService } from './userPermissionsService';
@@ -13,8 +13,9 @@ import { getQuestionOptions, hasMadeUpOptions, isOptionCorrect } from '../utils/
  * Placement test and personal learning plan.
  * The placement test is drawn at random from the topics' basic and middle tests (the student's
  * grade, and the grades below it if the admin chose so), a few questions per topic.
- * - users/{uid}/placement/result: the student's answers and the topics of the questions they got
- *   wrong. Those topics are their plan; they open once the student has paid (an access period
+ * Placement tests are free and every grade's (6-12) is open to every student, once each.
+ * - users/{uid}/placement/g{grade}: the student's answers on that grade's test and the topics of
+ *   the questions they got wrong. Together these topics are their plan. Those topics are their plan; they open once the student has paid (an access period
  *   set on their permissions).
  * A topic's tests unlock in turn: scoring 85% or more on the basic test opens the middle one, and
  * on the middle one opens the advanced one. Passing them fills the topic to 35%, 70% and 100%;
@@ -166,14 +167,32 @@ export function buildPlacementTest(grade: GradeNumber): PlacementTest | null {
   return questions.length > 0 ? { grade, questions } : null;
 }
 
-export async function loadPlacementResult(uid: string): Promise<PlacementResult | null> {
-  const snap = await getDoc(doc(getDb(), 'users', uid, 'placement', 'result'));
-  return snap.exists() ? (snap.data() as PlacementResult) : null;
+export const GRADES: GradeNumber[] = [6, 7, 8, 9, 10, 11, 12];
+
+function sortResults(list: PlacementResult[]): PlacementResult[] {
+  return [...list].sort((a, b) => a.grade - b.grade || a.takenAt - b.takenAt);
 }
 
-/** Admin: lets the student take the placement test again. */
-export async function resetPlacementResult(uid: string): Promise<void> {
-  await deleteDoc(doc(getDb(), 'users', uid, 'placement', 'result'));
+/** The topics of all of a student's results, in grade order, without repeats. */
+export function combinedPlan(results: PlacementResult[]): (PlacementResult['plan'][number] & { grade: GradeNumber })[] {
+  const plan: (PlacementResult['plan'][number] & { grade: GradeNumber })[] = [];
+  for (const r of sortResults(results)) {
+    for (const p of r.plan) {
+      if (!plan.some((x) => x.topicId === p.topicId)) plan.push({ ...p, grade: r.grade });
+    }
+  }
+  return plan;
+}
+
+export async function loadPlacementResults(uid: string): Promise<PlacementResult[]> {
+  const snap = await getDocs(collection(getDb(), 'users', uid, 'placement'));
+  return sortResults(snap.docs.map((d) => d.data() as PlacementResult));
+}
+
+/** Admin: removes all of a student's placement results so they can take the tests again. */
+export async function resetPlacementResults(uid: string): Promise<void> {
+  const snap = await getDocs(collection(getDb(), 'users', uid, 'placement'));
+  await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
 }
 
 /* ---------------------------- student ---------------------------- */
@@ -195,7 +214,7 @@ export function gradePlacement(test: PlacementTest, answers: Record<string, stri
 }
 
 export async function savePlacementResult(uid: string, result: PlacementResult): Promise<void> {
-  await setDoc(doc(getDb(), 'users', uid, 'placement', 'result'), result);
+  await setDoc(doc(getDb(), 'users', uid, 'placement', `g${result.grade}`), result);
 }
 
 interface PlanState {
@@ -203,11 +222,11 @@ interface PlanState {
   userId: string | null;
   grade: GradeNumber | null;
   // undefined while loading
-  result: PlacementResult | null | undefined;
+  results: PlacementResult[] | undefined;
   attempts: AttemptMap;
 }
 
-const state: PlanState = { uid: null, userId: null, grade: null, result: undefined, attempts: {} };
+const state: PlanState = { uid: null, userId: null, grade: null, results: undefined, attempts: {} };
 let unsubs: (() => void)[] = [];
 
 function notify() {
@@ -217,21 +236,21 @@ function notify() {
 /** Starts for a signed-in student: their grade's placement test, their result and test scores. */
 export function startLearningPlan(uid: string, userId: string, grade: GradeNumber | null) {
   stopLearningPlan();
-  Object.assign(state, { uid, userId, grade, result: undefined, attempts: {} });
+  Object.assign(state, { uid, userId, grade, results: undefined, attempts: {} });
   const db = getDb();
   const onError = (what: string) => (err: unknown) => {
     console.error(`${what} failed to load`, err);
   };
   unsubs.push(
     onSnapshot(
-      doc(db, 'users', uid, 'placement', 'result'),
+      collection(db, 'users', uid, 'placement'),
       (snap) => {
-        state.result = snap.exists() ? (snap.data() as PlacementResult) : null;
+        state.results = sortResults(snap.docs.map((d) => d.data() as PlacementResult));
         notify();
       },
       (err) => {
-        onError('Placement result')(err);
-        state.result = null;
+        onError('Placement results')(err);
+        state.results = [];
         notify();
       }
     )
@@ -248,7 +267,7 @@ export function startLearningPlan(uid: string, userId: string, grade: GradeNumbe
 export function stopLearningPlan() {
   unsubs.forEach((u) => u());
   unsubs = [];
-  Object.assign(state, { uid: null, userId: null, grade: null, result: undefined, attempts: {} });
+  Object.assign(state, { uid: null, userId: null, grade: null, results: undefined, attempts: {} });
   notify();
 }
 
@@ -258,21 +277,32 @@ export const learningPlan = {
   },
   /** Still loading what decides whether the student must take the test first. */
   isLoading(): boolean {
-    return !!state.uid && state.result === undefined;
+    return !!state.uid && state.results === undefined;
   },
-  /** The admin turned the placement test on, it has questions, and the student has not taken it. */
-  needsPlacement(): boolean {
+  /** A grade's placement test exists and the student has not taken it yet. */
+  canTakePlacement(grade: GradeNumber): boolean {
     return (
       !!state.uid &&
-      !!state.grade &&
-      state.result === null &&
+      !!state.results &&
       cloud.getAppSettings().placementEnabled &&
-      placementSize(state.grade).questions > 0
+      !state.results.some((r) => r.grade === grade) &&
+      placementSize(grade).questions > 0
     );
   },
-  /** The student has taken the test, so their access follows their plan. */
+  resultFor(grade: GradeNumber): PlacementResult | undefined {
+    return state.results?.find((r) => r.grade === grade);
+  },
+  /** Placement tests are on and the student has not taken any yet (lessons wait for one). */
+  needsPlacement(): boolean {
+    return !!state.results && state.results.length === 0 && GRADES.some((g) => this.canTakePlacement(g));
+  },
+  /** The student has taken a placement test, so their access follows their plan. */
   hasPlan(): boolean {
-    return !!state.uid && !!state.result;
+    return !!state.uid && !!state.results && state.results.length > 0;
+  },
+  /** Topics to study from all the student's placement tests. */
+  plan() {
+    return combinedPlan(state.results || []);
   },
   isPaid(): boolean {
     if (!state.userId) return false;
@@ -285,7 +315,7 @@ export const learningPlan = {
     return typeof e === 'number' ? e : null;
   },
   inPlan(topicId: string): boolean {
-    return !!state.result?.plan.some((p) => p.topicId === topicId);
+    return this.plan().some((p) => p.topicId === topicId);
   },
   /** Students whose access follows the placement test (taken, or still to take). */
   isGated(): boolean {

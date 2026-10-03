@@ -206,18 +206,19 @@ export default function App() {
     });
   }, [openSession]);
 
-  // A student with a learning plan starts on it
   const hasPlan = learningPlan.hasPlan();
   const isStudent = currentUser?.role !== 'admin' && !!learningPlan.state.uid;
-  // Right after finishing the placement test, show the plan it produced
-  const hadNoResult = React.useRef(false);
+  // The grade whose placement test the student is taking
+  const [placementGrade, setPlacementGrade] = useState<GradeNumber>(6);
+  // Right after finishing a placement test, show the plan it produced
+  const placementCount = learningPlan.state.results?.length;
+  const prevPlacementCount = React.useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (learningPlan.state.result === null) hadNoResult.current = true;
-    else if (hasPlan && hadNoResult.current) {
-      hadNoResult.current = false;
+    if (placementCount !== undefined && prevPlacementCount.current !== undefined && placementCount > prevPlacementCount.current) {
       setActiveView('plan');
     }
-  }, [hasPlan, learningPlan.state.result]);
+    prevPlacementCount.current = placementCount;
+  }, [placementCount]);
 
   // Opens a topic from the plan in its grade
   const openPlanTopic = (topicId: string, view: 'topics' | 'exams') => {
@@ -605,13 +606,16 @@ export default function App() {
           )}
           {currentUser.role !== 'admin' && learningPlan.isLoading() ? (
             <div className="text-center py-20 text-sm text-stone-500">Ачаалж байна...</div>
-          ) : isStudent && activeView === 'placement' && learningPlan.needsPlacement() ? (
-            <PlacementTestView uid={getFirebaseAuth().currentUser!.uid} grade={learningPlan.state.grade!} />
+          ) : isStudent && activeView === 'placement' && learningPlan.canTakePlacement(placementGrade) ? (
+            <PlacementTestView key={placementGrade} uid={getFirebaseAuth().currentUser!.uid} grade={placementGrade} />
           ) : isStudent && (activeView === 'home' || activeView === 'placement') ? (
             <StudentHome
               uid={getFirebaseAuth().currentUser!.uid}
               currentUser={currentUser}
-              onStartPlacement={() => setActiveView('placement')}
+              onStartPlacement={(grade) => {
+                setPlacementGrade(grade);
+                setActiveView('placement');
+              }}
               onOpenPlan={() => setActiveView('plan')}
               onOpenLessons={() => setActiveView('topics')}
               onOpenExams={() => setActiveView('exams')}
