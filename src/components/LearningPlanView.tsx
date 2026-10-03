@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle, Award, BookOpen, Check, CheckCircle2, Copy, CreditCard, Lock, Route, X } from 'lucide-react';
+import { Award, BookOpen, Check, CheckCircle2, Copy, CreditCard, Lock, Route, X } from 'lucide-react';
 import { AuthUser } from '../types';
 import {
   learningPlan,
@@ -323,30 +323,22 @@ const PaymentDialog: React.FC<{
                   <Row label="Дансны дугаар" value={settings.accountNumber} k="acc" />
                   {settings.accountName && <Row label="Хүлээн авагч" value={settings.accountName} k="name" />}
                 </div>
-                <div className="rounded-xl border-2 border-red-500 bg-red-50 overflow-hidden shadow-sm">
-                  <div className="px-3 py-1.5 bg-red-600 text-white text-xs font-black flex items-center gap-1.5">
-                    <AlertTriangle className="w-4 h-4" />
-                    Гүйлгээний утга дээр заавал бичнэ үү!
+                <div className="rounded-xl bg-amber-50 border border-amber-300 p-3">
+                  <div className="text-xs text-amber-900 font-bold mb-1">Гүйлгээний утга дээр заавал бичнэ үү:</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <b className="text-base text-stone-950 select-all" data-testid="transfer-note">
+                      {note}
+                    </b>
+                    <button
+                      type="button"
+                      onClick={() => copy('note', note)}
+                      className="p-1 rounded hover:bg-amber-100 text-amber-800 cursor-pointer"
+                      aria-label="Хуулах"
+                    >
+                      {copied === 'note' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                    </button>
                   </div>
-                  <div className="p-3">
-                    <div className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-white border-2 border-dashed border-red-400">
-                      <b className="text-xl tracking-wide text-red-700 select-all" data-testid="transfer-note">
-                        {note}
-                      </b>
-                      <button
-                        type="button"
-                        onClick={() => copy('note', note)}
-                        className="px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
-                        aria-label="Хуулах"
-                      >
-                        {copied === 'note' ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        {copied === 'note' ? 'Хуулсан' : 'Хуулах'}
-                      </button>
-                    </div>
-                    <div className="text-xs text-red-800 font-semibold mt-1.5">
-                      Таны ID болон утасны дугаар. Үүнийг бичихгүй бол таны төлбөрийг таньж чадахгүй.
-                    </div>
-                  </div>
+                  <div className="text-[11px] text-amber-800 mt-1">(таны ID болон утасны дугаар)</div>
                 </div>
                 {error && <div className="text-xs text-red-700">{error}</div>}
                 <button
