@@ -80,7 +80,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const showExamNav = !!onSelectView && activeView === 'exams';
   // Lessons can be listed by grade (all topics) or as the user's plan (plan topics of every grade)
   const [lessonMode, setLessonMode] = useState<'all' | 'plan'>('all');
-  const canPlanView = !isAdmin && learningPlan.hasPlan();
+  // Everyone gets the two views; without a plan the plan view explains how to get one
+  const canPlanView = !!onSelectView;
   // The exams page uses the same two views; its choice also filters the exams table
   const examMode: 'all' | 'plan' = examFilter === 'plan' ? 'plan' : 'all';
   const mode = showExamNav ? examMode : lessonMode;
@@ -333,6 +334,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {planMode ? (
           <div className="flex-1 overflow-y-auto p-3 space-y-3" data-testid="plan-topic-list">
+            {learningPlan.plan().length === 0 && (
+              <div className="rounded-xl border border-stone-800 bg-stone-950/40 p-3 text-xs text-stone-400 leading-relaxed">
+                {isAdmin
+                  ? 'Хэрэглэгч бүрд түвшин тогтоох сорилын дүнгээр гарсан өөрийн төлөвлөгөөний сэдвүүд энд харагдана.'
+                  : learningPlan.hasPlan()
+                  ? 'Таны төлөвлөгөөнд сэдэв алга.'
+                  : 'Түвшин тогтоох сорил өгсний дараа танд зориулсан сэдвүүд энд гарна.'}
+                {!isAdmin && !learningPlan.hasPlan() && onOpenPlan && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenPlan();
+                      onCloseMobile();
+                    }}
+                    className="mt-2 w-full py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold cursor-pointer"
+                  >
+                    Сорил өгөх
+                  </button>
+                )}
+              </div>
+            )}
             {GRADES_LIST.filter((g) => learningPlan.plan().some((p) => topicMeta(p.topicId).grade === g)).map((g) => (
               <div key={g}>
                 <div className="px-1 mb-1 text-[11px] font-bold text-stone-400 uppercase tracking-wider">{g}-р анги</div>
