@@ -219,7 +219,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   ...(showHome
                     ? [{ key: 'home', label: 'Нүүр\nхуудас', icon: Home, active: activeView === 'home' || activeView === 'plan' || activeView === 'placement' }]
                     : []),
-                  { key: 'topics', label: 'Хичээл', icon: BookOpen, active: activeView === 'topics' },
+                  { key: 'topics', label: 'Хичээл\nүзэх', icon: BookOpen, active: activeView === 'topics' },
                   { key: 'exams', label: 'Сэдэвчилсэн\nсорил', icon: Award, active: activeView === 'exams' },
                 ] as const
               ).map(({ key, label, icon: Icon, active }) => (
