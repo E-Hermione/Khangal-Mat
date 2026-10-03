@@ -324,11 +324,11 @@ const PaymentDialog: React.FC<{
                   {settings.accountName && <Row label="Хүлээн авагч" value={settings.accountName} k="name" />}
                 </div>
                 <div className="rounded-xl bg-amber-50 border-[3px] border-amber-400 p-3.5">
-                  <div className="text-sm text-amber-900 font-black mb-1.5">Гүйлгээний утга дээр заавал бичнэ үү:</div>
+                  <div className="text-sm text-amber-900 font-black mb-1.5">Гүйлгээний утга дээрээ өөрийн ID болон утасны дугаараа бичнэ үү.</div>
                   <div className="flex items-center justify-between gap-2">
-                    <b className="text-xl tracking-wide text-stone-950 select-all" data-testid="transfer-note">
+                    <span className="text-xl tracking-wide text-stone-950 select-all" data-testid="transfer-note">
                       {note}
-                    </b>
+                    </span>
                     <button
                       type="button"
                       onClick={() => copy('note', note)}
@@ -338,7 +338,6 @@ const PaymentDialog: React.FC<{
                       {copied === 'note' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
-                  <div className="text-[11px] text-amber-800 mt-1">(таны ID болон утасны дугаар)</div>
                 </div>
                 {error && <div className="text-xs text-red-700">{error}</div>}
                 <button
