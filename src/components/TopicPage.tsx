@@ -8,6 +8,8 @@ import { ItemEditorModal, ItemEditorType } from './ItemEditorModal';
 import { visibilityService, TopicAccessMode } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { learningPlan, useLearningPlanVersion } from '../services/learningPlan';
+import { loadPracticeGrants, usePracticeSolutions } from '../services/practiceSolutions';
+import { PracticeGrantsDialog } from './PracticeGrantsDialog';
 import { accessRequestService } from '../services/accessRequestService';
 import { getFirebaseAuth } from '../services/firebase';
 import { AuthUser } from '../types';
@@ -23,6 +25,7 @@ import {
   Award,
   Play,
   ArrowRight,
+  Unlock,
 } from 'lucide-react';
 
 interface TopicPageProps {
@@ -47,6 +50,14 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   onOpenPlan,
 }) => {
   useLearningPlanVersion();
+  // Practice solutions: the admin opens them per topic for chosen users
+  const grantedSolutions = usePracticeSolutions(isAdmin ? undefined : getFirebaseAuth().currentUser?.uid, topic.id);
+  const [grantsOpen, setGrantsOpen] = useState(false);
+  const [grantCount, setGrantCount] = useState<number | null>(null);
+  useEffect(() => {
+    setGrantCount(null);
+    if (isAdmin) loadPracticeGrants(topic.id).then((u) => setGrantCount(u.length)).catch(() => {});
+  }, [isAdmin, topic.id]);
   // Students with a learning plan see paid plan topics in full and nothing else
   const planGate = isAdmin ? null : learningPlan.topicGate(topic.id);
   // Selection for core lesson sections: Theory, Examples, Practice
@@ -488,10 +499,27 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           {/* 3. Practice Exercises */}
           {((isAdmin && selection.practice) || (!isAdmin && isPracticeAllowed)) && (
             <PracticeSection
-              practice={topic.practice}
+              practice={
+                grantedSolutions
+                  ? (topic.practice || []).map((p) => (grantedSolutions[p.id] ? { ...p, ...grantedSolutions[p.id] } : p))
+                  : topic.practice
+              }
               includeWorkSpace={isAdmin ? options.includeWorkSpace : false}
               teacherVersion={isAdmin ? options.teacherVersion : false}
-              allowSolutions={isAdmin}
+              allowSolutions={isAdmin || !!grantedSolutions}
+              headerExtra={
+                isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setGrantsOpen(true)}
+                    className="text-xs px-2.5 py-1 rounded border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold flex items-center space-x-1 cursor-pointer"
+                    data-testid="open-practice-grants"
+                  >
+                    <Unlock className="w-3.5 h-3.5" />
+                    <span>Бодолт нээх{grantCount !== null ? ` (${grantCount})` : ''}</span>
+                  </button>
+                )
+              }
               isEditable={isAdmin && isEditMode}
               onAddPractice={handleOpenAddPractice}
               onEditPractice={handleOpenEditPractice}
@@ -527,6 +555,10 @@ export const TopicPage: React.FC<TopicPageProps> = ({
             </div>
           )}
         </article>
+      )}
+
+      {grantsOpen && (
+        <PracticeGrantsDialog topic={topic} onClose={() => setGrantsOpen(false)} onSaved={setGrantCount} />
       )}
 
       {/* Item Editor Modal with LaTeX live preview (Theory, Examples, Practice) */}

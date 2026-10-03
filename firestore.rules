@@ -103,6 +103,12 @@ service cloud.firestore {
         allow delete: if isAdmin();
       }
 
+      // Practice solutions the admin opened for this user
+      match /practiceSolutions/{topicId} {
+        allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+        allow write: if isAdmin();
+      }
+
       // Exam results: the owner writes, the admin can review
       match /examAttempts/{examId} {
         allow read, write: if signedIn() && request.auth.uid == uid;
@@ -135,6 +141,11 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['uid', 'userId', 'phoneNumber', 'fullName', 'months', 'amount', 'note', 'status', 'createdAt']);
       allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       allow update, delete: if isAdmin();
+    }
+
+    // Who has each topic's practice solutions
+    match /practiceGrants/{topicId} {
+      allow read, write: if isAdmin();
     }
 
     match /phones/{phone} {

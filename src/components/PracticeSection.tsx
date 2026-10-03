@@ -9,6 +9,8 @@ interface PracticeSectionProps {
   teacherVersion?: boolean;
   // Students never see practice answers or solutions
   allowSolutions?: boolean;
+  // Extra controls in the section header (admin: who may see the solutions)
+  headerExtra?: React.ReactNode;
   isEditable?: boolean;
   onEditPractice?: (problem: PracticeProblem) => void;
   onDeletePractice?: (problemId: string) => void;
@@ -20,6 +22,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
   includeWorkSpace = true,
   teacherVersion = false,
   allowSolutions = false,
+  headerExtra,
   isEditable = false,
   onEditPractice,
   onDeletePractice,
@@ -49,6 +52,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
           III. БИЕ ДААХ ДАСГАЛ БОДЛОГО
         </h2>
         <div className="flex items-center space-x-2 no-print">
+          {headerExtra}
           {isEditable && onAddPractice && (
             <button
               type="button"

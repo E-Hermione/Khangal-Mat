@@ -1,3 +1,4 @@
+import { syncPracticeSolutions } from './practiceSolutions';
 import { TopicPackage, GradeNumber, TheoryRule, WorkedExample, PracticeProblem, TestQuestion } from '../types';
 import { INITIAL_TOPICS } from '../data/initialData';
 import { cloud } from './cloud';
@@ -64,6 +65,8 @@ export const storageService = {
 
   saveTopic(topic: TopicPackage): void {
     cloud.setTopic(topic);
+    // Users the admin opened the practice solutions for get the edited ones
+    syncPracticeSolutions(topic).catch((err) => console.error('Practice solutions not refreshed', err));
   },
 
   deleteTopic(topicId: string): void {
