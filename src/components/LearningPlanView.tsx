@@ -66,6 +66,8 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, current
 
       <PaymentStatusCard uid={uid} currentUser={currentUser} />
 
+      <HowItWorks paid={paid} />
+
       {/* Progress */}
       {total > 0 && (
         <div className="bg-white rounded-xl border border-stone-200 p-4">
@@ -78,11 +80,6 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ uid, current
           <div className="h-2 rounded-full bg-stone-100 overflow-hidden">
             <div className="h-full bg-blue-500 transition-all" style={{ width: `${overall}%` }} />
           </div>
-          <p className="text-[11px] text-stone-500 mt-1.5">
-            Сэдэв бүр дээр эхлээд Анхан шатны сорил өгнө. {PASS_PERCENT}%-иас дээш авбал Дунд шат нээгдэж сэдэв 35%, Дунд шатанд{' '}
-            {PASS_PERCENT}%-иас дээш авбал Ахисан шат нээгдэж 70%, Ахисан шатанд {PASS_PERCENT}%-иас дээш авбал 100% болж үзсэнд
-            тооцогдоно.
-          </p>
         </div>
       )}
 
@@ -355,6 +352,89 @@ const PaymentDialog: React.FC<{
             )}
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+/** Step-by-step guide to the plan: what to do first, then next, and what the marks mean. */
+const HowItWorks: React.FC<{ paid: boolean }> = ({ paid }) => {
+  const steps: { title: string; text: React.ReactNode; state: 'done' | 'now' | 'later' }[] = [
+    {
+      title: 'Түвшин тогтоох сорил өгнө',
+      text: 'Сорилд алдсан бодлогуудын сэдвүүдээр танд зориулсан төлөвлөгөө гарна. Доорх жагсаалт бол таны үзэх ёстой сэдвүүд.',
+      state: 'done',
+    },
+    {
+      title: 'Төлбөр төлж эрх авна',
+      text: 'Дээрх «Төлбөр төлөх» товчоор хугацаагаа сонгоод шилжүүлэг хийнэ. Админ баталгаажуулмагц сэдвүүд нээгдэнэ.',
+      state: paid ? 'done' : 'now',
+    },
+    {
+      title: 'Сэдвээ үзнэ',
+      text: 'Сэдэв бүрийн «Үзэх» товчоор онол, жишээ, дасгалыг дараалан үзэж, дасгалаа бодно.',
+      state: paid ? 'now' : 'later',
+    },
+    {
+      title: 'Сорилоор ахина',
+      text: (
+        <>
+          «Сорил өгөх» товчоор эхлээд <b>Анхан</b> шатны сорил өгнө. {PASS_PERCENT}%-иас дээш авбал <b>Дунд</b> шат нээгдэнэ, Дунд
+          шатанд {PASS_PERCENT}%+ авбал <b>Ахисан</b> шат нээгдэнэ.
+        </>
+      ),
+      state: paid ? 'now' : 'later',
+    },
+  ];
+
+  return (
+    <div className="bg-white rounded-xl border border-stone-200 p-4 space-y-4" data-testid="how-it-works">
+      <h2 className="text-sm font-black text-stone-900">Хэрхэн ажиллах вэ?</h2>
+      <ol className="space-y-3">
+        {steps.map((st, i) => (
+          <li key={st.title} className="flex gap-3">
+            <span
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                st.state === 'done'
+                  ? 'bg-emerald-500 text-white'
+                  : st.state === 'now'
+                  ? 'bg-amber-500 text-stone-950 ring-4 ring-amber-100'
+                  : 'bg-stone-100 text-stone-500'
+              }`}
+            >
+              {st.state === 'done' ? <Check className="w-4 h-4" /> : i + 1}
+            </span>
+            <div className="min-w-0">
+              <div className={`text-sm font-bold ${st.state === 'later' ? 'text-stone-500' : 'text-stone-900'}`}>{st.title}</div>
+              <div className="text-xs text-stone-600 leading-relaxed">{st.text}</div>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <div className="rounded-lg bg-stone-50 border border-stone-200 p-3 space-y-2">
+        <div className="text-xs font-bold text-stone-700">Сэдвийн явц юу гэсэн үг вэ?</div>
+        <div className="grid sm:grid-cols-4 gap-2 text-[11px] text-stone-600">
+          {[
+            { pct: 0, text: 'Сорил өгөөгүй' },
+            { pct: 35, text: 'Анхан шатыг давсан' },
+            { pct: 70, text: 'Дунд шатыг давсан' },
+            { pct: 100, text: 'Ахисан шатыг давсан — сэдэв үзсэн ✓' },
+          ].map((x) => (
+            <div key={x.pct} className="flex items-center gap-2">
+              <ProgressRing percent={x.pct} size={20} />
+              <span>{x.text}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-stone-600 pt-1">
+          <span className="flex items-center gap-1">
+            <Lock className="w-3.5 h-3.5 text-stone-400" /> Төлбөрийн дараа нээгдэнэ
+          </span>
+          <span className="flex items-center gap-1">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Сэдэв үзэж дууссан
+          </span>
+        </div>
       </div>
     </div>
   );

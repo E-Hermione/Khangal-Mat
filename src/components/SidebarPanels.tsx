@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collectionGroup, getDocs } from 'firebase/firestore';
-import { Bell, CalendarClock, ChevronRight, ClipboardCheck, CreditCard, Megaphone, Users, X } from 'lucide-react';
-import { learningPlan, useLearningPlanVersion } from '../services/learningPlan';
-import { userPermissionsService } from '../services/userPermissionsService';
-import { InboxItem, markAnnouncementsRead, subscribeMyAnnouncements } from '../services/announcements';
+import { ChevronRight, ClipboardCheck, CreditCard, Users } from 'lucide-react';
+import { learningPlan, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
 import { subscribeAllPaymentRequests } from '../services/payments';
 import { cloud } from '../services/cloud';
 import { getDb } from '../services/firebase';
@@ -12,8 +10,6 @@ import { ProgressRing } from './ProgressRing';
 
 // Exams page: all tests of a grade, or only the user's plan topics
 export type ExamFilter = 'all' | 'plan';
-
-const DAY = 24 * 60 * 60 * 1000;
 
 const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="px-1 mb-1.5 text-[11px] font-bold text-stone-400 uppercase tracking-wider">{children}</div>
@@ -35,140 +31,54 @@ export const HomePanel: React.FC<{
 }> = ({ uid, userId, isAdmin, onOpenPlan, onOpenAccessRequests }) =>
   isAdmin ? <AdminOverview onOpenAccessRequests={onOpenAccessRequests} /> : <MemberHome uid={uid} userId={userId} onOpenPlan={onOpenPlan} />;
 
-const MemberHome: React.FC<{ uid?: string; userId?: string; onOpenPlan: () => void }> = ({ uid, userId, onOpenPlan }) => {
+const MemberHome: React.FC<{ uid?: string; userId?: string; onOpenPlan: () => void }> = ({ onOpenPlan }) => {
   useLearningPlanVersion();
-  const [items, setItems] = useState<InboxItem[]>([]);
-  const [readIds, setReadIds] = useState<Set<string>>(new Set());
-  const [open, setOpen] = useState<InboxItem | null>(null);
-
-  useEffect(
-    () =>
-      uid
-        ? subscribeMyAnnouncements(uid, (list, reads) => {
-            setItems(list);
-            setReadIds(reads);
-          })
-        : undefined,
-    [uid]
-  );
-
   const plan = learningPlan.plan();
+  const hasPlan = learningPlan.hasPlan();
   const overall = plan.length
     ? Math.round(plan.reduce((sum, p) => sum + learningPlan.progress(p.topicId), 0) / plan.length)
     : 0;
   const done = plan.filter((p) => learningPlan.isDone(p.topicId)).length;
-
-  const expiresAt = userId ? userPermissionsService.getUserPermissions(userId).expiresAt : null;
-  const daysLeft = typeof expiresAt === 'number' ? Math.ceil((expiresAt - Date.now()) / DAY) : null;
-
-  const openItem = (a: InboxItem) => {
-    setOpen(a);
-    if (uid && !readIds.has(a.id)) markAnnouncementsRead(uid, [a.id]).catch(() => {});
-  };
+  const next = plan.find((p) => !learningPlan.isDone(p.topicId));
 
   return (
-    <div className="p-3 space-y-4" data-testid="home-panel">
-      <div>
-        <Label>Миний явц</Label>
-        {learningPlan.hasPlan() ? (
-          <button
-            type="button"
-            onClick={onOpenPlan}
-            className="w-full text-left rounded-xl border border-stone-800 bg-stone-950/40 p-3 flex items-center gap-3 hover:bg-stone-800/60 cursor-pointer"
-          >
+    <div className="p-3 space-y-3" data-testid="home-panel">
+      <Label>Миний төлөвлөгөө</Label>
+      {hasPlan ? (
+        <Panel className="space-y-3">
+          <div className="flex items-center gap-3">
             <ProgressRing percent={overall} size={44} />
-            <span className="text-xs text-stone-300 leading-snug">
+            <div className="text-xs text-stone-300 leading-snug">
               <b className="text-white text-sm">
                 {done}/{plan.length}
               </b>{' '}
               сэдэв үзсэн
-              <span className="block text-stone-500">Төлөвлөгөө харах →</span>
-            </span>
+              <span className="block text-stone-500">
+                {learningPlan.isPaid() ? 'Хичээлүүд нээлттэй' : 'Төлбөрийн дараа нээгдэнэ'}
+              </span>
+            </div>
+          </div>
+          {next && (
+            <div className="text-[11px] text-stone-400">
+              Дараагийн сэдэв: <span className="text-stone-200 font-bold">{topicMeta(next.topicId).title}</span>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={onOpenPlan}
+            className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold cursor-pointer"
+            data-testid="open-plan"
+          >
+            Миний төлөвлөгөө харах
           </button>
-        ) : (
-          <Panel>
-            <div className="flex items-center gap-2 text-xs text-stone-400">
-              <ClipboardCheck className="w-4 h-4 text-amber-400 shrink-0" />
-              Түвшин тогтоох сорил өгсний дараа явц энд харагдана.
-            </div>
-          </Panel>
-        )}
-      </div>
-
-      <div>
-        <Label>Эрхийн хугацаа</Label>
-        <Panel>
-          <div className="flex items-center gap-2.5">
-            <CalendarClock
-              className={`w-5 h-5 shrink-0 ${
-                daysLeft === null ? 'text-stone-500' : daysLeft > 7 ? 'text-emerald-400' : daysLeft > 0 ? 'text-amber-400' : 'text-red-400'
-              }`}
-            />
-            <div className="text-xs text-stone-300" data-testid="access-days">
-              {daysLeft === null ? (
-                learningPlan.isGated() ? 'Эрх аваагүй байна' : 'Хугацаагүй'
-              ) : daysLeft > 0 ? (
-                <>
-                  <b className="text-white text-sm">{daysLeft}</b> хоног үлдсэн
-                  <span className="block text-stone-500">{new Date(expiresAt!).toLocaleDateString()} хүртэл</span>
-                </>
-              ) : (
-                <span className="text-red-300">Хугацаа дууссан</span>
-              )}
-            </div>
+        </Panel>
+      ) : (
+        <Panel className="space-y-2">
+          <div className="flex items-start gap-2 text-xs text-stone-400">
+            <ClipboardCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            Түвшин тогтоох сорил өгөхөд танд зориулсан сургалтын төлөвлөгөө гарна.
           </div>
         </Panel>
-      </div>
-
-      <div>
-        <Label>Сүүлийн зарлалууд</Label>
-        {items.length === 0 ? (
-          <Panel>
-            <div className="flex items-center gap-2 text-xs text-stone-500">
-              <Bell className="w-4 h-4 shrink-0" /> Зарлал алга
-            </div>
-          </Panel>
-        ) : (
-          <div className="space-y-1.5" data-testid="recent-announcements">
-            {items.slice(0, 3).map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => openItem(a)}
-                className="w-full text-left rounded-xl border border-stone-800 bg-stone-950/40 px-3 py-2 hover:bg-stone-800/60 cursor-pointer flex items-start gap-2"
-              >
-                <span
-                  className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${readIds.has(a.id) ? 'bg-stone-600' : 'bg-amber-400'}`}
-                />
-                <span className="min-w-0">
-                  <span className={`block text-xs truncate ${readIds.has(a.id) ? 'text-stone-300' : 'text-white font-bold'}`}>
-                    {a.title}
-                  </span>
-                  <span className="block text-[10px] text-stone-500">{new Date(a.createdAt).toLocaleDateString()}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {open && (
-        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setOpen(null)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="px-5 py-3.5 border-b border-stone-200 flex items-center justify-between">
-              <h3 className="font-extrabold text-stone-900 flex items-center gap-2">
-                <Megaphone className="w-5 h-5 text-amber-600" /> {open.title}
-              </h3>
-              <button type="button" onClick={() => setOpen(null)} className="p-1 rounded-md hover:bg-stone-100 cursor-pointer" aria-label="Хаах">
-                <X className="w-5 h-5 text-stone-500" />
-              </button>
-            </div>
-            <div className="p-5">
-              <div className="text-[11px] text-stone-500 mb-2">{new Date(open.createdAt).toLocaleString()}</div>
-              <div className="text-sm text-stone-800 whitespace-pre-wrap">{open.body}</div>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
