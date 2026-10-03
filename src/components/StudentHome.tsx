@@ -329,9 +329,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-sm ring-2 ring-amber-400" /> Таны анги
               </span>
-              <span className="flex items-center gap-1.5 text-stone-400">
-                <span className="text-stone-300 font-black">7</span> Удахгүй
-              </span>
             </div>
           </div>
           {editable && (

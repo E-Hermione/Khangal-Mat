@@ -5,6 +5,7 @@ import { subscribeAttempts, AttemptMap } from './examAttempts';
 import { userPermissionsService } from './userPermissionsService';
 import { storageService } from './storageService';
 import { cloud } from './cloud';
+import { generateTopicTests } from '../utils/topicTests';
 import { GRADE_TOPICS_CATALOG } from '../data/initialData';
 import { GradeNumber, TestQuestion, TopicPackage } from '../types';
 import { getQuestionOptions, hasMadeUpOptions, isOptionCorrect } from '../utils/examGrading';
@@ -129,18 +130,26 @@ function shuffle<T>(list: T[]): T[] {
   return a;
 }
 
-// Questions with the teacher's own choices only: open questions get made-up ones
-function questionPool(t: TopicPackage): TestQuestion[] {
-  return [...(t.test1?.questions || []), ...(t.test2?.questions || [])].filter((q) => !hasMadeUpOptions(q));
+// A topic's three tests as the topic-tests page shows them (sample tests when the admin has not written its own)
+function topicTests(t: TopicMeta): TopicPackage['test1'][] {
+  const saved = storageService.getTopics().find((s) => s.id === t.id);
+  if (saved?.test1?.questions?.length && saved.test2?.questions?.length && saved.test3?.questions?.length) {
+    return [saved.test1, saved.test2, saved.test3];
+  }
+  const g = generateTopicTests(t.id, saved?.title || t.title, t.grade, saved?.category || t.category);
+  return [g.test1, g.test2, g.test3];
 }
 
-// Topics of that grade the admin filled in (with their own test questions) that a placement test draws from
-function placementTopics(grade: GradeNumber) {
-  return storageService
-    .getTopics()
-    .filter((t) => t.grade === grade)
-    .filter((t) => questionPool(t).length > 0)
-    .sort((a, b) => a.grade - b.grade);
+// Choice questions of a topic's tests (open questions get made-up choices, so they are left out)
+function questionPool(t: TopicMeta): TestQuestion[] {
+  return topicTests(t)
+    .flatMap((test) => test?.questions || [])
+    .filter((q) => !hasMadeUpOptions(q));
+}
+
+// Every topic of that grade; each has topic tests to draw from
+function placementTopics(grade: GradeNumber): TopicMeta[] {
+  return allTopicMetas().filter((t) => t.grade === grade && questionPool(t).length > 0);
 }
 
 // At least 3 questions per topic, so one slip does not put a topic in the plan
@@ -150,25 +159,33 @@ function placementPerTopic(): number {
   return Math.max(MIN_PLACEMENT_PER_TOPIC, cloud.getAppSettings().placementPerTopic || 0);
 }
 
-/** How many topics and questions a grade's placement test would have. */
-export function placementSize(grade: GradeNumber): { topics: number; questions: number } {
-  const topics = placementTopics(grade);
+// Up to `per` random questions from each topic, never the same question text twice
+function drawQuestions(grade: GradeNumber, random: boolean): PlacementQuestion[] {
   const per = placementPerTopic();
-  const questions = topics.reduce(
-    (sum, t) => sum + Math.min(per, questionPool(t).length),
-    0
-  );
-  return { topics: topics.length, questions };
-}
-
-/** A fresh random placement test for a grade, or null if there is nothing to draw from. */
-export function buildPlacementTest(grade: GradeNumber): PlacementTest | null {
-  const per = placementPerTopic();
+  const used = new Set<string>();
   const questions: PlacementQuestion[] = [];
   for (const t of placementTopics(grade)) {
     const pool = questionPool(t);
-    for (const q of shuffle(pool).slice(0, per)) questions.push({ topicId: t.id, question: q });
+    const fresh = (random ? shuffle(pool) : pool).filter((q) => {
+      const key = q.question.trim();
+      if (used.has(key)) return false;
+      used.add(key);
+      return true;
+    });
+    for (const q of fresh.slice(0, per)) questions.push({ topicId: t.id, question: q });
   }
+  return questions;
+}
+
+/** How many topics and questions a grade's placement test would have. */
+export function placementSize(grade: GradeNumber): { topics: number; questions: number } {
+  const questions = drawQuestions(grade, false);
+  return { topics: new Set(questions.map((q) => q.topicId)).size, questions: questions.length };
+}
+
+/** A fresh placement test for a grade: questions from each of its topic tests, mixed together. */
+export function buildPlacementTest(grade: GradeNumber): PlacementTest | null {
+  const questions = shuffle(drawQuestions(grade, true));
   return questions.length > 0 ? { grade, questions } : null;
 }
 
@@ -215,6 +232,9 @@ export function gradePlacement(test: PlacementTest, answers: Record<string, stri
     if (entry) entry.missed.push(i + 1);
     else plan.push({ topicId: q.topicId, missed: [i + 1] });
   });
+  // Questions are mixed, so list the plan in the course's topic order
+  const order = allTopicMetas().map((t) => t.id);
+  plan.sort((a, b) => order.indexOf(a.topicId) - order.indexOf(b.topicId));
   return { grade: test.grade, takenAt: Date.now(), answers, correct, total: test.questions.length, plan };
 }
 
