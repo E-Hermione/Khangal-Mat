@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Award, BookOpen, Check, CheckCircle2, ChevronRight, ClipboardCheck, Copy, CreditCard, Lock, Route, X } from 'lucide-react';
+import { Award, BookOpen, Check, CheckCircle2, ChevronRight, ClipboardCheck, Copy, CreditCard, Info, Lock, Route, X } from 'lucide-react';
 import { AuthUser } from '../types';
 import {
   learningPlan,
@@ -424,6 +424,12 @@ const PaymentDialog: React.FC<{
                   </div>
                 </div>
                 {error && <div className="text-xs text-red-700">{error}</div>}
+                <div className="flex items-start gap-2 rounded-lg bg-sky-50 border border-sky-200 px-3 py-2 text-xs text-sky-900" data-testid="paid-reminder">
+                  <Info className="w-4 h-4 text-sky-600 shrink-0 mt-px" />
+                  <span>
+                    Шилжүүлгээ хийсний дараа доорх <b>«Шилжүүлсэн»</b> товчийг заавал дарна уу. Дарахгүй бол таны төлбөр шалгагдахгүй.
+                  </span>
+                </div>
                 <button
                   type="button"
                   onClick={handlePaid}
