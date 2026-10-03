@@ -427,7 +427,7 @@ const PaymentDialog: React.FC<{
                 <div className="flex items-start gap-2 rounded-lg bg-sky-50 border border-sky-200 px-3 py-2 text-xs text-sky-900" data-testid="paid-reminder">
                   <Info className="w-4 h-4 text-sky-600 shrink-0 mt-px" />
                   <span>
-                    Шилжүүлгээ хийсний дараа доорх <b>«Шилжүүлсэн»</b> товчийг заавал дарна уу. Дарахгүй бол таны төлбөр шалгагдахгүй.
+                    Шилжүүлгээ хийсний дараа доорх <b>«Шилжүүлсэн»</b> товчийг заавал дарна уу. Дарахгүй бол таны төлбөр удаж шалгагдах болно.
                   </span>
                 </div>
                 <button
