@@ -205,7 +205,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   const firstName = (currentUser.name || '').split(' ').pop();
   // Retaking replaces that grade's result, so ask first
   const startPlacement = (g: GradeNumber) => {
-    if (learningPlan.resultFor(g) && !window.confirm(`${g}-р ангийн түвшин тогтоох сорилыг дахин өгөх үү? Өмнөх дүн шинэ дүнгээр солигдоно.`)) return;
+    if (learningPlan.resultFor(g) && !window.confirm(`${g}-р ангийн түвшин тогтоох сорилыг дахин өгөх үү?`)) return;
     onStartPlacement(g);
   };
   // "Take it again" opens the user's own grade, else the last grade they took
