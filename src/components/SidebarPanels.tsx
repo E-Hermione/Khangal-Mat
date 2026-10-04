@@ -95,7 +95,7 @@ const MemberHome: React.FC<{ uid?: string; userId?: string; onOpenPlan: () => vo
 const AdminOverview: React.FC<{ onOpenAccessRequests?: () => void }> = ({ onOpenAccessRequests }) => {
   const [pending, setPending] = useState(0);
   const [users, setUsers] = useState(() => cloud.getUsers());
-  const [placementTakers, setPlacementTakers] = useState<number | null>(null);
+  const [placementUids, setPlacementUids] = useState<Set<string> | null>(null);
 
   useEffect(() => subscribeAllPaymentRequests((list) => setPending(list.filter((r) => r.status === 'pending').length)), []);
   useEffect(() => {
@@ -105,13 +105,15 @@ const AdminOverview: React.FC<{ onOpenAccessRequests?: () => void }> = ({ onOpen
   }, []);
   useEffect(() => {
     getDocs(collectionGroup(getDb(), 'placement'))
-      .then((snap) => setPlacementTakers(new Set(snap.docs.map((d) => d.ref.parent.parent?.id)).size))
-      .catch(() => setPlacementTakers(null));
+      .then((snap) => setPlacementUids(new Set(snap.docs.map((d) => d.ref.parent.parent?.id || ''))))
+      .catch(() => setPlacementUids(null));
   }, []);
 
   const members = users.filter((u) => u.email !== ADMIN_EMAIL);
   const startOfToday = new Date().setHours(0, 0, 0, 0);
   const newToday = members.filter((u) => u.createdAt >= startOfToday).length;
+  // People, not attempts; the admin's own test runs ("view as user") are left out
+  const placementTakers = placementUids ? members.filter((u) => placementUids.has(u.uid)).length : null;
 
   const Stat: React.FC<{ icon: React.ReactNode; label: string; value: React.ReactNode; onClick?: () => void; alert?: boolean }> = ({
     icon,
