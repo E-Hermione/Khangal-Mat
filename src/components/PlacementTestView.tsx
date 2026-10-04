@@ -50,10 +50,7 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
           <ClipboardCheck className="w-7 h-7" />
         </div>
         <h1 className="text-xl font-black text-stone-900">Түвшин тогтоох шалгалт</h1>
-        <p className="text-sm text-stone-600 leading-relaxed">
-          Эхлээд {test.grade}-р ангийн түвшин тогтоох шалгалт өгнө үү ({test.questions.length} бодлого). Таны алдсан
-          бодлогууд дээр үндэслэн танд зориулсан сургалтын төлөвлөгөө гарна. Дахин өгвөл өмнөх дүн шинэ дүнгээр солигдоно.
-        </p>
+        <p className="text-base font-bold text-stone-700">{test.grade}-р ангийн түвшин тогтоох сорил</p>
         <NoGuessingNotice />
         <button
           type="button"
