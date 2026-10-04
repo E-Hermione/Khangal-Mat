@@ -8,6 +8,7 @@ import {
   UserCog,
   Megaphone,
   CreditCard,
+  Gift,
 } from 'lucide-react';
 import { accessRequestService } from '../services/accessRequestService';
 import { userPermissionsService, matchesUserToken } from '../services/userPermissionsService';
@@ -15,9 +16,10 @@ import { ApprovedAccount, UserPermissions, GradeNumber } from '../types';
 import { UserLookupTab } from './UserLookupTab';
 import { AnnouncementsTab } from './AnnouncementsTab';
 import { PaymentsTab } from './PaymentsTab';
+import { FreeTopicsTab } from './FreeTopicsTab';
 import { subscribeAllPaymentRequests } from '../services/payments';
 
-type MainTab = 'lookup' | 'user-permissions' | 'announcements' | 'payments';
+type MainTab = 'lookup' | 'user-permissions' | 'free-topics' | 'announcements' | 'payments';
 
 export const AccessRequestsTab: React.FC = () => {
   const [mainTab, setMainTab] = useState<MainTab>('lookup');
@@ -192,6 +194,19 @@ export const AccessRequestsTab: React.FC = () => {
 
         <button
           type="button"
+          onClick={() => setMainTab('free-topics')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all cursor-pointer ${
+            mainTab === 'free-topics'
+              ? 'bg-stone-900 text-amber-400 shadow-xs'
+              : 'bg-stone-100 text-stone-600 hover:text-stone-900 hover:bg-stone-200/80'
+          }`}
+        >
+          <Gift className="w-4 h-4" />
+          <span>Үнэгүй хичээл</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setMainTab('announcements')}
           className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all cursor-pointer ${
             mainTab === 'announcements'
@@ -230,6 +245,7 @@ export const AccessRequestsTab: React.FC = () => {
         <UserLookupTab onEditPermissions={handleOpenUserPermissions} />
       )}
 
+      {mainTab === 'free-topics' && <FreeTopicsTab />}
       {mainTab === 'announcements' && <AnnouncementsTab />}
       {mainTab === 'payments' && <PaymentsTab />}
 
