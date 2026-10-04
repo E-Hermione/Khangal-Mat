@@ -207,8 +207,8 @@ export default function App() {
     if (currentUser?.role !== 'admin') return;
     const uid = getFirebaseAuth().currentUser?.uid;
     if (previewAsUser && uid) {
-      // Previewed as a 10th-grade student
-      const previewGrade: GradeNumber = 10;
+      // Previewed as a student: paid in 10th grade, unpaid in 9th
+      const previewGrade: GradeNumber = previewAsUser === 'paid' ? 10 : 9;
       startLearningPlan(uid, currentUser.userId || 'ADMIN-01', previewGrade, previewAsUser === 'paid');
       setSelectedGrade(previewGrade);
       const first = GRADE_TOPICS_CATALOG[previewGrade]?.[0];
