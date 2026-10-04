@@ -71,7 +71,6 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
           {answered}/{test.questions.length} хариулсан
         </span>
       </div>
-      <NoGuessingNotice />
 
       {test.questions.map(({ question: q }, i) => (
         <div key={q.id} className="bg-white rounded-xl border border-stone-200 p-5 space-y-3">
