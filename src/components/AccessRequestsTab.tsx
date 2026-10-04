@@ -202,7 +202,7 @@ export const AccessRequestsTab: React.FC = () => {
           }`}
         >
           <Gift className="w-4 h-4" />
-          <span>Үнэгүй хичээл</span>
+          <span>Анхдагч эрх</span>
         </button>
 
         <button
