@@ -299,12 +299,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
             // A student takes their own grade's test only
             <div className="rounded-xl bg-stone-50 border border-stone-100 px-3 py-2.5 text-sm" data-testid="placement-own">
               <b className="text-stone-900">{grade}-р ангийн түвшин тогтоох сорил</b>
-              {learningPlan.resultFor(grade) && (
-                <span className="text-stone-500">
-                  {' '}
-                  • {learningPlan.resultFor(grade)!.correct}/{learningPlan.resultFor(grade)!.total} зөв
-                </span>
-              )}
             </div>
           ) : (
           <div className="rounded-xl bg-stone-50 border border-stone-100 p-2.5">
