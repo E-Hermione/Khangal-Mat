@@ -13,6 +13,7 @@ import { AnnouncementsBell } from './components/AnnouncementsBell';
 import { CopyProtection } from './components/CopyProtection';
 import { SettingsModal } from './components/SettingsModal';
 import { ExamsHub } from './components/ExamsHub';
+import { MistakesView } from './components/MistakesView';
 import { PlacementTestView } from './components/PlacementTestView';
 import { LearningPlanView } from './components/LearningPlanView';
 import { StudentHome } from './components/StudentHome';
@@ -59,7 +60,7 @@ export default function App() {
   // General view: the admin's rights without the editing buttons (signing in as "Ерөнхий" locks it on)
   const [generalView, setGeneralView] = useState<boolean>(() => isGeneralLogin());
   const generalLocked = generalView && isGeneralLogin();
-  const [activeView, setActiveView] = useState<'home' | 'topics' | 'exams' | 'plan' | 'placement'>('topics');
+  const [activeView, setActiveView] = useState<'home' | 'topics' | 'exams' | 'plan' | 'placement' | 'mistakes'>('topics');
   useLearningPlanVersion();
   const [topics, setTopics] = useState<TopicPackage[]>([]);
   const [selectedGrade, setSelectedGrade] = useState<GradeNumber>(6);
@@ -216,7 +217,7 @@ export default function App() {
       setActiveView('home');
     } else {
       stopLearningPlan();
-      setActiveView((v) => (v === 'plan' || v === 'placement' ? 'home' : v));
+      setActiveView((v) => (v === 'plan' || v === 'placement' || v === 'mistakes' ? 'home' : v));
     }
   }, [previewAsUser, currentUser?.role]);
   const isStudent = (currentUser?.role !== 'admin' || isAdminPreview) && !!learningPlan.state.uid;
@@ -716,7 +717,14 @@ export default function App() {
                 }
               }}
             />
-          ) : activeView === 'exams' ? (
+          ) : activeView === 'mistakes' && isStudent ? (
+            <MistakesView
+              onOpenExam={(topicId) => {
+                setSelectedTopicId(topicId);
+                setActiveView('exams');
+              }}
+            />
+          ) : activeView === 'exams' || activeView === 'mistakes' ? (
             <ExamsHub
               topics={topics}
               selectedGrade={selectedGrade}

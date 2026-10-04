@@ -7,8 +7,8 @@ import { storageService } from './storageService';
 import { cloud } from './cloud';
 import { generateTopicTests } from '../utils/topicTests';
 import { GRADE_TOPICS_CATALOG } from '../data/initialData';
-import { GradeNumber, TestQuestion, TopicPackage } from '../types';
-import { getQuestionOptions, hasMadeUpOptions, isOptionCorrect } from '../utils/examGrading';
+import { GradeNumber, TestPackage, TestQuestion, TopicPackage } from '../types';
+import { getQuestionOptions, hasMadeUpOptions, isOptionCorrect, testForGrade } from '../utils/examGrading';
 
 /**
  * Placement test and personal learning plan.
@@ -138,6 +138,41 @@ function topicTests(t: TopicMeta): TopicPackage['test1'][] {
   }
   const g = generateTopicTests(t.id, saved?.title || t.title, t.grade, saved?.category || t.category);
   return [g.test1, g.test2, g.test3];
+}
+
+const TIER_NAMES = ['', 'Анхан', 'Дунд', 'Ахисан'] as const;
+
+/** A topic test as a student of `grade` takes it (the same questions the topic-tests page gives). */
+export function examPackage(topicId: string, tier: 1 | 2 | 3, grade: number): TestPackage {
+  const meta = topicMeta(topicId);
+  return testForGrade(topicTests(meta)[tier - 1], meta.grade, grade);
+}
+
+export interface Mistake {
+  topicId: string;
+  tier: 1 | 2 | 3;
+  tierName: string;
+  question: TestQuestion;
+  given: string;
+}
+
+/** Questions the student got wrong on the latest try of each topic test (retaking the test updates it). */
+export function mistakes(attempts: AttemptMap, grade: number | null): Mistake[] {
+  const list: Mistake[] = [];
+  for (const [examId, attempt] of Object.entries(attempts)) {
+    const m = examId.match(/^(.*)-test([123])$/);
+    if (!m || !attempt.finishedAt) continue;
+    const topicId = m[1];
+    const tier = Number(m[2]) as 1 | 2 | 3;
+    const pkg = examPackage(topicId, tier, grade ?? topicMeta(topicId).grade);
+    for (const q of pkg.questions || []) {
+      const given = attempt.answers?.[q.id] || '';
+      if (!isOptionCorrect(given, q, getQuestionOptions(q))) {
+        list.push({ topicId, tier, tierName: TIER_NAMES[tier], question: q, given });
+      }
+    }
+  }
+  return list;
 }
 
 // Choice questions of a topic's tests up to that grade (open questions get made-up choices, so they are left out)
@@ -362,6 +397,10 @@ export const learningPlan = {
     if (!state.userId) return null;
     const e = userPermissionsService.getUserPermissions(state.userId).expiresAt;
     return typeof e === 'number' ? e : null;
+  },
+  /** Wrong answers on the student's topic tests, to practise again. */
+  mistakes(): Mistake[] {
+    return state.uid ? mistakes(state.attempts, state.grade) : [];
   },
   inPlan(topicId: string): boolean {
     return this.plan().some((p) => p.topicId === topicId);

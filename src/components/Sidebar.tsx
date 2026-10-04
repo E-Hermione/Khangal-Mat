@@ -47,8 +47,8 @@ interface SidebarProps {
   isAdmin: boolean;
   // Admin mode proper has no "Миний төлөвлөгөө" view (the general view keeps it to show students)
   hidePlanView?: boolean;
-  activeView?: 'home' | 'topics' | 'exams' | 'plan' | 'placement';
-  onSelectView?: (view: 'home' | 'topics' | 'exams' | 'plan' | 'placement') => void;
+  activeView?: 'home' | 'topics' | 'exams' | 'plan' | 'placement' | 'mistakes';
+  onSelectView?: (view: 'home' | 'topics' | 'exams' | 'plan' | 'placement' | 'mistakes') => void;
   // Students get a home tab first
   showHome?: boolean;
   examFilter?: ExamFilter;
@@ -78,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenPlan,
 }) => {
   const showLessonNav = !onSelectView || activeView === 'topics';
-  const showExamNav = !!onSelectView && activeView === 'exams';
+  const showExamNav = !!onSelectView && (activeView === 'exams' || activeView === 'mistakes');
   // Lessons can be listed by grade (all topics) or as the user's plan (plan topics of every grade)
   const [lessonMode, setLessonMode] = useState<'all' | 'plan'>('all');
   // Everyone gets the two views; without a plan the plan view explains how to get one
@@ -221,7 +221,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? [{ key: 'home', label: 'Нүүр\nхуудас', icon: Home, active: activeView === 'home' || activeView === 'plan' || activeView === 'placement' }]
                     : []),
                   { key: 'topics', label: 'Хичээл\nүзэх', icon: BookOpen, active: activeView === 'topics' },
-                  { key: 'exams', label: 'Сэдэвчилсэн\nсорил', icon: Award, active: activeView === 'exams' },
+                  { key: 'exams', label: 'Сэдэвчилсэн\nсорил', icon: Award, active: activeView === 'exams' || activeView === 'mistakes' },
                 ] as const
               ).map(({ key, label, icon: Icon, active }) => (
                 <button
@@ -343,6 +343,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
               ))}
             </div>
           </div>
+        )}
+        {/* Students: wrong answers on topic tests, to solve again */}
+        {showExamNav && !isAdmin && learningPlan.state.uid && (
+          <button
+            type="button"
+            onClick={() => {
+              onSelectView?.(activeView === 'mistakes' ? 'exams' : 'mistakes');
+              onCloseMobile();
+            }}
+            className={`w-full px-3 py-2 rounded-lg border text-xs font-bold flex items-center justify-between cursor-pointer ${
+              activeView === 'mistakes'
+                ? 'bg-rose-500/20 border-rose-500/50 text-rose-200'
+                : 'bg-stone-950/40 border-stone-800 text-stone-300 hover:bg-stone-800/60'
+            }`}
+            data-testid="open-mistakes"
+          >
+            <span>Алдсан бодлогууд</span>
+            <span className="px-1.5 rounded-full bg-rose-500 text-white text-[10px]">{learningPlan.mistakes().length}</span>
+          </button>
         )}
 
 
