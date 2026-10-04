@@ -648,8 +648,8 @@ export default function App() {
               дууссан байна. Сунгуулахын тулд админд хандана уу.
             </div>
           )}
-          {/* Access ends within a week: remind the student to extend it */}
-          {isStudent && learningPlan.isPaid() && (() => {
+          {/* Access ends within a week: remind the student on the home page (not in the admin's views) */}
+          {isStudent && currentUser.role !== 'admin' && activeView === 'home' && learningPlan.isPaid() && (() => {
             const until = learningPlan.paidUntil();
             const daysLeft = until ? Math.ceil((until - Date.now()) / 86400000) : null;
             if (daysLeft === null || daysLeft > 7) return null;
