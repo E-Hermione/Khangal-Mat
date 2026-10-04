@@ -128,6 +128,11 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    // The admin sees which topics students find hardest
+    match /{path=**}/examAttempts/{examId} {
+      allow read: if isAdmin();
+    }
+
     match /{path=**}/announcementReads/{announcementId} {
       allow read, delete: if isAdmin();
     }

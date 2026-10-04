@@ -190,6 +190,11 @@ function inGrade(t: TopicMeta, grade: GradeNumber): boolean {
   return !!saved?.visibleGrades?.includes(grade);
 }
 
+/** Every topic taught in a grade: its own topics and the ones shown in it from other grades. */
+export function topicsInGrade(grade: GradeNumber): TopicMeta[] {
+  return allTopicMetas().filter((t) => inGrade(t, grade));
+}
+
 // Every topic taught in that grade; each has topic tests to draw from
 function placementTopics(grade: GradeNumber): TopicMeta[] {
   return allTopicMetas().filter((t) => inGrade(t, grade) && questionPool(t, grade).length > 0);

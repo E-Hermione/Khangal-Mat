@@ -2,16 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CheckSquare, Gift, Square } from 'lucide-react';
 import { GradeNumber } from '../types';
 import { cloud } from '../services/cloud';
-import { storageService } from '../services/storageService';
-import { allTopicMetas, GRADES } from '../services/learningPlan';
-
-// Topics taught in a grade: their own grade, or the other grades they are shown in
-function gradeTopics(grade: GradeNumber) {
-  const saved = storageService.getTopics();
-  return allTopicMetas().filter(
-    (t) => t.grade === grade || !!saved.find((s) => s.id === t.id)?.visibleGrades?.includes(grade)
-  );
-}
+import { GRADES, topicsInGrade } from '../services/learningPlan';
 
 /** Admin: per grade, the topics open to everyone right after signing up (a free sample of the lessons). */
 export const FreeTopicsTab: React.FC = () => {
@@ -30,7 +21,7 @@ export const FreeTopicsTab: React.FC = () => {
     cloud.setAppSettings({ freeTopicIds: next });
   };
 
-  const topics = gradeTopics(grade);
+  const topics = topicsInGrade(grade);
   const categories = [...new Set(topics.map((t) => t.category))];
 
   return (
@@ -45,7 +36,7 @@ export const FreeTopicsTab: React.FC = () => {
 
       <div className="grid grid-cols-7 gap-1.5">
         {GRADES.map((g) => {
-          const count = gradeTopics(g).filter((t) => freeIds.includes(t.id)).length;
+          const count = topicsInGrade(g).filter((t) => freeIds.includes(t.id)).length;
           return (
             <button
               key={g}
