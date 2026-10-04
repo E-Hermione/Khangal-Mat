@@ -648,17 +648,16 @@ function TakeExamModal({
         <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
           {exam.testPackage.questions.map((q, idx) => (
             <div key={q.id || idx} className="p-4 bg-stone-50 border border-stone-200 rounded-xl space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-xs text-stone-900">
-                  Тест {idx + 1}
-                </span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-white border border-stone-300 text-amber-900">
-                  {q.points} оноо
-                </span>
-              </div>
-
-              <div className="text-xs md:text-sm text-stone-900 font-semibold leading-relaxed">
-                <MathRenderer content={questionStem(q)} />
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex gap-2 text-xs md:text-sm text-stone-900 font-semibold leading-relaxed min-w-0">
+                  <span className="font-black shrink-0">{idx + 1}.</span>
+                  <MathRenderer content={questionStem(q)} />
+                </div>
+                <div className="shrink-0">
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-white border border-stone-300 text-amber-900">
+                    {q.points} оноо
+                  </span>
+                </div>
               </div>
 
               {isOpenQuestion(q) ? (
@@ -771,17 +770,16 @@ function ViewSolutionModal({
         <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-5">
           {exam.testPackage.questions.map((q, idx) => (
             <div key={q.id || idx} className="p-4 bg-stone-50 border border-stone-200 rounded-xl space-y-3">
-              <div className="flex items-center justify-between pb-1.5 border-b border-stone-200">
-                <span className="font-extrabold text-xs text-stone-900">
-                  Тест {idx + 1}
-                </span>
-                <span className="text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                  {q.points} оноо
-                </span>
-              </div>
-
-              <div className="text-xs md:text-sm text-stone-900 font-semibold">
-                <MathRenderer content={questionStem(q)} />
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex gap-2 text-xs md:text-sm text-stone-900 font-semibold leading-relaxed min-w-0">
+                  <span className="font-black shrink-0">{idx + 1}.</span>
+                  <MathRenderer content={questionStem(q)} />
+                </div>
+                <div className="shrink-0">
+                  <span className="text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                    {q.points} оноо
+                  </span>
+                </div>
               </div>
 
               {/* Test Options (A, B, C, D) with Correct Answer Highlighted */}
@@ -979,24 +977,23 @@ function ViewErrorCheckModal({
                     : 'bg-rose-50/40 border-rose-200'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-extrabold text-xs text-stone-900">
-                    Тест {idx + 1}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1 ${
-                      isCorrect
-                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                        : 'bg-rose-100 text-rose-800 border border-rose-300'
-                    }`}
-                  >
-                    {isCorrect ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                    <span>{isCorrect ? 'Зөв хариулсан' : 'Алдаатай'}</span>
-                  </span>
-                </div>
-
-                <div className="text-xs md:text-sm text-stone-900 font-semibold">
-                  <MathRenderer content={questionStem(q)} />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex gap-2 text-xs md:text-sm text-stone-900 font-semibold leading-relaxed min-w-0">
+                    <span className="font-black shrink-0">{idx + 1}.</span>
+                    <MathRenderer content={questionStem(q)} />
+                  </div>
+                  <div className="shrink-0">
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1 ${
+                        isCorrect
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          : 'bg-rose-100 text-rose-800 border border-rose-300'
+                      }`}
+                    >
+                      {isCorrect ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                      <span>{isCorrect ? 'Зөв хариулсан' : 'Алдаатай'}</span>
+                    </span>
+                  </div>
                 </div>
 
                 {/* Display 4 Options with user choice & correct choice highlighted */}
