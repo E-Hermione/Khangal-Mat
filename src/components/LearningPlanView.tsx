@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Award, BookOpen, Check, CheckCircle2, ChevronRight, ClipboardCheck, Copy, CreditCard, Info, Lock, Route, X } from 'lucide-react';
+import { Award, BookOpen, Check, CheckCircle2, ChevronRight, ClipboardCheck, Clock, Copy, CreditCard, Info, Lock, Route, X } from 'lucide-react';
 import { AuthUser } from '../types';
 import {
   learningPlan,
@@ -285,16 +285,35 @@ export const PaymentStepContent: React.FC<{ uid: string; currentUser: AuthUser; 
           </>
         )}
       </div>
-      {enabled && !pending && (
+      {enabled && !pending && paid && (
+        <div className="grid grid-cols-2 gap-2">
+          <div
+            className="py-2 rounded-lg bg-white border border-emerald-200 text-xs text-emerald-800 flex items-center justify-center gap-1.5"
+            data-testid="days-left"
+          >
+            <Clock className="w-4 h-4" />
+            <span>
+              <b>{Math.max(0, Math.ceil((paidUntil! - Date.now()) / 86400000))}</b> хоног үлдсэн
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPayOpen(true)}
+            className="py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-50"
+          >
+            <CreditCard className="w-4 h-4" />
+            Хугацаа сунгах
+          </button>
+        </div>
+      )}
+      {enabled && !pending && !paid && (
         <button
           type="button"
           onClick={() => setPayOpen(true)}
-          className={`w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer ${
-            paid ? 'bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-50' : 'bg-stone-900 hover:bg-black text-white'
-          }`}
+          className="w-full py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer bg-stone-900 hover:bg-black text-white"
         >
-          <CreditCard className={`w-4 h-4 ${paid ? '' : 'text-amber-400'}`} />
-          {paid ? 'Хугацаа сунгах' : 'Төлбөр төлөх'}
+          <CreditCard className="w-4 h-4 text-amber-400" />
+          Төлбөр төлөх
         </button>
       )}
       {payOpen && <PaymentDialog uid={uid} currentUser={currentUser} settings={settings} onClose={() => setPayOpen(false)} />}
