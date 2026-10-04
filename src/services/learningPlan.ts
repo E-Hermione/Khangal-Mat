@@ -204,6 +204,17 @@ function sortResults(list: PlacementResult[]): PlacementResult[] {
 }
 
 /** The topics of all of a student's results, in grade order, without repeats. */
+/**
+ * The result the plan comes from: the student's own grade's test (or, without one, the latest test).
+ * A retake replaces it; tests of other grades no longer add topics.
+ */
+export function currentResults(results: PlacementResult[], grade: GradeNumber | null | undefined): PlacementResult[] {
+  const own = grade ? results.find((r) => r.grade === grade) : undefined;
+  const latest = [...results].sort((a, b) => b.takenAt - a.takenAt)[0];
+  const pick = own || latest;
+  return pick ? [pick] : [];
+}
+
 export function combinedPlan(results: PlacementResult[]): (PlacementResult['plan'][number] & { grade: GradeNumber })[] {
   const plan: (PlacementResult['plan'][number] & { grade: GradeNumber })[] = [];
   for (const r of sortResults(results)) {
@@ -318,8 +329,8 @@ export const learningPlan = {
   canTakePlacement(grade: GradeNumber): boolean {
     return (
       !!state.uid &&
-      // A student takes their own grade's test or a lower grade's, never a higher one
-      (!state.grade || grade <= state.grade) &&
+      // A student takes their own grade's test only (lower grades are mixed into its topics)
+      (!state.grade || grade === state.grade) &&
       !!state.results &&
       cloud.getAppSettings().placementEnabled &&
       placementSize(grade).questions > 0
@@ -338,7 +349,7 @@ export const learningPlan = {
   },
   /** Topics to study from all the student's placement tests. */
   plan() {
-    return combinedPlan(state.results || []);
+    return combinedPlan(currentResults(state.results || [], state.grade));
   },
   isPaid(): boolean {
     if (state.paidOverride !== null) return state.paidOverride;

@@ -278,7 +278,13 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               />
             )
           }
-          action={retakeGrade ? { label: 'Дахин түвшин тест бөглөх', onClick: () => startPlacement(retakeGrade) } : null}
+          action={
+            retakeGrade
+              ? { label: 'Дахин түвшин тест бөглөх', onClick: () => startPlacement(retakeGrade) }
+              : grade && learningPlan.canTakePlacement(grade)
+              ? { label: 'Сорил өгөх', onClick: () => startPlacement(grade) }
+              : null
+          }
         >
           <div className="flex items-center justify-between gap-2 mb-3">
             <span className="text-xs text-stone-500 whitespace-pre-wrap">{content.placementText}</span>
@@ -286,9 +292,21 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               Үнэгүй
             </span>
           </div>
+          {grade ? (
+            // A student takes their own grade's test only
+            <div className="rounded-xl bg-stone-50 border border-stone-100 px-3 py-2.5 text-sm" data-testid="placement-own">
+              <b className="text-stone-900">{grade}-р ангийн түвшин тогтоох сорил</b>
+              {learningPlan.resultFor(grade) && (
+                <span className="text-stone-500">
+                  {' '}
+                  • {learningPlan.resultFor(grade)!.correct}/{learningPlan.resultFor(grade)!.total} зөв
+                </span>
+              )}
+            </div>
+          ) : (
           <div className="rounded-xl bg-stone-50 border border-stone-100 p-2.5">
             <div className="grid grid-cols-7 gap-1.5" data-testid="placement-grades">
-              {GRADES.filter((g) => !grade || g <= grade).map((g) => {
+              {GRADES.map((g) => {
                 const taken = learningPlan.resultFor(g);
                 const open = learningPlan.canTakePlacement(g);
                 const count = placementSize(g).questions;
@@ -320,6 +338,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               })}
             </div>
           </div>
+          )}
           {editable && (
             <button
               type="button"

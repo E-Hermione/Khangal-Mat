@@ -12,6 +12,7 @@ import { MathRenderer } from './MathRenderer';
 import { ProgressRing } from './ProgressRing';
 import {
   combinedPlan,
+  currentResults,
   loadPlacementResults,
   PlacementResult,
   resetPlacementResults,
@@ -341,11 +342,11 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
                     зөв
                   </div>
                 ))}
-                {combinedPlan(placement).length === 0 ? (
+                {combinedPlan(currentResults(placement, user?.grades?.[0] as GradeNumber | undefined)).length === 0 ? (
                   <div className="text-xs text-stone-500">Бүх бодлогыг зөв бодсон.</div>
                 ) : (
                   <div className="space-y-1">
-                    {combinedPlan(placement).map((p) => (
+                    {combinedPlan(currentResults(placement, user?.grades?.[0] as GradeNumber | undefined)).map((p) => (
                       <div key={p.topicId} className="flex items-center gap-2 text-xs">
                         <ProgressRing percent={topicProgress(p.topicId, attempts)} size={18} />
                         <span className="font-bold text-stone-900">{topicMeta(p.topicId).title}</span>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Award, BookOpen, Check, CheckCircle2, ChevronRight, ClipboardCheck, Clock, Copy, CreditCard, Info, Lock, Route, X } from 'lucide-react';
 import { AuthUser } from '../types';
 import {
+  currentResults,
   learningPlan,
   PASS_PERCENT,
   tierPercent,
@@ -76,7 +77,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
         </h1>
         <p className="text-sm text-stone-600 mt-1">
           Түвшин тогтоох сорил:{' '}
-          {results.map((r, i) => (
+          {currentResults(results, learningPlan.state.grade).map((r, i) => (
             <span key={r.grade}>
               {i > 0 && ', '}
               {r.grade}-р анги{' '}
