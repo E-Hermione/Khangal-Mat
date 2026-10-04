@@ -46,7 +46,8 @@ import {
   LogOut,
   X,
   Shield,
-  Eye,
+  UserCheck,
+  UserX,
 } from 'lucide-react';
 
 export default function App() {
@@ -54,7 +55,7 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(isFirebaseConfigured);
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
-  const [previewAsUser, setPreviewAsUser] = useState<boolean>(false);
+  const [previewAsUser, setPreviewAsUser] = useState<false | 'paid' | 'unpaid'>(false);
   const [activeView, setActiveView] = useState<'home' | 'topics' | 'exams' | 'plan' | 'placement'>('topics');
   useLearningPlanVersion();
   const [topics, setTopics] = useState<TopicPackage[]>([]);
@@ -221,7 +222,7 @@ export default function App() {
     if (currentUser?.role !== 'admin') return;
     const uid = getFirebaseAuth().currentUser?.uid;
     if (previewAsUser && uid) {
-      startLearningPlan(uid, currentUser.userId || 'ADMIN-01', null);
+      startLearningPlan(uid, currentUser.userId || 'ADMIN-01', null, previewAsUser === 'paid');
       setActiveView('home');
     } else {
       stopLearningPlan();
@@ -521,19 +522,27 @@ export default function App() {
                 >
                   <Shield className="w-4 h-4" />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setPreviewAsUser(true)}
-                  className={`p-1.5 rounded-md transition-all cursor-pointer ${
-                    previewAsUser
-                      ? 'bg-amber-500 text-stone-950 shadow-xs'
-                      : 'text-stone-500 hover:text-stone-900'
-                  }`}
-                  title="Хэрэглэгчээр харах"
-                  aria-label="Хэрэглэгчээр харах"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
+                {([
+                  ['unpaid', 'Төлөөгүй', 'Төлбөр төлөөгүй хэрэглэгчээр харах', UserX],
+                  ['paid', 'Төлсөн', 'Төлбөр төлсөн хэрэглэгчээр харах', UserCheck],
+                ] as const).map(([mode, label, title, Icon]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setPreviewAsUser(mode)}
+                    className={`p-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                      previewAsUser === mode
+                        ? 'bg-amber-500 text-stone-950 shadow-xs'
+                        : 'text-stone-500 hover:text-stone-900'
+                    }`}
+                    title={title}
+                    aria-label={title}
+                    data-testid={`preview-${mode}`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="text-[11px] font-bold pr-0.5">{label}</span>
+                  </button>
+                ))}
               </div>
             )}
 
@@ -692,7 +701,7 @@ export default function App() {
                 refreshTopics();
               }}
               onOpenAdmin={() => setAdminModalOpen(true)}
-              onPreviewAsUser={() => setPreviewAsUser(true)}
+              onPreviewAsUser={() => setPreviewAsUser('unpaid')}
               onOpenPlan={() => setActiveView('home')}
               onOpenExamsHub={(topicId) => {
                 if (topicId) setSelectedTopicId(topicId);

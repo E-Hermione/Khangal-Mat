@@ -249,9 +249,11 @@ interface PlanState {
   // undefined while loading
   results: PlacementResult[] | undefined;
   attempts: AttemptMap;
+  // Admin's "view as user": pretend the account has paid (true) or not (false)
+  paidOverride: boolean | null;
 }
 
-const state: PlanState = { uid: null, userId: null, grade: null, results: undefined, attempts: {} };
+const state: PlanState = { uid: null, userId: null, grade: null, results: undefined, attempts: {}, paidOverride: null };
 let unsubs: (() => void)[] = [];
 
 function notify() {
@@ -259,9 +261,9 @@ function notify() {
 }
 
 /** Starts for a signed-in student: their grade's placement test, their result and test scores. */
-export function startLearningPlan(uid: string, userId: string, grade: GradeNumber | null) {
+export function startLearningPlan(uid: string, userId: string, grade: GradeNumber | null, paidOverride: boolean | null = null) {
   stopLearningPlan();
-  Object.assign(state, { uid, userId, grade, results: undefined, attempts: {} });
+  Object.assign(state, { uid, userId, grade, results: undefined, attempts: {}, paidOverride });
   const db = getDb();
   const onError = (what: string) => (err: unknown) => {
     console.error(`${what} failed to load`, err);
@@ -292,7 +294,7 @@ export function startLearningPlan(uid: string, userId: string, grade: GradeNumbe
 export function stopLearningPlan() {
   unsubs.forEach((u) => u());
   unsubs = [];
-  Object.assign(state, { uid: null, userId: null, grade: null, results: undefined, attempts: {} });
+  Object.assign(state, { uid: null, userId: null, grade: null, results: undefined, attempts: {}, paidOverride: null });
   notify();
 }
 
@@ -329,11 +331,13 @@ export const learningPlan = {
     return combinedPlan(state.results || []);
   },
   isPaid(): boolean {
+    if (state.paidOverride !== null) return state.paidOverride;
     if (!state.userId) return false;
     const perms = userPermissionsService.getUserPermissions(state.userId);
     return !perms.isBlocked && typeof perms.expiresAt === 'number' && Date.now() < perms.expiresAt;
   },
   paidUntil(): number | null {
+    if (state.paidOverride !== null) return state.paidOverride ? Date.now() + 30 * 24 * 3600 * 1000 : null;
     if (!state.userId) return null;
     const e = userPermissionsService.getUserPermissions(state.userId).expiresAt;
     return typeof e === 'number' ? e : null;
