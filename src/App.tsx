@@ -207,7 +207,8 @@ export default function App() {
     if (currentUser?.role !== 'admin') return;
     const uid = getFirebaseAuth().currentUser?.uid;
     if (previewAsUser && uid) {
-      startLearningPlan(uid, currentUser.userId || 'ADMIN-01', null, previewAsUser === 'paid');
+      // Previewed as a student of the grade the admin was browsing
+      startLearningPlan(uid, currentUser.userId || 'ADMIN-01', selectedGrade, previewAsUser === 'paid');
       setActiveView('home');
     } else {
       stopLearningPlan();
