@@ -478,7 +478,7 @@ export const PlanSteps: React.FC<{
     {
       icon: <ClipboardCheck className="w-5 h-5" />,
       title: 'Түвшин тогтоох сорил',
-      text: placementDone ? 'Алдсан бодлогуудаар танд үзэх сэдвүүд гарсан.' : 'Үнэгүй. Алдсан бодлогуудаар танд үзэх сэдвүүд гарна.',
+      text: placementDone ? '' : 'Үнэгүй.',
       state: placementDone ? 'done' : 'now',
     },
     {
@@ -527,7 +527,7 @@ export const PlanSteps: React.FC<{
               {withContent ? (
                 <div className="mt-1.5 flex-1 flex flex-col justify-between">{paymentContent}</div>
               ) : (
-                <div className="text-xs text-stone-600 mt-1 leading-relaxed">{st.text}</div>
+                st.text && <div className="text-xs text-stone-600 mt-1 leading-relaxed">{st.text}</div>
               )}
             </div>
           );
