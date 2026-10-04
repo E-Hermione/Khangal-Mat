@@ -140,16 +140,24 @@ function topicTests(t: TopicMeta): TopicPackage['test1'][] {
   return [g.test1, g.test2, g.test3];
 }
 
-// Choice questions of a topic's tests (open questions get made-up choices, so they are left out)
-function questionPool(t: TopicMeta): TestQuestion[] {
+// Choice questions of a topic's tests up to that grade (open questions get made-up choices, so they are left out)
+function questionPool(t: TopicMeta, grade: GradeNumber): TestQuestion[] {
   return topicTests(t)
     .flatMap((test) => test?.questions || [])
+    .filter((q) => (q.prerequisiteGrade ?? t.grade) <= grade)
     .filter((q) => !hasMadeUpOptions(q));
 }
 
-// Every topic of that grade; each has topic tests to draw from
+// A topic belongs to its own grade and to the other grades it is shown in
+function inGrade(t: TopicMeta, grade: GradeNumber): boolean {
+  if (t.grade === grade) return true;
+  const saved = storageService.getTopics().find((s) => s.id === t.id);
+  return !!saved?.visibleGrades?.includes(grade);
+}
+
+// Every topic taught in that grade; each has topic tests to draw from
 function placementTopics(grade: GradeNumber): TopicMeta[] {
-  return allTopicMetas().filter((t) => t.grade === grade && questionPool(t).length > 0);
+  return allTopicMetas().filter((t) => inGrade(t, grade) && questionPool(t, grade).length > 0);
 }
 
 // At least 3 questions per topic, so one slip does not put a topic in the plan
@@ -165,7 +173,7 @@ function drawQuestions(grade: GradeNumber, random: boolean): PlacementQuestion[]
   const used = new Set<string>();
   const questions: PlacementQuestion[] = [];
   for (const t of placementTopics(grade)) {
-    const pool = questionPool(t);
+    const pool = questionPool(t, grade);
     const fresh = (random ? shuffle(pool) : pool).filter((q) => {
       const key = q.id;
       if (used.has(key)) return false;

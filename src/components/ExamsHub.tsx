@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { backdropClose } from '../utils/backdrop';
 import { generateTopicTests } from '../utils/topicTests';
-import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect, questionStem } from '../utils/examGrading';
+import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect, questionStem, testForGrade } from '../utils/examGrading';
 import { visibilityService } from '../services/visibilityService';
 import { learningPlan } from '../services/learningPlan';
 import type { ExamFilter } from './SidebarPanels';
@@ -249,7 +249,8 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
                   const chosenTier = topicTiers[topic.id];
                   const activeTier: 1 | 2 | 3 = chosenTier && tiers.includes(chosenTier) ? chosenTier : tiers[0];
 
-                  const testPackage = activeTier === 1 ? tests.test1 : activeTier === 2 ? tests.test2 : tests.test3;
+                  // Topics spanning grades: only questions up to this grade, mixed without grade labels
+                  const testPackage = testForGrade(activeTier === 1 ? tests.test1 : activeTier === 2 ? tests.test2 : tests.test3, topic.grade, selectedGrade);
                   const tierName = activeTier === 1 ? 'Анхан шат' : activeTier === 2 ? 'Үндсэн (Дунд)' : 'Ахисан түвшин';
                   const tierBadgeClass = activeTier === 1
                     ? 'bg-emerald-100 text-emerald-800 border-emerald-300'

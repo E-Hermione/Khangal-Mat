@@ -1,4 +1,4 @@
-import { TestQuestion } from '../types';
+import { TestPackage, TestQuestion } from '../types';
 import { answerKeyHash, candidateKeys } from '../services/answers';
 
 // Helper to get multiple-choice options for any test question
@@ -135,4 +135,18 @@ function isChoiceCorrect(userAns: string, q: TestQuestion, options: { letter: st
   if (numericLetter && u === numericLetter) return true;
 
   return false;
+}
+
+/**
+ * A topic's test as a student of `viewGrade` takes it: only questions up to their grade, mixed together
+ * without grade labels. Falls back to the whole test if none would be left.
+ */
+export function testForGrade(pkg: TestPackage, topicGrade: number, viewGrade: number): TestPackage {
+  const questions = (pkg.questions || []).filter((q) => (q.prerequisiteGrade ?? topicGrade) <= viewGrade);
+  if (questions.length === 0 || questions.length === (pkg.questions || []).length) return pkg;
+  return {
+    ...pkg,
+    questions: questions.map((q, i) => ({ ...q, number: i + 1 })),
+    totalPoints: questions.reduce((sum, q) => sum + (q.points || 0), 0) || pkg.totalPoints,
+  };
 }

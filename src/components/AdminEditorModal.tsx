@@ -608,6 +608,14 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-stone-800">Асуулт {q.number}:</span>
                             <div className="flex items-center space-x-2">
+                              <ItemGradePicker
+                                value={q.prerequisiteGrade}
+                                onChange={(g) => {
+                                  const newQuestions = [...test.questions];
+                                  newQuestions[qIdx] = { ...newQuestions[qIdx], prerequisiteGrade: g };
+                                  setTopic({ ...topic, [testKey]: { ...test, questions: newQuestions } });
+                                }}
+                              />
                               <span className="text-[11px] text-stone-500">Оноо:</span>
                               <input
                                 type="number"

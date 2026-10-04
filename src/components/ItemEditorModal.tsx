@@ -596,6 +596,11 @@ function TestQuestionEditor({
           </div>
         </div>
 
+        <div>
+          <label className="text-xs font-bold text-stone-700 block mb-1">Аль ангийнх:</label>
+          <GradeSelect value={question.prerequisiteGrade} onChange={(g) => setQuestion({ ...question, prerequisiteGrade: g })} />
+        </div>
+
         <LatexInputWithPreview
           label="Сорилын асуулт / Даалгаврын нөхцөл:"
           value={question.question}

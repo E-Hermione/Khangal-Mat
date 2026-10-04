@@ -40,6 +40,8 @@ export interface TestQuestion {
   id: string;
   number: number;
   question: string;
+  // The grade this question belongs to (unset: the topic's own grade); not shown to students
+  prerequisiteGrade?: number;
   options?: string[];
   points: number;
   answer: string;
