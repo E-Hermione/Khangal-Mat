@@ -698,6 +698,7 @@ export default function App() {
           ) : currentTopic.id ? (
             <TopicPage
               topic={currentTopic}
+              viewGrade={selectedGrade}
               isAdmin={currentUser?.role === 'admin' && !previewAsUser}
               currentUser={currentUser}
               onUpdateTopic={(updated) => {

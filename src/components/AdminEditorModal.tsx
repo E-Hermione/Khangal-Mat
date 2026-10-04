@@ -27,6 +27,23 @@ interface AdminEditorModalProps {
   onLogout?: () => void;
 }
 
+// Which grade a theory part, example or exercise belongs to (students of lower grades do not see it)
+const ItemGradePicker: React.FC<{ value?: number; onChange: (grade: number | undefined) => void }> = ({ value, onChange }) => (
+  <select
+    value={value ?? ''}
+    onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
+    className="text-xs p-1.5 rounded border border-stone-300 font-bold bg-white"
+    title="Аль ангийнх"
+  >
+    <option value="">Үндсэн анги</option>
+    {[6, 7, 8, 9, 10, 11, 12].map((g) => (
+      <option key={g} value={g}>
+        {g}-р анги
+      </option>
+    ))}
+  </select>
+);
+
 export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   isOpen,
   onClose,
@@ -301,7 +318,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                 {topic.theory.map((rule, idx) => (
                   <div key={rule.id || idx} className="p-4 border border-stone-200 rounded-xl bg-stone-50/60 space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex-1 grid grid-cols-2 gap-2">
+                      <div className="flex-1 grid grid-cols-3 gap-2">
                         <input
                           type="text"
                           value={rule.title}
@@ -323,6 +340,14 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                           }}
                           placeholder="Шошго (жишээ: Дүрэм, Чанар)"
                           className="text-xs p-2 bg-white border border-stone-300 rounded"
+                        />
+                        <ItemGradePicker
+                          value={rule.prerequisiteGrade}
+                          onChange={(g) => {
+                            const updated = [...topic.theory];
+                            updated[idx] = { ...updated[idx], prerequisiteGrade: g };
+                            setTopic({ ...topic, theory: updated });
+                          }}
                         />
                       </div>
                       <button
@@ -399,6 +424,15 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                       <span className="font-black text-xs text-stone-900">
                         Жишээ {ex.number}
                       </span>
+                      <div className="flex items-center space-x-2">
+                        <ItemGradePicker
+                          value={ex.prerequisiteGrade}
+                          onChange={(g) => {
+                            const updated = [...topic.examples];
+                            updated[idx] = { ...updated[idx], prerequisiteGrade: g };
+                            setTopic({ ...topic, examples: updated });
+                          }}
+                        />
                       <button
                         type="button"
                         onClick={() => removeWorkedExample(idx)}
@@ -407,6 +441,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
+                      </div>
                     </div>
 
                     <LatexInputWithPreview
@@ -473,6 +508,14 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                         Дасгал {item.number}
                       </span>
                       <div className="flex items-center space-x-2">
+                        <ItemGradePicker
+                          value={item.prerequisiteGrade}
+                          onChange={(g) => {
+                            const updated = [...topic.practice];
+                            updated[idx] = { ...updated[idx], prerequisiteGrade: g };
+                            setTopic({ ...topic, practice: updated });
+                          }}
+                        />
                         <select
                           value={item.difficulty}
                           onChange={(e) => {

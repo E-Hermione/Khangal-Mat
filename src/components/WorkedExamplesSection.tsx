@@ -65,7 +65,7 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
                   </span>
                   {ex.prerequisiteGrade && (
                     <span className="text-[11px] px-2 py-0.5 bg-stone-100 print:bg-stone-200 text-stone-700 border border-stone-300 rounded font-medium">
-                      {ex.prerequisiteGrade}-р ангийн суурь
+                      {ex.prerequisiteGrade}-р анги
                     </span>
                   )}
                 </div>

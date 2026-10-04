@@ -5,6 +5,7 @@ export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 export interface TheoryRule {
   id: string;
   title: string;
+  // The grade this part belongs to (unset: the topic's own grade); higher grades are hidden from lower-grade students
   prerequisiteGrade?: number;
   ruleText: string;
   formula?: string;
@@ -31,6 +32,8 @@ export interface PracticeProblem {
   answer: string;
   solution?: string;
   workSpaceLines?: number;
+  // The grade this exercise belongs to (unset: the topic's own grade)
+  prerequisiteGrade?: number;
 }
 
 export interface TestQuestion {

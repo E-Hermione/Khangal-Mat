@@ -4,6 +4,23 @@ import { LatexInputWithPreview } from './LatexInputWithPreview';
 import { X, Save, Trash2, Plus, HelpCircle } from 'lucide-react';
 import { backdropClose } from '../utils/backdrop';
 
+// Which grade a theory part, example or exercise belongs to; students of lower grades do not see it
+const GradeSelect: React.FC<{ value?: number; onChange: (grade: number | undefined) => void }> = ({ value, onChange }) => (
+  <select
+    value={value ?? ''}
+    onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
+    className="w-full text-xs p-2 bg-white border border-stone-300 rounded-lg font-bold"
+    data-testid="item-grade"
+  >
+    <option value="">Сэдвийн үндсэн анги</option>
+    {[6, 7, 8, 9, 10, 11, 12].map((g) => (
+      <option key={g} value={g}>
+        {g}-р анги
+      </option>
+    ))}
+  </select>
+);
+
 export type ItemEditorType =
   | { type: 'theory'; item: TheoryRule; isNew?: boolean }
   | { type: 'example'; item: WorkedExample; isNew?: boolean }
@@ -148,6 +165,11 @@ function TheoryEditor({
           </div>
         </div>
 
+        <div>
+          <label className="text-xs font-bold text-stone-700 block mb-1">Аль ангийнх:</label>
+          <GradeSelect value={rule.prerequisiteGrade} onChange={(g) => setRule({ ...rule, prerequisiteGrade: g })} />
+        </div>
+
         <LatexInputWithPreview
           label="Онолын тодорхойлолт, тайлбар бичвэр:"
           value={rule.ruleText}
@@ -279,6 +301,11 @@ function ExampleEditor({
               className="w-full text-xs p-2 bg-white border border-stone-300 rounded-lg"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-bold text-stone-700 block mb-1">Аль ангийнх:</label>
+          <GradeSelect value={example.prerequisiteGrade} onChange={(g) => setExample({ ...example, prerequisiteGrade: g })} />
         </div>
 
         <LatexInputWithPreview
@@ -414,6 +441,11 @@ function PracticeEditor({
               className="w-full text-xs p-2 bg-white border border-stone-300 rounded-lg"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-bold text-stone-700 block mb-1">Аль ангийнх:</label>
+          <GradeSelect value={practice.prerequisiteGrade} onChange={(g) => setPractice({ ...practice, prerequisiteGrade: g })} />
         </div>
 
         <LatexInputWithPreview
