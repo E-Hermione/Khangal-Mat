@@ -22,7 +22,7 @@ import { AuthUser } from './types';
 import { clearStoredAuth, saveStoredAuth } from './utils/deviceManager';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { getFirebaseAuth, isFirebaseConfigured } from './services/firebase';
-import { loadSession, signOutUser, isRegistering } from './services/authService';
+import { loadSession, signOutUser, isRegistering, isGeneralLogin } from './services/authService';
 import { startCloudSync, stopCloudSync, cloud } from './services/cloud';
 import { seedCloudFromLegacyData } from './services/migration';
 import {
@@ -48,6 +48,7 @@ import {
   Shield,
   UserCheck,
   UserX,
+  Presentation,
 } from 'lucide-react';
 
 export default function App() {
@@ -56,6 +57,9 @@ export default function App() {
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [previewAsUser, setPreviewAsUser] = useState<false | 'paid' | 'unpaid'>(false);
+  // General view: the admin's rights without the editing buttons (signing in as "Ерөнхий" locks it on)
+  const [generalView, setGeneralView] = useState<boolean>(() => isGeneralLogin());
+  const generalLocked = generalView && isGeneralLogin();
   const [activeView, setActiveView] = useState<'home' | 'topics' | 'exams' | 'plan' | 'placement'>('topics');
   useLearningPlanVersion();
   const [topics, setTopics] = useState<TopicPackage[]>([]);
@@ -191,6 +195,8 @@ export default function App() {
       saveStoredAuth(session.user);
       setLoginNotice(null);
       setCurrentUser(session.user);
+      setGeneralView(session.isAdmin && isGeneralLogin());
+      setPreviewAsUser(false);
     } catch (err) {
       console.error('Failed to open session', err);
       setLoginNotice('Мэдээлэл ачаалж чадсангүй. Интернэт холболтоо шалгаад дахин нэвтэрнэ үү.');
@@ -230,6 +236,8 @@ export default function App() {
     }
   }, [previewAsUser, currentUser?.role]);
   const isStudent = (currentUser?.role !== 'admin' || isAdminPreview) && !!learningPlan.state.uid;
+  // Admin mode proper: content and home texts can be edited
+  const canEdit = currentUser?.role === 'admin' && !previewAsUser && !generalView;
   // The grade whose placement test the student is taking
   const [placementGrade, setPlacementGrade] = useState<GradeNumber>(6);
   // Exams page filter, chosen in the sidebar
@@ -506,43 +514,56 @@ export default function App() {
               <AnnouncementsBell uid={getFirebaseAuth().currentUser!.uid} />
             )}
 
-            {/* Admin vs User View Switcher (Icons only) */}
-            {currentUser?.role === 'admin' && (
+            {/* Admin view switcher: admin / general / unpaid user / paid user */}
+            {currentUser?.role === 'admin' && generalLocked && (
+              <span
+                className="px-2.5 py-1 rounded-lg bg-sky-50 border border-sky-200 text-sky-800 text-[11px] font-bold flex items-center gap-1"
+                data-testid="general-badge"
+              >
+                <Presentation className="w-3.5 h-3.5" />
+                Ерөнхий
+              </span>
+            )}
+            {currentUser?.role === 'admin' && !generalLocked && (
               <div className="flex items-center bg-stone-100 p-0.5 rounded-lg border border-stone-200">
-                <button
-                  type="button"
-                  onClick={() => setPreviewAsUser(false)}
-                  className={`p-1.5 rounded-md transition-all cursor-pointer ${
-                    !previewAsUser
-                      ? 'bg-stone-900 text-amber-400 shadow-xs'
-                      : 'text-stone-500 hover:text-stone-900'
-                  }`}
-                  title="Админ горим"
-                  aria-label="Админ горим"
-                >
-                  <Shield className="w-4 h-4" />
-                </button>
                 {([
+                  ['admin', 'Админ', 'Админ горим', Shield],
+                  ['general', 'Ерөнхий', 'Ерөнхий харагдац: админы эрхтэй, засах товчгүй', Presentation],
                   ['unpaid', 'Төлөөгүй', 'Төлбөр төлөөгүй хэрэглэгчээр харах', UserX],
                   ['paid', 'Төлсөн', 'Төлбөр төлсөн хэрэглэгчээр харах', UserCheck],
-                ] as const).map(([mode, label, title, Icon]) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setPreviewAsUser(mode)}
-                    className={`p-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
-                      previewAsUser === mode
-                        ? 'bg-amber-500 text-stone-950 shadow-xs'
-                        : 'text-stone-500 hover:text-stone-900'
-                    }`}
-                    title={title}
-                    aria-label={title}
-                    data-testid={`preview-${mode}`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span className="text-[11px] font-bold pr-0.5">{label}</span>
-                  </button>
-                ))}
+                ] as const).map(([mode, label, title, Icon]) => {
+                  const active =
+                    mode === 'admin'
+                      ? !previewAsUser && !generalView
+                      : mode === 'general'
+                      ? !previewAsUser && generalView
+                      : previewAsUser === mode;
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => {
+                        setGeneralView(mode === 'general');
+                        setPreviewAsUser(mode === 'paid' || mode === 'unpaid' ? mode : false);
+                      }}
+                      className={`p-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                        active
+                          ? mode === 'admin'
+                            ? 'bg-stone-900 text-amber-400 shadow-xs'
+                            : mode === 'general'
+                            ? 'bg-sky-600 text-white shadow-xs'
+                            : 'bg-amber-500 text-stone-950 shadow-xs'
+                          : 'text-stone-500 hover:text-stone-900'
+                      }`}
+                      title={title}
+                      aria-label={title}
+                      data-testid={`preview-${mode}`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="hidden sm:inline text-[11px] font-bold pr-0.5">{label}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
 
@@ -651,7 +672,7 @@ export default function App() {
             <StudentHome
               uid={getFirebaseAuth().currentUser?.uid}
               currentUser={currentUser}
-              editable={currentUser.role === 'admin' && !previewAsUser}
+              editable={canEdit}
               onStartPlacement={(grade) => {
                 setPlacementGrade(grade);
                 setActiveView('placement');
@@ -700,8 +721,11 @@ export default function App() {
                 storageService.saveTopic(updated);
                 refreshTopics();
               }}
-              onOpenAdmin={() => setAdminModalOpen(true)}
-              onPreviewAsUser={() => setPreviewAsUser('unpaid')}
+              onOpenAdmin={canEdit ? () => setAdminModalOpen(true) : undefined}
+              onPreviewAsUser={() => {
+                setGeneralView(false);
+                setPreviewAsUser('unpaid');
+              }}
               onOpenPlan={() => setActiveView('home')}
               onOpenExamsHub={(topicId) => {
                 if (topicId) setSelectedTopicId(topicId);

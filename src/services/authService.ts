@@ -190,11 +190,32 @@ async function createProfileIfMissing(profile: UserProfile): Promise<void> {
   }
 }
 
+// Signing in as "Ерөнхий" opens the admin account in the general view only (no editing, no admin mode)
+const GENERAL_LOGINS = ['ерөнхий', 'еренхий', 'erunhii', 'eronhii', 'general'];
+const GENERAL_KEY = 'matmate-general-login';
+
+export function isGeneralLogin(): boolean {
+  try {
+    return localStorage.getItem(GENERAL_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setGeneralLogin(on: boolean) {
+  try {
+    if (on) localStorage.setItem(GENERAL_KEY, '1');
+    else localStorage.removeItem(GENERAL_KEY);
+  } catch {
+    // storage blocked: the session opens in admin mode
+  }
+}
+
 /** Looks up the sign-in email for an 8-digit phone number, or returns the email as given. */
 async function resolveEmail(identifier: string): Promise<string> {
   const id = identifier.trim().toLowerCase();
   // The admin can sign in with the name "Admin" (the password is checked by Firebase as usual)
-  if (id === 'admin') return ADMIN_EMAIL;
+  if (id === 'admin' || GENERAL_LOGINS.includes(id)) return ADMIN_EMAIL;
   const digits = id.replace(/[\s-]/g, '');
   if (!/^\d{8}$/.test(digits)) return id;
   const phone = await getDoc(doc(getDb(), 'phones', digits)).catch(() => null);
@@ -222,8 +243,11 @@ export async function sendPasswordReset(identifier: string): Promise<string> {
 export async function signInWithIdentifier(identifier: string, password: string): Promise<void> {
   const email = await resolveEmail(identifier);
   try {
+    // Set before signing in: the app reads it as soon as the session starts
+    setGeneralLogin(GENERAL_LOGINS.includes(identifier.trim().toLowerCase()));
     await signInWithEmailAndPassword(getFirebaseAuth(), email, password.trim());
   } catch (err) {
+    setGeneralLogin(false);
     throw new Error(authErrorMessage(err, 'Нэвтэрч чадсангүй. Дахин оролдоно уу.'));
   }
 }
@@ -271,6 +295,7 @@ export async function loadSession(fbUser: User): Promise<SessionResult> {
 }
 
 export function signOutUser(): Promise<void> {
+  setGeneralLogin(false);
   return signOut(getFirebaseAuth());
 }
 
