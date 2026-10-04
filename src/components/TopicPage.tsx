@@ -280,28 +280,21 @@ export const TopicPage: React.FC<TopicPageProps> = ({
     }
   };
 
-  // A topic can span grades: each part is marked with its grade. Parts above the viewer's grade are hidden,
-  // lower-grade parts go into a review block, and the viewer's own grade is the main lesson.
+  // A topic can span grades: each part is marked with its grade. Parts above the viewer's grade are hidden;
+  // the rest reads as one lesson from the lowest grade up (exercises also from easy to hard).
   const viewerGrade = viewGrade ?? topic.grade;
   const partGrade = (x: { prerequisiteGrade?: number }) => x.prerequisiteGrade ?? topic.grade;
-  const upTo = <T extends { prerequisiteGrade?: number }>(list: T[] = []) => list.filter((x) => partGrade(x) <= viewerGrade);
-  const visibleParts = { theory: upTo(topic.theory), examples: upTo(topic.examples), practice: upTo(topic.practice) };
-  const isOwn = (x: { prerequisiteGrade?: number }) => partGrade(x) >= viewerGrade;
-  const hasOwn = [...visibleParts.theory, ...visibleParts.examples, ...visibleParts.practice].some(isOwn);
-  const lower = <T extends { prerequisiteGrade?: number }>(list: T[]) => (hasOwn ? list.filter((x) => !isOwn(x)) : []);
-  const own = <T extends { prerequisiteGrade?: number }>(list: T[]) => (hasOwn ? list.filter(isOwn) : list);
+  const LEVEL = { easy: 0, medium: 1, hard: 2 } as const;
+  const upTo = <T extends { prerequisiteGrade?: number }>(list: T[] = []) =>
+    list.filter((x) => partGrade(x) <= viewerGrade).sort((x, y) => partGrade(x) - partGrade(y));
   const mainTopic: TopicPackage = {
     ...topic,
-    theory: own(visibleParts.theory),
-    examples: own(visibleParts.examples),
-    practice: own(visibleParts.practice),
+    theory: upTo(topic.theory),
+    examples: upTo(topic.examples).map((ex, i) => ({ ...ex, number: i + 1 })),
+    practice: upTo<PracticeProblem>(topic.practice)
+      .sort((x, y) => partGrade(x) - partGrade(y) || (LEVEL[x.difficulty] ?? 1) - (LEVEL[y.difficulty] ?? 1))
+      .map((p, i) => ({ ...p, number: i + 1 })),
   };
-  const reviewParts = { theory: lower(visibleParts.theory), examples: lower(visibleParts.examples), practice: lower(visibleParts.practice) };
-  const review: TopicPackage | null =
-    reviewParts.theory.length + reviewParts.examples.length + reviewParts.practice.length > 0 ? { ...topic, ...reviewParts } : null;
-  const reviewGrades = [
-    ...new Set([...reviewParts.theory, ...reviewParts.examples, ...reviewParts.practice].map(partGrade)),
-  ].sort((a, b) => a - b);
 
   const renderSections = (t: TopicPackage, main: boolean) => (
     <>
@@ -513,19 +506,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                 Багш уг сэдвийн онол, жишээ эсвэл дасгалыг нээсний дараа энд харагдана.
               </p>
             </div>
-          )}
-
-          {/* Lower-grade parts of a topic that spans grades: a review the student can open */}
-          {review && (
-            <details className="mb-8 rounded-xl border border-sky-200 bg-sky-50/40 group" data-testid="grade-review">
-              <summary className="px-4 py-3 cursor-pointer select-none flex items-center justify-between text-sm font-black text-sky-900">
-                <span>
-                  Суурь давталт ({reviewGrades.length > 1 ? `${reviewGrades[0]}–${reviewGrades[reviewGrades.length - 1]}` : reviewGrades[0]}-р анги)
-                </span>
-                <ChevronRight className="w-4 h-4 transition-transform group-open:rotate-90" />
-              </summary>
-              <div className="px-4 pb-4">{renderSections(review, false)}</div>
-            </details>
           )}
 
           {renderSections(mainTopic, true)}
