@@ -3,7 +3,7 @@ import { ClipboardCheck, Send } from 'lucide-react';
 import { MathRenderer } from './MathRenderer';
 import { buildPlacementTest, gradePlacement, savePlacementResult } from '../services/learningPlan';
 import { GradeNumber } from '../types';
-import { getQuestionOptions } from '../utils/examGrading';
+import { getQuestionOptions, questionStem } from '../utils/examGrading';
 
 
 const NoGuessingNotice: React.FC = () => (
@@ -76,7 +76,7 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
         <div key={q.id} className="bg-white rounded-xl border border-stone-200 p-5 space-y-3">
           <div className="flex gap-2 text-sm text-stone-900">
             <span className="font-black shrink-0">{i + 1}.</span>
-            <MathRenderer content={q.question} />
+            <MathRenderer content={questionStem(q)} />
           </div>
           <div className="grid sm:grid-cols-2 gap-2">
             {getQuestionOptions(q).map(({ letter, text }) => {

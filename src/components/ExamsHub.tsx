@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { backdropClose } from '../utils/backdrop';
 import { generateTopicTests } from '../utils/topicTests';
-import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect } from '../utils/examGrading';
+import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect, questionStem } from '../utils/examGrading';
 import { visibilityService } from '../services/visibilityService';
 import { learningPlan } from '../services/learningPlan';
 import type { ExamFilter } from './SidebarPanels';
@@ -658,7 +658,7 @@ function TakeExamModal({
               </div>
 
               <div className="text-xs md:text-sm text-stone-900 font-semibold leading-relaxed">
-                <MathRenderer content={q.question} />
+                <MathRenderer content={questionStem(q)} />
               </div>
 
               {isOpenQuestion(q) ? (
@@ -781,7 +781,7 @@ function ViewSolutionModal({
               </div>
 
               <div className="text-xs md:text-sm text-stone-900 font-semibold">
-                <MathRenderer content={q.question} />
+                <MathRenderer content={questionStem(q)} />
               </div>
 
               {/* Test Options (A, B, C, D) with Correct Answer Highlighted */}
@@ -996,7 +996,7 @@ function ViewErrorCheckModal({
                 </div>
 
                 <div className="text-xs md:text-sm text-stone-900 font-semibold">
-                  <MathRenderer content={q.question} />
+                  <MathRenderer content={questionStem(q)} />
                 </div>
 
                 {/* Display 4 Options with user choice & correct choice highlighted */}

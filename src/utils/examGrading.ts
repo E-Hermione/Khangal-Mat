@@ -2,6 +2,15 @@ import { TestQuestion } from '../types';
 import { answerKeyHash, candidateKeys } from '../services/answers';
 
 // Helper to get multiple-choice options for any test question
+/** The question without the "A) … B) …" choices written into its text (they are shown as buttons). */
+export function questionStem(q: TestQuestion): string {
+  const text = q.question || '';
+  const markers = [...text.matchAll(/(^|\s)([A-D])\)\s/g)];
+  const first = markers.find((m) => m[2] === 'A');
+  if (!first || !markers.some((m) => m[2] === 'B' && m.index! > first.index!)) return text;
+  return text.slice(0, first.index! + first[1].length).trimEnd();
+}
+
 export function getQuestionOptions(q: TestQuestion): { letter: string; text: string }[] {
   if (Array.isArray(q.options) && q.options.length > 0) {
     return q.options.map((opt, i) => {
