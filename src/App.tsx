@@ -647,6 +647,35 @@ export default function App() {
               дууссан байна. Сунгуулахын тулд админд хандана уу.
             </div>
           )}
+          {/* Access ends within a week: remind the student to extend it */}
+          {isStudent && learningPlan.isPaid() && (() => {
+            const until = learningPlan.paidUntil();
+            const daysLeft = until ? Math.ceil((until - Date.now()) / 86400000) : null;
+            if (daysLeft === null || daysLeft > 7) return null;
+            return (
+              <div
+                className="mb-4 p-3 bg-amber-50 border border-amber-300 rounded-xl text-sm text-amber-900 flex flex-wrap items-center justify-between gap-2"
+                data-testid="access-ending"
+              >
+                <span>
+                  Таны эрх <b>{Math.max(daysLeft, 1)} хоногийн дараа</b> дуусна.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveView('home');
+                    setTimeout(
+                      () => document.querySelector('[data-testid="plan-payment"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+                      100
+                    );
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-stone-900 hover:bg-black text-white text-xs font-bold cursor-pointer"
+                >
+                  Хугацаа сунгах
+                </button>
+              </div>
+            );
+          })()}
           {isStudent && learningPlan.isLoading() ? (
             <div className="text-center py-20 text-sm text-stone-500">Ачаалж байна...</div>
           ) : isStudent && activeView === 'placement' && learningPlan.canTakePlacement(placementGrade) ? (
