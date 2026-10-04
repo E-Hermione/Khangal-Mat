@@ -265,26 +265,24 @@ export const PaymentStepContent: React.FC<{ uid: string; currentUser: AuthUser; 
 
   return (
     <div className="space-y-2.5" data-testid="plan-payment" onClick={(e) => e.stopPropagation()}>
-      <div className="text-xs text-stone-600 leading-relaxed">
-        {!enabled ? (
-          'Түвшин тогтоох сорил өгсний дараа төлбөрөө төлж хичээлийн эрх авна.'
-        ) : paid ? (
-          <>
-            Хичээлүүд <b className="text-emerald-800">{new Date(paidUntil!).toLocaleDateString()}</b> хүртэл нээлттэй.
-          </>
-        ) : pending ? (
-          <>
-            <b className="text-amber-900">Шалгаж байна</b> ({pending.months} сар, {formatMoney(pending.amount)}). Админ
-            баталгаажуулмагц хичээлүүд нээгдэнэ.
-          </>
-        ) : (
-          <>
-            {paidUntil ? <b className="text-red-700">Хугацаа дууссан. </b> : null}
-            Админ шилжүүлгийг шалгаж баталгаажуулмагц хичээлүүд нээгдэнэ.
-            {lastRejected && <span className="block text-red-700 mt-0.5">Сүүлийн төлбөр баталгаажаагүй. Админд хандана уу.</span>}
-          </>
-        )}
-      </div>
+      {!(enabled && paid) && (
+        <div className="text-xs text-stone-600 leading-relaxed">
+          {!enabled ? (
+            'Түвшин тогтоох сорил өгсний дараа төлбөрөө төлж хичээлийн эрх авна.'
+          ) : pending ? (
+            <>
+              <b className="text-amber-900">Шалгаж байна</b> ({pending.months} сар, {formatMoney(pending.amount)}). Админ
+              баталгаажуулмагц хичээлүүд нээгдэнэ.
+            </>
+          ) : (
+            <>
+              {paidUntil ? <b className="text-red-700">Хугацаа дууссан. </b> : null}
+              Админ шилжүүлгийг шалгаж баталгаажуулмагц хичээлүүд нээгдэнэ.
+              {lastRejected && <span className="block text-red-700 mt-0.5">Сүүлийн төлбөр баталгаажаагүй. Админд хандана уу.</span>}
+            </>
+          )}
+        </div>
+      )}
       {enabled && !pending && paid && (
         <div className="grid grid-cols-2 gap-2">
           <div
