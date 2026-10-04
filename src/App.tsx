@@ -207,8 +207,12 @@ export default function App() {
     if (currentUser?.role !== 'admin') return;
     const uid = getFirebaseAuth().currentUser?.uid;
     if (previewAsUser && uid) {
-      // Previewed as a student of the grade the admin was browsing
-      startLearningPlan(uid, currentUser.userId || 'ADMIN-01', selectedGrade, previewAsUser === 'paid');
+      // Previewed as a 10th-grade student
+      const previewGrade: GradeNumber = 10;
+      startLearningPlan(uid, currentUser.userId || 'ADMIN-01', previewGrade, previewAsUser === 'paid');
+      setSelectedGrade(previewGrade);
+      const first = GRADE_TOPICS_CATALOG[previewGrade]?.[0];
+      if (first) setSelectedTopicId(first.id);
       setActiveView('home');
     } else {
       stopLearningPlan();
