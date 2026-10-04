@@ -129,7 +129,9 @@ const Card: React.FC<{
   testId?: string;
   onEdit?: () => void;
   editor?: React.ReactNode;
-}> = ({ icon, title, highlight, children, action, locked, testId, onEdit, editor }) => (
+  // A small tag right after the title
+  badge?: React.ReactNode;
+}> = ({ icon, title, highlight, children, action, locked, testId, onEdit, editor, badge }) => (
   <div
     className={`bg-white rounded-2xl border p-5 flex flex-col gap-3 ${
       highlight ? 'border-amber-400 ring-2 ring-amber-200 shadow-sm' : 'border-stone-200'
@@ -144,7 +146,10 @@ const Card: React.FC<{
       >
         {icon}
       </span>
-      <h2 className="font-black text-stone-900 flex-1">{title}</h2>
+      <h2 className="font-black text-stone-900 flex-1 flex items-center gap-2 flex-wrap">
+        {title}
+        {badge}
+      </h2>
       {onEdit && !editor && <EditButton onClick={onEdit} />}
     </div>
     {editor || (
@@ -263,6 +268,11 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
         <Card
           icon={<ClipboardCheck className="w-5 h-5" />}
           title={content.placementTitle}
+          badge={
+            <span className="text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+              Үнэгүй
+            </span>
+          }
           highlight={needsPlacement}
           testId="home-placement"
           onEdit={edit('placement')}
@@ -271,7 +281,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               <TextEditor
                 fields={[
                   { key: 'placementTitle', label: 'Гарчиг' },
-                  { key: 'placementText', label: 'Тайлбар', multiline: true },
                 ]}
                 content={content}
                 onDone={done}
@@ -286,12 +295,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               : null
           }
         >
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <span className="text-xs text-stone-500 whitespace-pre-wrap">{content.placementText}</span>
-            <span className="text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 shrink-0">
-              Үнэгүй
-            </span>
-          </div>
           {grade ? (
             // A student takes their own grade's test only
             <div className="rounded-xl bg-stone-50 border border-stone-100 px-3 py-2.5 text-sm" data-testid="placement-own">

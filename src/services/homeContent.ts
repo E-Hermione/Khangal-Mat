@@ -8,7 +8,6 @@ export interface HomeContent {
   lessonsTitle: string;
   lessonsText: string;
   placementTitle: string;
-  placementText: string;
   examsTitle: string;
   examsText: string;
   accessTitle: string;
@@ -20,7 +19,6 @@ export const DEFAULT_HOME_CONTENT: HomeContent = {
   lessonsTitle: 'Хичээл',
   lessonsText: 'Онол, жишээ, дасгалтай сэдвүүд.',
   placementTitle: 'Түвшин тогтоох сорил',
-  placementText: 'Сорилын дүнгээр танд зориулсан төлөвлөгөө гарна.',
   examsTitle: 'Сэдэвчилсэн сорил',
   examsText: 'Сэдэв бүр дээр Анхан → Дунд → Ахисан. 85%-иас дээш авбал дараагийн шат нээгдэнэ.',
   accessTitle: 'Эрх авах',
