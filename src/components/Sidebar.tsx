@@ -79,7 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Lessons can be listed by grade (all topics) or as the user's plan (plan topics of every grade)
   const [lessonMode, setLessonMode] = useState<'all' | 'plan'>('all');
   // Everyone gets the two views; without a plan the plan view explains how to get one
-  const canPlanView = !!onSelectView;
+  const canPlanView = !!onSelectView && !isAdmin;
   // The exams page uses the same two views; its choice also filters the exams table
   const examMode: 'all' | 'plan' = examFilter === 'plan' ? 'plan' : 'all';
   const mode = showExamNav ? examMode : lessonMode;

@@ -698,7 +698,7 @@ export default function App() {
               isAdmin={currentUser?.role === 'admin' && !previewAsUser}
               userId={currentUser?.userId}
               uid={getFirebaseAuth().currentUser?.uid}
-              filter={examFilter}
+              filter={currentUser?.role === 'admin' && !previewAsUser ? 'all' : examFilter}
             />
           ) : currentTopic.id ? (
             <TopicPage
