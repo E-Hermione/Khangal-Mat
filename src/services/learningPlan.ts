@@ -350,7 +350,12 @@ export const learningPlan = {
     return this.hasPlan() || this.needsPlacement();
   },
   /** For those students: 'open', or why the topic is closed. null for everyone else. */
+  /** A free sample topic the admin opened for everyone. */
+  isFree(topicId: string): boolean {
+    return (cloud.getAppSettings().freeTopicIds || []).includes(topicId);
+  },
   topicGate(topicId: string): 'open' | 'needs-placement' | 'unpaid' | 'not-in-plan' | null {
+    if (this.isFree(topicId) && !!state.uid) return 'open';
     if (this.needsPlacement()) return 'needs-placement';
     if (!this.hasPlan()) return null;
     if (!this.inPlan(topicId)) return 'not-in-plan';

@@ -246,7 +246,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Lessons: grades + topics. Exams: grades + filters and results. Home: progress and news */}
         {showLessonNav || showExamNav ? (
           <>
-        {/* Grades Selector Tabs */}
+        {/* Grades Selector Tabs (a student only sees their own grade, so they get none) */}
+        {(isAdmin || !learningPlan.state.grade) && (
         <div className="p-3 border-b border-stone-800/80 bg-stone-950/40 shrink-0">
           <div className="flex items-center justify-between mb-2 px-1">
             <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">
@@ -310,6 +311,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             })}
           </div>
         </div>
+        )}
 
         {/* Grade's content: all topics / tests, or the user's plan topics as a flat list */}
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
@@ -490,6 +492,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               </div>
 
                               <div className="flex items-center space-x-1 shrink-0 ml-1">
+                                {learningPlan.isFree(topic.id) && (
+                                  <span
+                                    className="text-[9px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded font-bold"
+                                    title="Бүх хүнд үнэгүй нээлттэй жишээ хичээл"
+                                  >
+                                    Үнэгүй
+                                  </span>
+                                )}
                                 {isAdmin && isHidden && (
                                   <span
                                     className="text-[9px] px-1 py-0.2 bg-red-500/20 text-red-300 border border-red-500/30 rounded flex items-center space-x-0.5"

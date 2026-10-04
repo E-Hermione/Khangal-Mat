@@ -29,6 +29,8 @@ export interface AppSettings {
   // New students first take a placement test drawn at random from the topics' tests
   placementEnabled: boolean;
   placementPerTopic: number;
+  // Topics open to everyone as a free sample of the lessons (chosen by the admin)
+  freeTopicIds: string[];
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -37,6 +39,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   copyProtection: false,
   placementEnabled: true,
   placementPerTopic: 3,
+  freeTopicIds: [],
 };
 
 interface CloudState {

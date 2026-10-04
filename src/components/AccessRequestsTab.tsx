@@ -6,20 +6,18 @@ import {
   Eye,
   Search,
   UserCog,
-  Sliders,
-  Sparkles,
   Megaphone,
   CreditCard,
 } from 'lucide-react';
 import { accessRequestService } from '../services/accessRequestService';
 import { userPermissionsService, matchesUserToken } from '../services/userPermissionsService';
-import { ApprovedAccount, UserPermissions, DefaultPermissionsConfig, GradeNumber } from '../types';
+import { ApprovedAccount, UserPermissions, GradeNumber } from '../types';
 import { UserLookupTab } from './UserLookupTab';
 import { AnnouncementsTab } from './AnnouncementsTab';
 import { PaymentsTab } from './PaymentsTab';
 import { subscribeAllPaymentRequests } from '../services/payments';
 
-type MainTab = 'lookup' | 'user-permissions' | 'default-permissions' | 'announcements' | 'payments';
+type MainTab = 'lookup' | 'user-permissions' | 'announcements' | 'payments';
 
 export const AccessRequestsTab: React.FC = () => {
   const [mainTab, setMainTab] = useState<MainTab>('lookup');
@@ -29,12 +27,6 @@ export const AccessRequestsTab: React.FC = () => {
   const [userSearchQuery, setUserSearchQuery] = useState<string>('');
   const [currentUserPerms, setCurrentUserPerms] = useState<UserPermissions | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
-
-  // Default Permissions Tab State
-  const [defaultConfig, setDefaultConfig] = useState<DefaultPermissionsConfig>(() =>
-    userPermissionsService.getDefaultConfig()
-  );
-  const [defaultSaveStatus, setDefaultSaveStatus] = useState<string | null>(null);
 
   // Bank transfers waiting for the admin to confirm
   const [pendingPayments, setPendingPayments] = useState(0);
@@ -49,7 +41,6 @@ export const AccessRequestsTab: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    setDefaultConfig(userPermissionsService.getDefaultConfig());
     // Refresh when Firestore delivers changes
     window.addEventListener('cloud-data-updated', loadData);
     return () => window.removeEventListener('cloud-data-updated', loadData);
@@ -132,13 +123,6 @@ export const AccessRequestsTab: React.FC = () => {
     return endOfDay(d);
   };
 
-  // Save default permissions config
-  const handleSaveDefaultConfig = () => {
-    userPermissionsService.saveDefaultConfig(defaultConfig);
-    setDefaultSaveStatus('Шинэ хэрэглэгчийн анхдагч эрхийн тохиргоо амжилттай хадгалагдлаа!');
-    setTimeout(() => setDefaultSaveStatus(null), 3500);
-  };
-
   // Build unified list of all users for permissions search/selection
   const allUsersList = useMemo(() => {
     const map = new Map<string, { userId: string; name: string; email: string; phone?: string; status: string }>();
@@ -204,19 +188,6 @@ export const AccessRequestsTab: React.FC = () => {
         >
           <UserCog className="w-4 h-4" />
           <span>Хэрэглэгчийн эрх тохируулах</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setMainTab('default-permissions')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all cursor-pointer ${
-            mainTab === 'default-permissions'
-              ? 'bg-stone-900 text-amber-400 shadow-xs'
-              : 'bg-stone-100 text-stone-600 hover:text-stone-900 hover:bg-stone-200/80'
-          }`}
-        >
-          <Sliders className="w-4 h-4" />
-          <span>Анхдагч эрхийн тохиргоо</span>
         </button>
 
         <button
@@ -602,164 +573,6 @@ export const AccessRequestsTab: React.FC = () => {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 3: АНХДАГЧ ЭРХИЙН ТОХИРГОО (Default Initial Permissions) */}
-      {/* ========================================================================= */}
-      {mainTab === 'default-permissions' && (
-        <div className="space-y-5">
-          <div className="bg-amber-50/60 border border-amber-200 rounded-2xl p-4 space-y-1">
-            <h3 className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center space-x-1.5">
-              <Sparkles className="w-4 h-4 text-amber-600" />
-              <span>Шинэ хэрэглэгчийн анхдагч эрхийн загвар</span>
-            </h3>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Шинээр бүртгүүлсэн эсвэл зөвшөөрөгдсөн хэрэглэгч системд анх нэвтрэхэд юу юу автоматаар нээгдсэн байх суурь эрхийг эндээс тохируулна.
-            </p>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-5">
-            {/* 1. Default Allowed Grades */}
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-black uppercase text-stone-800 tracking-wider">
-                  Анх нээгдэх ангиуд:
-                </label>
-                <div className="flex items-center space-x-2 text-xs">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDefaultConfig({
-                        ...defaultConfig,
-                        allowedGrades: [...allGradesList],
-                      })
-                    }
-                    className="text-amber-700 hover:underline font-bold cursor-pointer"
-                  >
-                    Бүгдийг нээх
-                  </button>
-                  <span className="text-stone-300">|</span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDefaultConfig({
-                        ...defaultConfig,
-                        allowedGrades: [],
-                      })
-                    }
-                    className="text-stone-500 hover:underline font-bold cursor-pointer"
-                  >
-                    Бүгдийг хаах
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
-                {allGradesList.map((grade) => {
-                  const isAllowed = defaultConfig.allowedGrades.includes(grade);
-                  return (
-                    <button
-                      key={grade}
-                      type="button"
-                      onClick={() => {
-                        const updated = isAllowed
-                          ? defaultConfig.allowedGrades.filter((g) => g !== grade)
-                          : [...defaultConfig.allowedGrades, grade];
-                        setDefaultConfig({
-                          ...defaultConfig,
-                          allowedGrades: updated,
-                        });
-                      }}
-                      className={`p-2.5 rounded-xl text-xs font-bold text-center border transition-all cursor-pointer ${
-                        isAllowed
-                          ? 'bg-stone-900 text-amber-400 border-stone-800 shadow-2xs'
-                          : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'
-                      }`}
-                    >
-                      {grade}-р анги {isAllowed && '✓'}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 3. Default Topic Access Mode */}
-            <div className="space-y-2 pt-2 border-t border-stone-100">
-              <label className="text-xs font-black uppercase text-stone-800 tracking-wider">
-                Сэдвийн анхны төлөв:
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDefaultConfig({
-                      ...defaultConfig,
-                      defaultAccessMode: 'visible',
-                    })
-                  }
-                  className={`p-3 rounded-xl text-left border transition-all cursor-pointer ${
-                    defaultConfig.defaultAccessMode === 'visible'
-                      ? 'bg-amber-50 border-amber-300 text-stone-950 font-bold shadow-2xs'
-                      : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
-                  }`}
-                >
-                  <div className="text-xs font-bold flex items-center space-x-1.5">
-                    <Eye className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Нээлттэй (Шууд харагдах)</span>
-                  </div>
-                  <div className="text-[11px] text-stone-500 mt-0.5">
-                    Шинэ хэрэглэгчид нээлттэй ангийн хичээлүүд шууд харагдана.
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDefaultConfig({
-                      ...defaultConfig,
-                      defaultAccessMode: 'locked',
-                    })
-                  }
-                  className={`p-3 rounded-xl text-left border transition-all cursor-pointer ${
-                    defaultConfig.defaultAccessMode === 'locked'
-                      ? 'bg-amber-50 border-amber-300 text-stone-950 font-bold shadow-2xs'
-                      : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
-                  }`}
-                >
-                  <div className="text-xs font-bold flex items-center space-x-1.5">
-                    <Lock className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Түгжээтэй (Тусгайлан нээлгэх)</span>
-                  </div>
-                  <div className="text-[11px] text-stone-500 mt-0.5">
-                    Сэдвүүд түгжээтэй байх ба тус бүрд нь хүсэлт илгээж нээлгэнэ.
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Save Status & Action */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-stone-100">
-              {defaultSaveStatus ? (
-                <div className="text-xs font-bold text-emerald-700 flex items-center space-x-1.5 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>{defaultSaveStatus}</span>
-                </div>
-              ) : (
-                <div className="text-[11px] text-stone-400">
-                  Шинэ хэрэглэгч бүрт үйлчлэх суурь загвар.
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={handleSaveDefaultConfig}
-                className="px-5 py-2 bg-stone-900 hover:bg-black text-amber-400 font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
-              >
-                Анхдагч тохиргоог хадгалах
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
