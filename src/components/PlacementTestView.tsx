@@ -24,13 +24,16 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Asked on the page itself: some in-app browsers block window.confirm, which left the button doing nothing
+  const [confirming, setConfirming] = useState(false);
 
   if (!test) return null;
   const answered = test.questions.filter((q) => answers[q.question.id]).length;
 
+  const left = test.questions.length - answered;
+
   const handleSubmit = async () => {
-    const left = test.questions.length - answered;
-    if (!window.confirm(left > 0 ? `${left} бодлого хоосон үлдсэн байна. Шалгалтыг дуусгах уу?` : 'Шалгалтыг дуусгах уу?')) return;
+    setConfirming(false);
     setSaving(true);
     setError(null);
     try {
@@ -114,10 +117,34 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
       ))}
 
       {error && <div className="text-sm text-red-700">{error}</div>}
+      {confirming && (
+        <div className="p-4 rounded-xl border border-amber-300 bg-amber-50 space-y-3" data-testid="placement-confirm">
+          <div className="text-sm font-bold text-stone-900">
+            {left > 0 ? `${left} бодлого хоосон үлдсэн байна. Шалгалтыг дуусгах уу?` : 'Шалгалтыг дуусгах уу?'}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="py-2.5 rounded-lg border border-stone-300 bg-white text-sm font-bold text-stone-700 cursor-pointer"
+            >
+              Үргэлжлүүлэх
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="py-2.5 rounded-lg bg-stone-900 hover:bg-black text-white text-sm font-bold cursor-pointer"
+              data-testid="placement-confirm-yes"
+            >
+              Тийм, дуусгах
+            </button>
+          </div>
+        </div>
+      )}
       <button
         type="button"
-        onClick={handleSubmit}
-        disabled={saving}
+        onClick={() => setConfirming(true)}
+        disabled={saving || confirming}
         className="w-full py-3 rounded-xl bg-stone-900 hover:bg-black text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
       >
         <Send className="w-4 h-4 text-amber-400" />
