@@ -159,6 +159,12 @@ function placementPerTopic(): number {
   return Math.max(MIN_PLACEMENT_PER_TOPIC, cloud.getAppSettings().placementPerTopic || 0);
 }
 
+// The test does not say which topic a question is from: drop a leading "«Topic» сэдвээр / сэдвийн хүрээнд"
+function withoutTopicName(text: string): string {
+  const rest = text.replace(/^\s*«[^»]*»\s*сэдв(?:ээр|ийн хүрээнд)\s*,?\s*/u, '');
+  return rest === text ? text : rest.charAt(0).toUpperCase() + rest.slice(1);
+}
+
 // Up to `per` random questions from each topic, never the same question text twice
 function drawQuestions(grade: GradeNumber, random: boolean): PlacementQuestion[] {
   const per = placementPerTopic();
@@ -172,7 +178,7 @@ function drawQuestions(grade: GradeNumber, random: boolean): PlacementQuestion[]
       used.add(key);
       return true;
     });
-    for (const q of fresh.slice(0, per)) questions.push({ topicId: t.id, question: q });
+    for (const q of fresh.slice(0, per)) questions.push({ topicId: t.id, question: { ...q, question: withoutTopicName(q.question) } });
   }
   return questions;
 }
