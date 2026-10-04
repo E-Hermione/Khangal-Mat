@@ -302,7 +302,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
               {((isAdmin && selection.theory) || (!isAdmin && isTheoryAllowed)) && (
                 <TheorySection
                   theory={t.theory}
-                  prerequisiteNotice={main ? t.prerequisiteNotice : undefined}
                   isEditable={isAdmin && isEditMode}
                   onAddRule={handleOpenAddTheory}
                   onEditRule={handleOpenEditTheory}

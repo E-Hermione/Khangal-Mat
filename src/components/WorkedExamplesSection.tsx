@@ -63,11 +63,6 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
                   <span className="font-extrabold text-sm md:text-base text-stone-950 print:text-black">
                     Жишээ {ex.number}. {ex.title ? <span className="font-semibold text-stone-700 print:text-stone-900">({ex.title})</span> : null}
                   </span>
-                  {ex.prerequisiteGrade && (
-                    <span className="text-[11px] px-2 py-0.5 bg-stone-100 print:bg-stone-200 text-stone-700 border border-stone-300 rounded font-medium">
-                      {ex.prerequisiteGrade}-р анги
-                    </span>
-                  )}
                 </div>
 
                 {/* Edit & Delete actions */}
