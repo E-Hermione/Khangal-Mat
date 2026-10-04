@@ -45,6 +45,8 @@ interface SidebarProps {
   onLogout: () => void;
   onOpenAccessRequests?: () => void;
   isAdmin: boolean;
+  // Admin mode proper has no "Миний төлөвлөгөө" view (the general view keeps it to show students)
+  hidePlanView?: boolean;
   activeView?: 'home' | 'topics' | 'exams' | 'plan' | 'placement';
   onSelectView?: (view: 'home' | 'topics' | 'exams' | 'plan' | 'placement') => void;
   // Students get a home tab first
@@ -67,6 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
   onOpenAccessRequests,
   isAdmin,
+  hidePlanView,
   activeView = 'topics',
   onSelectView,
   showHome = false,
@@ -79,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Lessons can be listed by grade (all topics) or as the user's plan (plan topics of every grade)
   const [lessonMode, setLessonMode] = useState<'all' | 'plan'>('all');
   // Everyone gets the two views; without a plan the plan view explains how to get one
-  const canPlanView = !!onSelectView && !isAdmin;
+  const canPlanView = !!onSelectView && !hidePlanView;
   // The exams page uses the same two views; its choice also filters the exams table
   const examMode: 'all' | 'plan' = examFilter === 'plan' ? 'plan' : 'all';
   const mode = showExamNav ? examMode : lessonMode;

@@ -629,6 +629,7 @@ export default function App() {
           onLogout={handleLogout}
           onOpenAccessRequests={() => setAccessRequestsModalOpen(true)}
           isAdmin={currentUser?.role === 'admin' && !previewAsUser}
+          hidePlanView={canEdit}
           activeView={activeView}
           onSelectView={setActiveView}
           showHome={isStudent || currentUser.role === 'admin'}
@@ -698,7 +699,7 @@ export default function App() {
               isAdmin={currentUser?.role === 'admin' && !previewAsUser}
               userId={currentUser?.userId}
               uid={getFirebaseAuth().currentUser?.uid}
-              filter={currentUser?.role === 'admin' && !previewAsUser ? 'all' : examFilter}
+              filter={canEdit ? 'all' : examFilter}
             />
           ) : currentTopic.id ? (
             <TopicPage
