@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { collectionGroup, getDocs } from 'firebase/firestore';
-import { ChevronRight, ClipboardCheck, CreditCard, Users } from 'lucide-react';
+import { ChevronRight, ClipboardCheck, CreditCard, UserCheck, Users } from 'lucide-react';
 import { learningPlan, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
 import { subscribeAllPaymentRequests } from '../services/payments';
 import { cloud } from '../services/cloud';
 import { getDb } from '../services/firebase';
 import { ADMIN_EMAIL } from '../services/authService';
 import { ProgressRing } from './ProgressRing';
+import { userPermissionsService } from '../services/userPermissionsService';
 
 // Exams page: all tests of a grade, or only the user's plan topics
 export type ExamFilter = 'all' | 'plan';
@@ -101,7 +102,12 @@ const AdminOverview: React.FC<{ onOpenAccessRequests?: () => void }> = ({ onOpen
   useEffect(() => {
     const refresh = () => setUsers(cloud.getUsers());
     window.addEventListener('users-updated', refresh);
-    return () => window.removeEventListener('users-updated', refresh);
+    // Paid counts change when the admin confirms a payment
+    window.addEventListener('user-permissions-updated', refresh);
+    return () => {
+      window.removeEventListener('users-updated', refresh);
+      window.removeEventListener('user-permissions-updated', refresh);
+    };
   }, []);
   useEffect(() => {
     getDocs(collectionGroup(getDb(), 'placement'))
@@ -110,8 +116,12 @@ const AdminOverview: React.FC<{ onOpenAccessRequests?: () => void }> = ({ onOpen
   }, []);
 
   const members = users.filter((u) => u.email !== ADMIN_EMAIL);
-  const startOfToday = new Date().setHours(0, 0, 0, 0);
-  const newToday = members.filter((u) => u.createdAt >= startOfToday).length;
+  // Paid and using the site now: access period not over and not blocked
+  const now = Date.now();
+  const paidActive = members.filter((u) => {
+    const perms = userPermissionsService.getUserPermissions(u.userId);
+    return u.active !== false && !perms.isBlocked && typeof perms.expiresAt === 'number' && perms.expiresAt > now;
+  }).length;
   // People, not attempts; the admin's own test runs ("view as user") are left out
   const placementTakers = placementUids ? members.filter((u) => placementUids.has(u.uid)).length : null;
 
@@ -147,8 +157,8 @@ const AdminOverview: React.FC<{ onOpenAccessRequests?: () => void }> = ({ onOpen
         alert={pending > 0}
         onClick={onOpenAccessRequests}
       />
-      <Stat icon={<Users className="w-4 h-4" />} label="Нийт хэрэглэгч" value={members.length} />
-      <Stat icon={<Users className="w-4 h-4" />} label="Өнөөдөр бүртгүүлсэн" value={newToday} />
+      <Stat icon={<Users className="w-4 h-4" />} label="Нийт бүртгүүлсэн" value={members.length} />
+      <Stat icon={<UserCheck className="w-4 h-4" />} label="Төлбөр төлсөн идэвхтэй" value={paidActive} />
       <Stat
         icon={<ClipboardCheck className="w-4 h-4" />}
         label="Түвшин тогтоох сорил өгсөн"
