@@ -6,13 +6,11 @@ import { backdropClose } from '../utils/backdrop';
 interface AccessRequestsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onRequestCountChange?: (count: number) => void;
 }
 
 export const AccessRequestsModal: React.FC<AccessRequestsModalProps> = ({
   isOpen,
   onClose,
-  onRequestCountChange,
 }) => {
   if (!isOpen) return null;
 
@@ -26,9 +24,9 @@ export const AccessRequestsModal: React.FC<AccessRequestsModalProps> = ({
               <UserCheck className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white">Нэвтрэх хүсэлт & Хэрэглэгчийн эрхийн удирдлага</h2>
+              <h2 className="text-sm font-bold text-white">Хэрэглэгчийн эрхийн удирдлага</h2>
               <p className="text-[11px] text-stone-400">
-                Хэрэглэгчийн ID-аар эрх оноох, хүсэлт зөвшөөрөх, анхдагч эрхийн тохиргоо
+                Хэрэглэгч хайх, эрх оноох, төлбөр, зарлал
               </p>
             </div>
           </div>
@@ -44,7 +42,7 @@ export const AccessRequestsModal: React.FC<AccessRequestsModalProps> = ({
 
         {/* Tab Content Body */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6 min-h-0">
-          <AccessRequestsTab onCountChange={onRequestCountChange} />
+          <AccessRequestsTab />
         </div>
 
         {/* Footer */}

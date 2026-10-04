@@ -34,7 +34,6 @@ import {
   MAX_DEVICES_ADMIN,
   MAX_DEVICES_USER,
 } from './services/deviceSessions';
-import { accessRequestService } from './services/accessRequestService';
 import { userPermissionsService } from './services/userPermissionsService';
 import {
   Menu,
@@ -89,26 +88,6 @@ export default function App() {
     return () => window.removeEventListener('user-permissions-updated', bump);
   }, []);
 
-  const [pendingRequestsCount, setPendingRequestsCount] = useState<number>(() => {
-    return accessRequestService.getRequests().filter((r) => r.status === 'pending').length;
-  });
-
-  // Keep pending requests count synchronized in real time
-  useEffect(() => {
-    const refreshCount = () => {
-      const count = accessRequestService.getRequests().filter((r) => r.status === 'pending').length;
-      setPendingRequestsCount(count);
-    };
-
-    refreshCount();
-    const interval = setInterval(refreshCount, 3000);
-    window.addEventListener('storage', refreshCount);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', refreshCount);
-    };
-  }, []);
   const [printMenuOpen, setPrintMenuOpen] = useState(false);
   const printMenuRef = React.useRef<HTMLDivElement>(null);
 
@@ -643,7 +622,6 @@ export default function App() {
           currentUser={currentUser}
           onOpenSettings={() => setSettingsModalOpen(true)}
           onLogout={handleLogout}
-          pendingRequestsCount={pendingRequestsCount}
           onOpenAccessRequests={() => setAccessRequestsModalOpen(true)}
           isAdmin={currentUser?.role === 'admin' && !previewAsUser}
           activeView={activeView}
@@ -756,7 +734,6 @@ export default function App() {
       <AccessRequestsModal
         isOpen={accessRequestsModalOpen}
         onClose={() => setAccessRequestsModalOpen(false)}
-        onRequestCountChange={setPendingRequestsCount}
       />
 
       {/* Settings Modal (Phone-style cascading settings: profile, phone, email, password, preferences) */}

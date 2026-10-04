@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, User, ShieldCheck, ClipboardList, Send, History, Route } from 'lucide-react';
+import { Search, User, ShieldCheck, ClipboardList, History, Route } from 'lucide-react';
 import { accessRequestService } from '../services/accessRequestService';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { storageService } from '../services/storageService';
@@ -208,7 +208,6 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
     .sort(([, a], [, b]) => b.wrong / b.total - a.wrong / a.total);
 
   const perms = user?.userId ? userPermissionsService.getUserPermissions(user.userId) : null;
-  const requests = user ? accessRequestService.getRequests().filter((r) => r.requesterUid === user.uid) : [];
 
   return (
     <div className="space-y-4">
@@ -454,25 +453,6 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
                   })}
                 </div>
               </>
-            )}
-          </Section>
-
-          <Section icon={<Send className="w-4 h-4 text-rose-600" />} title="Сэдэв нээлгэх хүсэлтүүд">
-            {requests.length === 0 ? (
-              <div className="text-xs text-stone-400">Хүсэлт илгээгээгүй.</div>
-            ) : (
-              <div className="space-y-1 text-xs">
-                {requests.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between">
-                    <span className="text-stone-800">{r.requestedTopicTitle || r.requestedTopicId}</span>
-                    <span className="text-stone-500">
-                      {{ pending: 'Хүлээгдэж буй', approved: 'Зөвшөөрсөн', rejected: 'Татгалзсан', expired: 'Хугацаа дууссан' }[r.status]}
-                      {' • '}
-                      {new Date(r.requestedAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
             )}
           </Section>
 

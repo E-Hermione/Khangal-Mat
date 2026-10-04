@@ -3,13 +3,12 @@ import {
   doc,
   onSnapshot,
   setDoc,
-  deleteDoc,
   writeBatch,
   updateDoc,
   Unsubscribe,
 } from 'firebase/firestore';
 import { getDb } from './firebase';
-import { TopicPackage, UserPermissions, DefaultPermissionsConfig, AccessRequest, UserProfile } from '../types';
+import { TopicPackage, UserPermissions, DefaultPermissionsConfig, UserProfile } from '../types';
 import { TopicAnswers, splitTopic, mergeAnswers, answersVisibleFor, needsAnswerRewrite } from './answers';
 import { getQuestionOptions } from '../utils/examGrading';
 
@@ -49,7 +48,6 @@ interface CloudState {
   appSettings: AppSettings;
   userPermissions: Record<string, UserPermissions>;
   users: UserProfile[];
-  requests: AccessRequest[];
 }
 
 const emptyState = (): CloudState => ({
@@ -60,7 +58,6 @@ const emptyState = (): CloudState => ({
   appSettings: DEFAULT_APP_SETTINGS,
   userPermissions: {},
   users: [],
-  requests: [],
 });
 
 let state: CloudState = emptyState();
@@ -247,17 +244,6 @@ export function startCloudSync({ isAdmin, userId }: CloudSyncOptions): Promise<v
         onError
       )
     );
-    listen((onFirst, onError) =>
-      onSnapshot(
-        collection(db, 'accessRequests'),
-        (snap) => {
-          state.requests = snap.docs.map((d) => ({ ...(d.data() as AccessRequest), id: d.id }));
-          notify('access-requests-updated');
-          onFirst();
-        },
-        onError
-      )
-    );
   } else if (userId) {
     listen((onFirst, onError) =>
       onSnapshot(
@@ -395,23 +381,5 @@ export const cloud = {
   removeUserLocally(uid: string) {
     state.users = state.users.filter((u) => u.uid !== uid);
     notify('users-updated');
-  },
-
-  // Topic unlock requests (admin reads; members only create)
-  getRequests(): AccessRequest[] {
-    return state.requests;
-  },
-  addRequest(request: AccessRequest): Promise<void> {
-    return setDoc(doc(getDb(), 'accessRequests', request.id), clean(request));
-  },
-  updateRequest(id: string, update: Partial<AccessRequest>) {
-    state.requests = state.requests.map((r) => (r.id === id ? { ...r, ...update } : r));
-    notify('access-requests-updated');
-    write(updateDoc(doc(getDb(), 'accessRequests', id), clean(update)));
-  },
-  deleteRequest(id: string) {
-    state.requests = state.requests.filter((r) => r.id !== id);
-    notify('access-requests-updated');
-    write(deleteDoc(doc(getDb(), 'accessRequests', id)));
   },
 };

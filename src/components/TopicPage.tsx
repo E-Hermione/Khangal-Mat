@@ -10,7 +10,6 @@ import { userPermissionsService } from '../services/userPermissionsService';
 import { learningPlan, useLearningPlanVersion } from '../services/learningPlan';
 import { loadPracticeGrants, usePracticeSolutions } from '../services/practiceSolutions';
 import { PracticeGrantsDialog } from './PracticeGrantsDialog';
-import { accessRequestService } from '../services/accessRequestService';
 import { getFirebaseAuth } from '../services/firebase';
 import { AuthUser } from '../types';
 import {
@@ -19,9 +18,6 @@ import {
   Lock,
   BookOpen,
   Pencil,
-  Send,
-  CheckCircle2,
-  AlertCircle,
   Award,
   Play,
   ArrowRight,
@@ -86,16 +82,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   const [accessMode, setAccessMode] = useState<TopicAccessMode>(() =>
     visibilityService.getTopicAccessMode(topic.id)
   );
-  const [requestStatus, setRequestStatus] = useState<{
-    submitting: boolean;
-    sent: boolean;
-    message: string;
-  }>({
-    submitting: false,
-    sent: false,
-    message: '',
-  });
-
   useEffect(() => {
     const handleUpdate = () => {
       setAccessMode(visibilityService.getTopicAccessMode(topic.id));
@@ -109,25 +95,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
       window.removeEventListener('user-permissions-updated', handleUpdate);
     };
   }, [topic.id]);
-
-  const handleRequestUnlock = async () => {
-    const requesterUid = getFirebaseAuth().currentUser?.uid;
-    if (!currentUser || !requesterUid) return;
-    setRequestStatus({ submitting: true, sent: false, message: '' });
-
-    const result = await accessRequestService.submitTopicUnlockRequest({
-      user: currentUser,
-      requesterUid,
-      topicId: topic.id,
-      topicTitle: topic.title,
-    });
-
-    setRequestStatus({
-      submitting: false,
-      sent: result.success,
-      message: result.message,
-    });
-  };
 
   const planOpen = planGate === 'open';
   // An open topic shows all its parts; the hidden/locked cases are handled below
@@ -406,44 +373,9 @@ export const TopicPage: React.FC<TopicPageProps> = ({
               «{topic.title}» хичээл түгжээтэй байна
             </h2>
             <p className="text-xs md:text-sm text-stone-600 max-w-md mx-auto leading-relaxed pt-1">
-              Энэ хичээлийн агуулгыг үзэхийн тулд <strong>багшаар уг хичээлийг нээлгэнэ үү</strong>. Доорх товчийг дарж багшид хичээл нээлгэх хүсэлтээ илгээнэ үү.
+              Энэ хичээлийн агуулгыг үзэхийн тулд <strong>багшаар уг хичээлийг нээлгэнэ үү</strong>.
             </p>
           </div>
-
-          {/* Feedback or Request Button */}
-          {requestStatus.message ? (
-            <div
-              className={`p-3 rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 ${
-                requestStatus.sent
-                  ? 'bg-emerald-50 text-emerald-900 border border-emerald-300'
-                  : 'bg-amber-50 text-amber-900 border border-amber-300'
-              }`}
-            >
-              {requestStatus.sent ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-              )}
-              <span>{requestStatus.message}</span>
-            </div>
-          ) : (
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={handleRequestUnlock}
-                disabled={requestStatus.submitting}
-                className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs md:text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2 mx-auto cursor-pointer"
-              >
-                <Send className="w-4 h-4" />
-                <span>
-                  {requestStatus.submitting ? 'Илгээж байна...' : 'Багшаар уг хичээлийг нээлгэх хүсэлт илгээх'}
-                </span>
-              </button>
-              <p className="text-[11px] text-stone-400 mt-2">
-                Багш хүсэлтийг зөвшөөрснөөр таны дэлгэцэнд хичээлийн онол, дасгалууд шууд нээгдэнэ.
-              </p>
-            </div>
-          )}
         </div>
       ) : (
         <article className="print-container bg-white rounded-xl border border-stone-200 p-6 md:p-10 shadow-xs print:shadow-none print:border-none print:p-0">

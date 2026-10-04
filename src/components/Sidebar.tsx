@@ -43,7 +43,6 @@ interface SidebarProps {
   currentUser: AuthUser;
   onOpenSettings: () => void;
   onLogout: () => void;
-  pendingRequestsCount?: number;
   onOpenAccessRequests?: () => void;
   isAdmin: boolean;
   activeView?: 'home' | 'topics' | 'exams' | 'plan' | 'placement';
@@ -66,7 +65,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentUser,
   onOpenSettings,
   onLogout,
-  pendingRequestsCount = 0,
   onOpenAccessRequests,
   isAdmin,
   activeView = 'topics',
@@ -561,7 +559,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Admin tools: ONLY shown for admin */}
           {isAdmin && (
             <>
-              {/* Нэвтрэх хүсэлтүүд (Админд зориулсан) */}
+              {/* User management (admin) */}
               {onOpenAccessRequests && (
                 <button
                   type="button"
@@ -569,27 +567,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onOpenAccessRequests();
                     onCloseMobile();
                   }}
-                  className="w-full py-2 px-3 rounded-lg bg-stone-800/80 hover:bg-stone-700 text-stone-200 text-xs font-semibold transition-colors flex items-center justify-between group cursor-pointer relative"
-                  title="Нэвтрэх хүсэлтүүдийг хянах, зөвшөөрөх"
+                  className="w-full py-2 px-3 rounded-lg bg-stone-800/80 hover:bg-stone-700 text-stone-200 text-xs font-semibold transition-colors flex items-center justify-between group cursor-pointer"
+                  title="Хэрэглэгч хайх, эрх оноох, төлбөр, зарлал"
                 >
                   <div className="flex items-center space-x-2.5 truncate">
-                    <div className="relative">
-                      <UserCheck className="w-4 h-4 text-amber-400 shrink-0" />
-                      {pendingRequestsCount > 0 && (
-                        <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-1 bg-red-600 text-white rounded-full text-[9px] font-black flex items-center justify-center shadow-xs animate-pulse ring-1 ring-stone-900">
-                          {pendingRequestsCount}
-                        </span>
-                      )}
-                    </div>
-                    <span className="truncate">Нэвтрэх хүсэлтүүд</span>
+                    <UserCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="truncate">Хэрэглэгч ба эрх</span>
                   </div>
-                  {pendingRequestsCount > 0 ? (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-red-600 text-white font-bold rounded-full animate-pulse">
-                      {pendingRequestsCount} шинэ
-                    </span>
-                  ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-stone-500 group-hover:text-stone-300 shrink-0" />
-                  )}
+                  <ChevronRight className="w-3.5 h-3.5 text-stone-500 group-hover:text-stone-300 shrink-0" />
                 </button>
               )}
             </>

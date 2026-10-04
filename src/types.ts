@@ -122,34 +122,6 @@ export interface AuthUser {
   deviceId: string;
 }
 
-export type AccessRequestStatus = 'pending' | 'approved' | 'rejected' | 'expired';
-
-export interface AccessRequest {
-  id: string;
-  requesterUid?: string;
-  userId?: string;
-  fullName: string;
-  email: string;
-  phoneNumber?: string;
-  school?: string;
-  note?: string;
-  requestedAt: number;
-  expiresAt: number;
-  status: AccessRequestStatus;
-  approvedAt?: number;
-  generatedPassword?: string;
-  emailSent?: boolean;
-  emailSentAt?: number;
-  emailSubject?: string;
-  emailBody?: string;
-  smsSent?: boolean;
-  smsSentAt?: number;
-  smsMessage?: string;
-  requestedTopicId?: string;
-  requestedTopicTitle?: string;
-  requestType?: 'full_access' | 'topic_unlock';
-}
-
 export interface ApprovedAccount {
   uid?: string;
   userId?: string;

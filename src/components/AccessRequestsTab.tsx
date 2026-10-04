@@ -1,24 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Clock,
   CheckCircle2,
-  XCircle,
-  Trash2,
-  Mail,
-  Copy,
-  Check,
-  Send,
-  RefreshCw,
-  AlertCircle,
-  KeyRound,
-  Shield,
-  ShieldCheck,
   Lock,
   Unlock,
   Eye,
   Search,
-  ExternalLink,
-  UserCheck,
   UserCog,
   Sliders,
   Sparkles,
@@ -27,26 +13,17 @@ import {
 } from 'lucide-react';
 import { accessRequestService } from '../services/accessRequestService';
 import { userPermissionsService, matchesUserToken } from '../services/userPermissionsService';
-import { AccessRequest, ApprovedAccount, UserPermissions, DefaultPermissionsConfig, GradeNumber } from '../types';
+import { ApprovedAccount, UserPermissions, DefaultPermissionsConfig, GradeNumber } from '../types';
 import { UserLookupTab } from './UserLookupTab';
 import { AnnouncementsTab } from './AnnouncementsTab';
 import { PaymentsTab } from './PaymentsTab';
 import { subscribeAllPaymentRequests } from '../services/payments';
 
-interface AccessRequestsTabProps {
-  onCountChange?: (count: number) => void;
-}
+type MainTab = 'lookup' | 'user-permissions' | 'default-permissions' | 'announcements' | 'payments';
 
-type MainTab = 'lookup' | 'requests' | 'user-permissions' | 'default-permissions' | 'announcements' | 'payments';
-
-export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountChange }) => {
-  const [mainTab, setMainTab] = useState<MainTab>('requests');
-  // User opened in the lookup tab (from "Дэлгэрэнгүй" in the registered users list)
-  const [lookupUid, setLookupUid] = useState<string | null>(null);
-  const [requests, setRequests] = useState<AccessRequest[]>([]);
+export const AccessRequestsTab: React.FC = () => {
+  const [mainTab, setMainTab] = useState<MainTab>('lookup');
   const [approvedAccounts, setApprovedAccounts] = useState<ApprovedAccount[]>([]);
-  const [requestsSubTab, setRequestsSubTab] = useState<'pending' | 'approved' | 'all'>('pending');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   // User Permissions Tab State
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [userSearchQuery, setUserSearchQuery] = useState<string>('');
@@ -67,21 +44,13 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
   );
 
   const loadData = () => {
-    const list = accessRequestService.getRequests();
-    setRequests(list);
-    const accounts = accessRequestService.getApprovedAccounts();
-    setApprovedAccounts(accounts);
-
-    const pendingCount = list.filter((r) => r.status === 'pending').length;
-    if (onCountChange) {
-      onCountChange(pendingCount);
-    }
+    setApprovedAccounts(accessRequestService.getApprovedAccounts());
   };
 
   useEffect(() => {
     loadData();
     setDefaultConfig(userPermissionsService.getDefaultConfig());
-    // Refresh when Firestore delivers changes (e.g. a new request from another device)
+    // Refresh when Firestore delivers changes
     window.addEventListener('cloud-data-updated', loadData);
     return () => window.removeEventListener('cloud-data-updated', loadData);
   }, []);
@@ -95,42 +64,6 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
       setCurrentUserPerms(null);
     }
   }, [selectedUserId]);
-
-  const handleApprove = (requestId: string) => {
-    accessRequestService.approveRequest(requestId);
-    loadData();
-  };
-
-  const handleReject = (requestId: string) => {
-    accessRequestService.rejectRequest(requestId);
-    loadData();
-  };
-
-  const handleDelete = (requestId: string) => {
-    accessRequestService.deleteRequest(requestId);
-    loadData();
-  };
-
-  const handleDeleteAccount = async (identifier: string) => {
-    if (!window.confirm('Энэ хэрэглэгчийн бүртгэлийг бүрмөсөн устгах уу?')) return;
-    try {
-      await accessRequestService.deleteAccount(identifier);
-    } catch (err) {
-      window.alert(err instanceof Error ? err.message : 'Хэрэглэгчийг устгаж чадсангүй.');
-    }
-    loadData();
-  };
-
-  const handleToggleAccount = (identifier: string) => {
-    accessRequestService.toggleAccountStatus(identifier);
-    loadData();
-  };
-
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
 
   // Jump from request card to permissions tab
   const handleOpenUserPermissions = (userId: string) => {
@@ -221,21 +154,8 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
       });
     });
 
-    requests.forEach((req) => {
-      const uId = req.userId || userPermissionsService.generateUserId(req.email || req.phoneNumber);
-      if (!map.has(uId)) {
-        map.set(uId, {
-          userId: uId,
-          name: req.fullName,
-          email: req.email,
-          phone: req.phoneNumber,
-          status: req.status,
-        });
-      }
-    });
-
     return Array.from(map.values());
-  }, [approvedAccounts, requests]);
+  }, [approvedAccounts]);
 
   // Filtered users for picker
   const filteredUsersForPicker = useMemo(() => {
@@ -249,9 +169,6 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
         (u.phone && u.phone.includes(q))
     );
   }, [allUsersList, userSearchQuery]);
-
-  const pendingRequests = requests.filter((r) => r.status === 'pending');
-  const approvedRequests = requests.filter((r) => r.status === 'approved');
 
   const selectedUserDetails = useMemo(() => {
     return allUsersList.find((u) => u.userId === selectedUserId);
@@ -274,24 +191,6 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
         >
           <Search className="w-4 h-4" />
           <span>Хэрэглэгч хайх</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setMainTab('requests')}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all cursor-pointer ${
-            mainTab === 'requests'
-              ? 'bg-stone-900 text-amber-400 shadow-xs'
-              : 'bg-stone-100 text-stone-600 hover:text-stone-900 hover:bg-stone-200/80'
-          }`}
-        >
-          <UserCheck className="w-4 h-4" />
-          <span>Нэвтрэх хүсэлтүүд</span>
-          {pendingRequests.length > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-stone-950">
-              {pendingRequests.length}
-            </span>
-          )}
         </button>
 
         <button
@@ -354,280 +253,14 @@ export const AccessRequestsTab: React.FC<AccessRequestsTabProps> = ({ onCountCha
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: НЭВТРЭХ ХҮСЭЛТҮҮД (Requests & Accounts) */}
+      {/* TAB 1: ХЭРЭГЛЭГЧ ХАЙХ (User lookup) */}
       {/* ========================================================================= */}
       {mainTab === 'lookup' && (
-        <UserLookupTab initialUid={lookupUid} onEditPermissions={handleOpenUserPermissions} />
+        <UserLookupTab onEditPermissions={handleOpenUserPermissions} />
       )}
 
       {mainTab === 'announcements' && <AnnouncementsTab />}
       {mainTab === 'payments' && <PaymentsTab />}
-
-      {mainTab === 'requests' && (
-        <div className="space-y-4">
-          {/* Subfilter Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-stone-50 p-2.5 rounded-xl border border-stone-200">
-            <div className="flex items-center space-x-1.5">
-              <button
-                type="button"
-                onClick={() => setRequestsSubTab('pending')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                  requestsSubTab === 'pending'
-                    ? 'bg-white text-stone-900 shadow-xs border border-stone-200'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                Хүлээгдэж буй ({pendingRequests.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setRequestsSubTab('approved')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                  requestsSubTab === 'approved'
-                    ? 'bg-white text-stone-900 shadow-xs border border-stone-200'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                Бүртгэлтэй хэрэглэгчид ({approvedAccounts.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setRequestsSubTab('all')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                  requestsSubTab === 'all'
-                    ? 'bg-white text-stone-900 shadow-xs border border-stone-200'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                Бүх түүх ({requests.length})
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={loadData}
-              className="p-1.5 text-stone-600 hover:text-stone-900 rounded-lg hover:bg-stone-200/60 transition-colors cursor-pointer"
-              title="Шинэчлэх"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Requests Content */}
-          {requestsSubTab === 'approved' ? (
-            /* Approved Accounts List */
-            approvedAccounts.length === 0 ? (
-              <div className="text-center py-12 text-stone-400 text-xs bg-stone-50 rounded-2xl border border-stone-200/60">
-                Бүртгэлтэй хэрэглэгч одоогоор алга байна.
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {approvedAccounts.map((account) => {
-                  const uId = account.userId || userPermissionsService.generateUserId(account.email || account.phoneNumber || '');
-                  return (
-                    <div
-                      key={uId}
-                      className="p-3.5 bg-white rounded-xl border border-stone-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-amber-300 transition-colors"
-                    >
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center space-x-2 flex-wrap gap-1">
-                          <span className="text-xs font-bold text-stone-900">{account.fullName}</span>
-                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300/80">
-                            ID: {uId}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(uId, uId)}
-                            className="p-0.5 text-stone-400 hover:text-stone-700 cursor-pointer"
-                            title="ID хуулах"
-                          >
-                            {copiedId === uId ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                          </button>
-                        </div>
-                        <div className="text-xs text-stone-600 flex items-center space-x-2 truncate">
-                          {account.phoneNumber && <span>{account.phoneNumber}</span>}
-                          {account.email && <span>• {account.email}</span>}
-                          {account.school && <span>• {account.school}</span>}
-                          {account.grades && account.grades.length > 0 && (
-                            <span>• {account.grades.join(', ')}-р анги</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2 shrink-0">
-                        {/* Everything about this user */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setLookupUid(account.uid || null);
-                            setMainTab('lookup');
-                          }}
-                          className="px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-bold rounded-lg transition-colors cursor-pointer"
-                          title="Энэ хэрэглэгчийн бүх мэдээлэл"
-                        >
-                          Дэлгэрэнгүй
-                        </button>
-
-                        {/* Jump to User Permissions */}
-                        <button
-                          type="button"
-                          onClick={() => handleOpenUserPermissions(uId)}
-                          className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold rounded-lg flex items-center space-x-1.5 transition-colors cursor-pointer"
-                          title="Энэ хэрэглэгчийн эрхийг тохируулах"
-                        >
-                          <UserCog className="w-3.5 h-3.5 text-stone-600" />
-                          <span>Эрх тохируулах</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleToggleAccount(account.phoneNumber || account.email)}
-                          className={`px-2.5 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                            account.active
-                              ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                              : 'bg-stone-200 text-stone-600 hover:bg-stone-300'
-                          }`}
-                        >
-                          {account.active ? 'Идэвхтэй' : 'Хаагдсан'}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteAccount(account.phoneNumber || account.email)}
-                          className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
-                          title="Устгах"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                    </div>
-                  );
-                })}
-              </div>
-            )
-          ) : (
-            /* Pending or All Requests List */
-            (requestsSubTab === 'pending' ? pendingRequests : requests).length === 0 ? (
-              <div className="text-center py-12 text-stone-400 text-xs bg-stone-50 rounded-2xl border border-stone-200/60">
-                {requestsSubTab === 'pending'
-                  ? 'Одоогоор хүлээгдэж буй нэвтрэх хүсэлт алга байна.'
-                  : 'Хүсэлтийн бүртгэл одоогоор алга байна.'}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {(requestsSubTab === 'pending' ? pendingRequests : requests).map((req) => {
-                  const uId = req.userId || userPermissionsService.generateUserId(req.email || req.phoneNumber);
-                  return (
-                    <div
-                      key={req.id}
-                      className="p-4 bg-white rounded-2xl border border-stone-200 shadow-xs space-y-3 hover:border-amber-300 transition-colors"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="space-y-0.5">
-                          <div className="flex items-center space-x-2 flex-wrap gap-1">
-                            <span className="text-xs font-black text-stone-900">{req.fullName}</span>
-                            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300/80">
-                              ID: {uId}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => copyToClipboard(uId, req.id)}
-                              className="p-0.5 text-stone-400 hover:text-stone-700 cursor-pointer"
-                              title="ID хуулах"
-                            >
-                              {copiedId === req.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                            </button>
-                          </div>
-                          <div className="text-xs text-stone-600 flex items-center space-x-2 truncate">
-                            <span>{req.email}</span>
-                            {req.phoneNumber && <span>• {req.phoneNumber}</span>}
-                            {req.school && <span>• {req.school}</span>}
-                          </div>
-                        </div>
-
-                        {/* Status Badge */}
-                        <div className="flex items-center space-x-2">
-                          {req.status === 'pending' && (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 flex items-center space-x-1">
-                              <Clock className="w-3 h-3" />
-                              <span>Хүлээгдэж байна</span>
-                            </span>
-                          )}
-                          {req.status === 'approved' && (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center space-x-1">
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>Зөвшөөрсөн</span>
-                            </span>
-                          )}
-                          {req.status === 'rejected' && (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-stone-100 text-stone-600 border border-stone-300 flex items-center space-x-1">
-                              <XCircle className="w-3 h-3" />
-                              <span>Татгалзсан</span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {req.note && (
-                        <p className="text-xs text-stone-600 bg-stone-50 p-2.5 rounded-lg border border-stone-200">
-                          {req.note}
-                        </p>
-                      )}
-
-                      {/* Actions */}
-                      <div className="flex items-center justify-between pt-1 border-t border-stone-100 text-xs">
-                        <div className="text-[11px] text-stone-400">
-                          Хүсэлт илгээсэн: {new Date(req.requestedAt).toLocaleString()}
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenUserPermissions(uId)}
-                            className="px-2.5 py-1 text-xs font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors cursor-pointer"
-                            title="Эрх тохируулах"
-                          >
-                            Эрх тохируулах
-                          </button>
-
-                          {req.status === 'pending' && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => handleApprove(req.id)}
-                                className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black rounded-lg transition-colors cursor-pointer shadow-2xs"
-                              >
-                                Зөвшөөрөх
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleReject(req.id)}
-                                className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-lg transition-colors cursor-pointer"
-                              >
-                                Татгалзах
-                              </button>
-                            </>
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(req.id)}
-                            className="p-1 text-stone-400 hover:text-rose-600 transition-colors cursor-pointer"
-                            title="Устгах"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )
-          )}
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* TAB 2: ХЭРЭГЛЭГЧИЙН ЭРХ ТОХИРУУЛАХ (User Permissions by User ID) */}
