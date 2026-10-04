@@ -500,7 +500,7 @@ export default function App() {
               <span className="w-7 h-7 rounded-md bg-stone-900 text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
                 ∑
               </span>
-              <span className="font-extrabold text-sm md:text-base tracking-tight text-stone-950 hidden sm:inline whitespace-nowrap">
+              <span className="font-extrabold text-sm md:text-base tracking-tight text-stone-950 hidden lg:inline whitespace-nowrap">
                 Математикийн сургалтын материалын сан
               </span>
             </div>
@@ -509,7 +509,7 @@ export default function App() {
           <div className="flex-1" />
 
           {/* Action buttons */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
             {currentUser.role !== 'admin' && getFirebaseAuth().currentUser && (
               <AnnouncementsBell uid={getFirebaseAuth().currentUser!.uid} />
             )}
@@ -560,7 +560,7 @@ export default function App() {
                       data-testid={`preview-${mode}`}
                     >
                       <Icon className="w-4 h-4" />
-                      <span className="hidden sm:inline text-[11px] font-bold pr-0.5">{label}</span>
+                      <span className="hidden md:inline text-[11px] font-bold pr-0.5">{label}</span>
                     </button>
                   );
                 })}
@@ -573,12 +573,13 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setPrintMenuOpen((prev) => !prev)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-stone-900 hover:bg-black text-white flex items-center space-x-1.5 shadow-xs transition-colors cursor-pointer"
+                  className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold bg-stone-900 hover:bg-black text-white flex items-center space-x-1.5 shadow-xs transition-colors cursor-pointer"
                   aria-expanded={printMenuOpen}
+                  aria-label="Хэвлэх"
                 >
                   <Printer className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Хэвлэх</span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-stone-400 transition-transform duration-150 ${printMenuOpen ? 'rotate-180' : ''}`} />
+                  <span className="hidden sm:inline">Хэвлэх</span>
+                  <ChevronDown className={`hidden sm:block w-3.5 h-3.5 text-stone-400 transition-transform duration-150 ${printMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {printMenuOpen && (
