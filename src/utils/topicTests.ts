@@ -20,7 +20,7 @@ export function generateTopicTests(
       {
         id: `t1-${topicId}-q1`,
         number: 1,
-        question: `«${topicTitle}» сэдвийн хүрээнд $2a + 3b$ илэрхийллийн утгыг ол, энд $a=4, b=2$.`,
+        question: `$2a + 3b$ илэрхийллийн утгыг ол, энд $a=4, b=2$.`,
         options: ['14', '12', '16', '10'],
         points: 3,
         answer: 'A',
@@ -29,7 +29,7 @@ export function generateTopicTests(
       {
         id: `t1-${topicId}-q2`,
         number: 2,
-        question: `«${topicTitle}» сэдвийн хүрээнд дараах өгүүлбэрүүдээс ҮНЭН чанарыг сонго:`,
+        question: `Дараах өгүүлбэрүүдээс ҮНЭН чанарыг сонго:`,
         options: ['$x + 0 = x$', '$x \\times 0 = x$', '$x - x = 1$', '$x \\div 1 = 0$'],
         points: 3,
         answer: 'A',
@@ -58,7 +58,7 @@ export function generateTopicTests(
       {
         id: `t2-${topicId}-q1`,
         number: 1,
-        question: `«${topicTitle}» сэдвээр $3(2x - 5) - 4(x - 2)$ илэрхийллийг хялбарчил:`,
+        question: `$3(2x - 5) - 4(x - 2)$ илэрхийллийг хялбарчил:`,
         options: ['$2x - 7$', '$2x - 23$', '$10x - 7$', '$2x + 7$'],
         points: 5,
         answer: 'A',

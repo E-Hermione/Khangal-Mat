@@ -2,9 +2,12 @@ import { TestQuestion } from '../types';
 import { answerKeyHash, candidateKeys } from '../services/answers';
 
 // Helper to get multiple-choice options for any test question
-/** The question without the "A) … B) …" choices written into its text (they are shown as buttons). */
+/** The question as a test shows it: without a topic-name prefix or the "A) … B) …" choices written into its text. */
 export function questionStem(q: TestQuestion): string {
-  const text = q.question || '';
+  // A test does not say which topic a question is from: drop a leading "«Topic» сэдвээр / сэдвийн хүрээнд"
+  let text = q.question || '';
+  const rest = text.replace(/^\s*«[^»]*»\s*сэдв(?:ээр|ийн хүрээнд)\s*,?\s*/u, '');
+  if (rest !== text) text = rest.charAt(0).toUpperCase() + rest.slice(1);
   const markers = [...text.matchAll(/(^|\s)([A-D])\)\s/g)];
   const first = markers.find((m) => m[2] === 'A');
   if (!first || !markers.some((m) => m[2] === 'B' && m.index! > first.index!)) return text;
