@@ -531,7 +531,7 @@ export default function App() {
                   ['general', 'Ерөнхий', 'Ерөнхий харагдац: админы эрхтэй, засах товчгүй', Presentation],
                   ['unpaid', 'Төлөөгүй', 'Төлбөр төлөөгүй хэрэглэгчээр харах', UserX],
                   ['paid', 'Төлсөн', 'Төлбөр төлсөн хэрэглэгчээр харах', UserCheck],
-                ] as const).map(([mode, label, title, Icon]) => {
+                ] as const).map(([mode, , title, Icon]) => {
                   const active =
                     mode === 'admin'
                       ? !previewAsUser && !generalView
@@ -560,7 +560,6 @@ export default function App() {
                       data-testid={`preview-${mode}`}
                     >
                       <Icon className="w-4 h-4" />
-                      <span className="hidden md:inline text-[11px] font-bold pr-0.5">{label}</span>
                     </button>
                   );
                 })}
