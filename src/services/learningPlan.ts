@@ -310,6 +310,8 @@ export const learningPlan = {
   canTakePlacement(grade: GradeNumber): boolean {
     return (
       !!state.uid &&
+      // A student takes their own grade's test or a lower grade's, never a higher one
+      (!state.grade || grade <= state.grade) &&
       !!state.results &&
       cloud.getAppSettings().placementEnabled &&
       placementSize(grade).questions > 0

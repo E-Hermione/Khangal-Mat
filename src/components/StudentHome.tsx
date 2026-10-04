@@ -288,7 +288,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
           </div>
           <div className="rounded-xl bg-stone-50 border border-stone-100 p-2.5">
             <div className="grid grid-cols-7 gap-1.5" data-testid="placement-grades">
-              {GRADES.map((g) => {
+              {GRADES.filter((g) => !grade || g <= grade).map((g) => {
                 const taken = learningPlan.resultFor(g);
                 const open = learningPlan.canTakePlacement(g);
                 const count = placementSize(g).questions;
