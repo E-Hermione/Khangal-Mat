@@ -5,7 +5,7 @@ import { userPermissionsService } from '../services/userPermissionsService';
 import { storageService } from '../services/storageService';
 import { loadUserAttempts, AttemptMap, ExamAttempt } from '../services/examAttempts';
 import { GRADE_TOPICS_CATALOG } from '../data/initialData';
-import { ApprovedAccount, GradeNumber, TestPackage } from '../types';
+import { ApprovedAccount, GradeNumber, PermissionHistoryEntry, TestPackage } from '../types';
 import { generateTopicTests } from './ExamsHub';
 import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect, questionStem } from '../utils/examGrading';
 import { MathRenderer } from './MathRenderer';
@@ -101,6 +101,27 @@ const Section: React.FC<{ icon: React.ReactNode; title: string; children: React.
     {children}
   </div>
 );
+
+// Times the access period was extended, newest first: when, by how long, and until when
+function accessExtensions(history: PermissionHistoryEntry[]): { at: number; length: string; until: number }[] {
+  const DAY = 86400000;
+  const list: { at: number; length: string; until: number }[] = [];
+  let prev: number | null = null;
+  for (const h of history) {
+    if (h.kind === 'account' || typeof h.expiresAt !== 'number') continue;
+    if (prev === null || h.expiresAt > prev) {
+      // Counted from the old end date, or from that day if access had already run out
+      const from = Math.max(prev ?? 0, h.at);
+      const days = Math.round((h.expiresAt - from) / DAY);
+      if (days > 0) {
+        const months = Math.round(days / 30);
+        list.push({ at: h.at, length: days >= 28 ? `${months} сар` : `${days} хоног`, until: h.expiresAt });
+      }
+    }
+    prev = h.expiresAt;
+  }
+  return list.reverse();
+}
 
 export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions, initialUid }) => {
   const [query, setQuery] = useState('');
@@ -208,6 +229,7 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
     .sort(([, a], [, b]) => b.wrong / b.total - a.wrong / a.total);
 
   const perms = user?.userId ? userPermissionsService.getUserPermissions(user.userId) : null;
+  const extensions = accessExtensions(perms?.history || []);
 
   return (
     <div className="space-y-4">
@@ -345,27 +367,17 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
             )}
           </Section>
 
-          <Section icon={<History className="w-4 h-4 text-stone-600" />} title="Эрхийн түүх">
-            {!perms?.history?.length ? (
-              <div className="text-xs text-stone-400">Эрх өөрчилсөн түүх алга.</div>
+          <Section icon={<History className="w-4 h-4 text-stone-600" />} title="Сунгалтын түүх">
+            {extensions.length === 0 ? (
+              <div className="text-xs text-stone-400">Эрх сунгаж байгаагүй.</div>
             ) : (
               <div className="space-y-1.5 text-xs max-h-64 overflow-y-auto" data-testid="permission-history">
-                {[...perms.history].reverse().map((h, i) => (
-                  <div key={i} className="flex gap-3 border-b border-stone-100 pb-1.5 last:border-0">
-                    <span className="text-stone-500 whitespace-nowrap">{formatDate(h.at)}</span>
-                    {h.kind === 'account' ? (
-                      <span className={h.active ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>
-                        {h.active ? 'Бүртгэлийг нээсэн' : 'Бүртгэлийг хаасан'}
-                      </span>
-                    ) : (
-                      <span className="text-stone-800">
-                        Ангиуд: <b>{h.allowedGrades?.length ? [...h.allowedGrades].sort((a, b) => a - b).join(', ') : 'байхгүй'}</b>
-                        {' • '}
-                        Хугацаа:{' '}
-                        <b>{typeof h.expiresAt === 'number' ? `${new Date(h.expiresAt).toLocaleDateString()} хүртэл` : 'хязгааргүй'}</b>
-                        {h.isBlocked && <b className="text-red-600"> • Хаагдсан</b>}
-                      </span>
-                    )}
+                {extensions.map((e, i) => (
+                  <div key={i} className="flex flex-wrap items-baseline gap-x-3 border-b border-stone-100 pb-1.5 last:border-0">
+                    <span className="text-stone-500 whitespace-nowrap">{new Date(e.at).toLocaleDateString()}</span>
+                    <span className="text-stone-800">
+                      <b>{e.length}</b> сунгасан <span className="text-stone-500">({new Date(e.until).toLocaleDateString()} хүртэл)</span>
+                    </span>
                   </div>
                 ))}
               </div>
