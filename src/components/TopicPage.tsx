@@ -352,19 +352,17 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   return (
     <div className="w-full">
       {/* Screen Breadcrumb & Title Bar */}
-      <div className="no-print mb-5 bg-stone-900 rounded-3xl px-5 md:px-7 py-5">
+      <div className="no-print mb-5">
         <div className="text-xs text-stone-400 mb-2">
           <nav className="flex items-center space-x-1.5 font-medium">
-            <span className="font-bold text-white">{topic.grade}-р анги</span>
-            <ChevronRight className="w-3.5 h-3.5 text-stone-500" />
+            <span className="font-bold text-stone-500">{topic.grade}-р анги</span>
+            <ChevronRight className="w-3.5 h-3.5 text-stone-300" />
             <span>{topic.category}</span>
-            <ChevronRight className="w-3.5 h-3.5 text-stone-500" />
-            <span className="text-amber-400 font-bold">{topic.title}</span>
           </nav>
         </div>
 
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-black text-stone-950 tracking-tight">
             {topic.title}
           </h1>
 
@@ -373,10 +371,10 @@ export const TopicPage: React.FC<TopicPageProps> = ({
             <button
               type="button"
               onClick={onOpenAdmin}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-stone-200 hover:text-white bg-white/10 hover:bg-white/15 border border-white/10 rounded-lg transition-all cursor-pointer shadow-2xs shrink-0"
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:text-stone-950 bg-white hover:bg-stone-50 border border-stone-200 rounded-lg transition-all cursor-pointer shadow-2xs shrink-0"
               title="Сэдвийн агуулга, онол, дасгал, шалгалтыг засах"
             >
-              <Pencil className="w-3.5 h-3.5 text-stone-400" />
+              <Pencil className="w-3.5 h-3.5 text-stone-500" />
               <span>Сэдэв засах</span>
             </button>
             </div>
@@ -384,59 +382,11 @@ export const TopicPage: React.FC<TopicPageProps> = ({
         </div>
 
         {topic.description && (
-          <p className="text-xs md:text-sm text-stone-400 mt-1 max-w-3xl leading-relaxed">
+          <p className="text-xs md:text-sm text-stone-500 mt-1 max-w-3xl leading-relaxed">
             {topic.description}
           </p>
         )}
 
-        {/* Tabs: one part of the lesson at a time */}
-        {showLesson && (() => {
-          const tabs = (
-            [
-              ['theory', 'Онол', mainTopic.theory.length, (isAdmin && selection.theory) || (!isAdmin && isTheoryAllowed)],
-              ['examples', 'Жишээ', mainTopic.examples.length, (isAdmin && selection.examples) || (!isAdmin && isExamplesAllowed)],
-              ['practice', 'Дасгал', mainTopic.practice.length, (isAdmin && selection.practice) || (!isAdmin && isPracticeAllowed)],
-            ] as const
-          ).filter(([, , , shown]) => shown);
-          if (tabs.length > 0 && !tabs.some(([key]) => key === lessonTab)) setTimeout(() => setLessonTab(tabs[0][0]));
-          return (
-            tabs.length > 0 && (
-              <div
-                className="grid gap-2 mt-5"
-                style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
-                role="tablist"
-                data-testid="lesson-tabs"
-              >
-                {tabs.map(([key, label], i) => {
-                  const on = lessonTab === key;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      role="tab"
-                      aria-selected={on}
-                      onClick={() => setLessonTab(key)}
-                      className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-sm font-extrabold transition-colors cursor-pointer ${
-                        on
-                          ? 'bg-amber-500 border-amber-500 text-stone-950'
-                          : 'bg-white/5 border-white/10 text-stone-300 hover:bg-white/10 hover:text-white'
-                      }`}
-                    >
-                      <span
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
-                          on ? 'bg-stone-900 text-amber-400' : 'bg-white/10 text-stone-400'
-                        }`}
-                      >
-                        {i + 1}
-                      </span>
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            )
-          );
-        })()}
       </div>
 
       {/* MAIN DOCUMENT CANVAS */}
@@ -502,6 +452,44 @@ export const TopicPage: React.FC<TopicPageProps> = ({
       ) : (
         <>
         <article className="print-container bg-white rounded-[28px] shadow-[0_20px_40px_-12px_rgba(17,24,39,0.18)] px-5 md:px-10 pt-6 pb-8 print:shadow-none print:rounded-none print:p-0">
+          {/* Tabs at the top of the lesson card: one part of the lesson at a time */}
+        {showLesson && (() => {
+          const tabs = (
+            [
+              ['theory', 'Онол', mainTopic.theory.length, (isAdmin && selection.theory) || (!isAdmin && isTheoryAllowed)],
+              ['examples', 'Жишээ', mainTopic.examples.length, (isAdmin && selection.examples) || (!isAdmin && isExamplesAllowed)],
+              ['practice', 'Дасгал', mainTopic.practice.length, (isAdmin && selection.practice) || (!isAdmin && isPracticeAllowed)],
+            ] as const
+          ).filter(([, , , shown]) => shown);
+          if (tabs.length > 0 && !tabs.some(([key]) => key === lessonTab)) setTimeout(() => setLessonTab(tabs[0][0]));
+          return (
+            tabs.length > 0 && (
+              <div
+                className="flex gap-1 p-1 mb-6 rounded-xl bg-stone-100 no-print"
+                role="tablist"
+                data-testid="lesson-tabs"
+              >
+                {tabs.map(([key, label]) => {
+                  const on = lessonTab === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      role="tab"
+                      aria-selected={on}
+                      onClick={() => setLessonTab(key)}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
+                        on ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-800'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )
+          );
+        })()}
           {/* Admin with nothing selected */}
           {isAdmin && !anyAdminSectionSelected && (
             <div className="py-16 text-center text-stone-400 border-2 border-dashed border-stone-200 rounded-xl my-4 no-print">
