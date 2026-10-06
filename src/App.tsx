@@ -298,6 +298,14 @@ export default function App() {
     setTopics(loaded);
   };
 
+  // A deleted topic is never shown: if the open topic was deleted, open the grade's first topic
+  useEffect(() => {
+    const removed = appSettings.removedTopicIds || [];
+    if (!removed.includes(selectedTopicId) || topics.some((t) => t.id === selectedTopicId)) return;
+    const first = topics.find((t) => t.grade === selectedGrade) || catalogTopics(selectedGrade)[0];
+    if (first) setSelectedTopicId(first.id);
+  }, [appSettings, topics, selectedTopicId, selectedGrade]);
+
   // Find active topic or generate fallback package if clicked on catalogue item that has not been initialized
   const currentTopic: TopicPackage = useMemo(() => {
     const existing = topics.find((t) => t.id === selectedTopicId);
