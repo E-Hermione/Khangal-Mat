@@ -10,7 +10,6 @@ import { userPermissionsService } from '../services/userPermissionsService';
 import { learningPlan, useLearningPlanVersion } from '../services/learningPlan';
 import { loadPracticeGrants, usePracticeSolutions } from '../services/practiceSolutions';
 import { PracticeGrantsDialog } from './PracticeGrantsDialog';
-import { cloud } from '../services/cloud';
 import { getFirebaseAuth } from '../services/firebase';
 import { AuthUser } from '../types';
 import {
@@ -19,7 +18,6 @@ import {
   Lock,
   BookOpen,
   Pencil,
-  Gift,
   Award,
   Play,
   ArrowRight,
@@ -95,13 +93,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
       window.removeEventListener('user-permissions-updated', handleUpdate);
     };
   }, [topic.id]);
-
-  // Admin: open this topic to everyone as a free sample of the lessons
-  const isFree = learningPlan.isFree(topic.id);
-  const toggleFree = () => {
-    const ids = cloud.getAppSettings().freeTopicIds || [];
-    cloud.setAppSettings({ freeTopicIds: isFree ? ids.filter((id) => id !== topic.id) : [...ids, topic.id] });
-  };
 
   const planOpen = planGate === 'open';
   // An open topic shows all its parts; the hidden/locked cases are handled below
@@ -376,20 +367,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
 
           {isAdmin && onOpenAdmin && (
             <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={toggleFree}
-              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer shadow-2xs ${
-                isFree
-                  ? 'bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700'
-                  : 'bg-white border-stone-300 text-stone-700 hover:bg-stone-50'
-              }`}
-              title="Төлбөр төлөөгүй хэрэглэгчдэд хичээл ямар байдгийг харуулах үнэгүй сэдэв"
-              data-testid="toggle-free-topic"
-            >
-              <Gift className="w-3.5 h-3.5" />
-              <span>{isFree ? 'Үнэгүй нээлттэй' : 'Үнэгүй нээх'}</span>
-            </button>
             <button
               type="button"
               onClick={onOpenAdmin}
