@@ -2,6 +2,7 @@ import React from 'react';
 import { PracticeProblem } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { PencilLine, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
+import { LessonSectionHeader } from './LessonSectionHeader';
 
 interface PracticeSectionProps {
   practice: PracticeProblem[];
@@ -32,26 +33,27 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
 
   const difficultyLabels: Record<string, { label: string; badgeClass: string }> = {
     easy: {
-      label: 'Хялбар түвшин',
-      badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-300 print:bg-stone-100 print:text-black print:border-black',
+      label: 'Хялбар',
+      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 print:bg-white print:text-black print:border-black',
     },
     medium: {
-      label: 'Дунд түвшин',
-      badgeClass: 'bg-amber-50 text-amber-800 border-amber-300 print:bg-stone-100 print:text-black print:border-black',
+      label: 'Дунд',
+      badgeClass: 'bg-amber-50 text-amber-700 border-amber-200 print:bg-white print:text-black print:border-black',
     },
     hard: {
-      label: 'Ахисан түвшин',
-      badgeClass: 'bg-rose-50 text-rose-800 border-rose-300 print:bg-stone-100 print:text-black print:border-black',
+      label: 'Ахисан',
+      badgeClass: 'bg-rose-50 text-rose-700 border-rose-200 print:bg-white print:text-black print:border-black',
     },
   };
 
   return (
-    <section className="mb-8 print:mb-6" id="section-practice">
-      <div className="flex items-center justify-between pb-2 mb-4 border-b-2 border-stone-800 print:border-black">
-        <h2 className="text-lg md:text-xl font-black tracking-tight text-stone-900 print:text-black uppercase">
-          III. БИЕ ДААХ ДАСГАЛ БОДЛОГО
-        </h2>
-        <div className="flex items-center space-x-2 no-print">
+    <section className="mb-12 print:mb-6" id="section-practice">
+      <LessonSectionHeader
+        icon={<PencilLine className="w-5 h-5" />}
+        title="Дасгал"
+        subtitle="Бие даан бодоорой: хялбараас ахисан руу"
+        tone="emerald"
+      >
           {headerExtra}
           {isEditable && onAddPractice && (
             <button
@@ -83,12 +85,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
             )}
           </button>
           )}
-        </div>
-      </div>
-
-      <p className="text-xs text-stone-600 print:text-stone-700 mb-4 italic">
-        Дараах бодлогуудыг бодолтын дэвтэр эсвэл доорх зайд шат дараалан гүйцэтгэнэ үү. (Хялбар → Дунд → Ахисан шатлалтай)
-      </p>
+      </LessonSectionHeader>
 
       {(!practice || practice.length === 0) ? (
         <div className="p-8 text-center border-2 border-dashed border-stone-200 rounded-xl my-3 text-stone-400">
@@ -112,15 +109,15 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
             return (
               <div
                 key={item.id || item.number || idx}
-                className="avoid-break bg-white border border-stone-300 print:border-stone-800 rounded-lg p-3.5 md:p-4 shadow-xs print:shadow-none relative group"
+                className="avoid-break bg-white border border-stone-200 rounded-2xl p-5 shadow-sm print:border-stone-500 print:shadow-none print:rounded-lg print:p-3 relative group"
               >
                 {/* Question header */}
-                <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-stone-100 print:border-stone-300">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-extrabold text-sm md:text-base text-stone-950 print:text-black">
-                      Дасгал {item.number}.
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-8 h-8 rounded-full bg-stone-900 text-white text-xs font-black flex items-center justify-center print:bg-white print:text-black print:border print:border-black">
+                      {item.number}
                     </span>
-                    <span className={`text-[10px] md:text-[11px] font-bold px-2 py-0.5 rounded border ${diff.badgeClass}`}>
+                    <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${diff.badgeClass}`}>
                       {diff.label}
                     </span>
                   </div>
@@ -156,14 +153,14 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                 </div>
 
                 {/* Question body */}
-                <div className="text-stone-900 print:text-black text-sm md:text-base mb-2 leading-relaxed font-normal">
+                <div className="text-stone-900 print:text-black text-[15px] mb-2 leading-relaxed">
                   <MathRenderer content={item.question} />
                 </div>
 
                 {/* Optional Hint */}
                 {item.hint && (
-                  <div className="text-[11px] text-amber-900/80 bg-amber-50/50 print:bg-transparent print:border-stone-300 p-1.5 rounded mb-2 border border-amber-200/60 inline-block">
-                    <span className="font-semibold">Зөвлөмж: </span>
+                  <div className="text-xs text-amber-900 bg-amber-50 print:bg-transparent print:border print:border-stone-300 px-3 py-2 rounded-xl mb-2 inline-block">
+                    <span className="font-bold">💡 Зөвлөмж: </span>
                     <MathRenderer content={item.hint} className="inline" />
                   </div>
                 )}
@@ -178,9 +175,9 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
 
                 {/* Teacher Solution on Screen or in Print */}
                 {showSol && item.answer && (
-                  <div className="mt-3 p-3 bg-amber-50/70 print:bg-stone-100 border border-amber-200 print:border-stone-500 rounded-md text-xs md:text-sm">
-                    <div className="font-bold text-amber-950 print:text-black mb-1">
-                      Шалгах хариу: <span className="font-mono text-emerald-700 print:text-black"><MathRenderer content={item.answer} className="inline" /></span>
+                  <div className="mt-3 p-4 bg-emerald-50 print:bg-stone-100 border border-emerald-100 print:border-stone-500 rounded-xl text-sm">
+                    <div className="font-bold text-emerald-900 print:text-black mb-1">
+                      Хариу: <span className="text-emerald-700 print:text-black"><MathRenderer content={item.answer} className="inline" /></span>
                     </div>
                     {item.solution && (
                       <div className="text-stone-700 print:text-black mt-1">

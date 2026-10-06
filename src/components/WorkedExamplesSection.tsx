@@ -2,6 +2,7 @@ import React from 'react';
 import { WorkedExample } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { Lightbulb, Plus, Edit2, Trash2 } from 'lucide-react';
+import { LessonSectionHeader } from './LessonSectionHeader';
 
 interface WorkedExamplesSectionProps {
   examples: WorkedExample[];
@@ -19,11 +20,13 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
   onAddExample,
 }) => {
   return (
-    <section className="mb-8 print:mb-6" id="section-examples">
-      <div className="flex items-center justify-between pb-2 mb-4 border-b-2 border-stone-800 print:border-black">
-        <h2 className="text-lg md:text-xl font-black tracking-tight text-stone-900 print:text-black uppercase">
-          II. ЖИШЭЭ БОДЛОГО БА БОДОЛТ
-        </h2>
+    <section className="mb-12 print:mb-6" id="section-examples">
+      <LessonSectionHeader
+        icon={<Lightbulb className="w-5 h-5" />}
+        title="Жишээ"
+        subtitle={examples?.length ? `${examples.length} бодлого алхам алхмаар бодсон` : undefined}
+        tone="violet"
+      >
 
         {isEditable && onAddExample && (
           <button
@@ -35,7 +38,7 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
             <span>Жишээ нэмэх</span>
           </button>
         )}
-      </div>
+      </LessonSectionHeader>
 
       {(!examples || examples.length === 0) ? (
         <div className="p-8 text-center border-2 border-dashed border-stone-200 rounded-xl my-3 text-stone-400">
@@ -51,18 +54,19 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
           )}
         </div>
       ) : (
-        <div className="space-y-4 print:space-y-3.5">
+        <div className="space-y-5 print:space-y-3.5">
           {examples.map((ex, idx) => (
             <div
               key={ex.id || ex.number || idx}
-              className="avoid-break bg-white border border-stone-300 print:border-stone-800 rounded-lg p-3.5 md:p-4 shadow-xs print:shadow-none relative group"
+              className="avoid-break bg-white border border-stone-200 rounded-2xl p-5 shadow-sm print:border-stone-500 print:shadow-none print:rounded-lg print:p-3 relative group"
             >
               {/* Title & Example Number */}
-              <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-stone-200 print:border-stone-400">
-                <div className="flex items-center space-x-2 flex-wrap">
-                  <span className="font-extrabold text-sm md:text-base text-stone-950 print:text-black">
-                    Жишээ {ex.number}. {ex.title ? <span className="font-semibold text-stone-700 print:text-stone-900">({ex.title})</span> : null}
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 print:bg-white print:text-black print:border print:border-black">
+                    Жишээ {ex.number}
                   </span>
+                  {ex.title && <span className="font-bold text-sm text-stone-800 print:text-black">{ex.title}</span>}
                 </div>
 
                 {/* Edit & Delete actions */}
@@ -97,27 +101,30 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
               </div>
 
               {/* Problem Statement */}
-              <div className="font-medium text-stone-900 print:text-black text-sm md:text-base mb-3 leading-relaxed">
+              <div className="font-medium text-stone-900 print:text-black text-[15px] mb-4 leading-relaxed">
                 <MathRenderer content={ex.problem} />
               </div>
 
               {/* Step-by-step Solution */}
-              <div className="bg-stone-50 print:bg-stone-50/50 rounded-md p-3 border border-stone-200 print:border-stone-400 mb-2.5">
-                <div className="font-bold text-xs md:text-sm text-stone-800 print:text-black mb-1.5 uppercase tracking-wide">
-                  Бодолт:
-                </div>
-                <ol className="space-y-1.5 text-xs md:text-sm text-stone-800 print:text-black list-decimal list-inside pl-1">
+              <div className="rounded-xl bg-stone-50 p-4 mb-3 print:bg-white print:border print:border-stone-400 print:p-2.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2.5 print:text-black">Бодолт</div>
+                <ol className="space-y-2.5 text-sm text-stone-700 print:text-black">
                   {ex.solutionSteps.map((step, sIdx) => (
-                    <li key={sIdx} className="leading-relaxed">
-                      <MathRenderer content={step} className="inline" />
+                    <li key={sIdx} className="flex gap-3 leading-relaxed">
+                      <span className="w-5 h-5 mt-0.5 rounded-full bg-white border border-violet-200 text-violet-700 text-[10px] font-black flex items-center justify-center shrink-0 print:border-black print:text-black">
+                        {sIdx + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <MathRenderer content={step} className="inline" />
+                      </div>
                     </li>
                   ))}
                 </ol>
               </div>
 
               {/* Final Answer */}
-              <div className="flex items-baseline space-x-2 text-xs md:text-sm pt-1">
-                <span className="font-bold text-stone-900 print:text-black">Хариу:</span>
+              <div className="inline-flex flex-wrap items-baseline gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-sm print:bg-white print:border-black">
+                <span className="font-bold text-emerald-800 print:text-black">Хариу:</span>
                 <span className="font-semibold text-stone-900 print:text-black">
                   <MathRenderer content={ex.answer} className="inline" />
                 </span>

@@ -1,7 +1,8 @@
 import React from 'react';
 import { TheoryRule } from '../types';
 import { MathRenderer } from './MathRenderer';
-import { BookOpen, Plus, Edit2, Trash2 } from 'lucide-react';
+import { BookOpen, Plus, Edit2, Trash2, Lightbulb } from 'lucide-react';
+import { LessonSectionHeader } from './LessonSectionHeader';
 
 interface TheorySectionProps {
   theory: TheoryRule[];
@@ -21,13 +22,13 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
   onAddRule,
 }) => {
   return (
-    <section className="mb-8 print:mb-6" id="section-theory">
-      {/* Section Header */}
-      <div className="flex items-center justify-between pb-2 mb-4 border-b-2 border-stone-800 print:border-black">
-        <h2 className="text-lg md:text-xl font-black tracking-tight text-stone-900 print:text-black uppercase">
-          I. ОНОЛЫН МАТЕРИАЛ БА ДҮРЭМ
-        </h2>
-
+    <section className="mb-12 print:mb-6" id="section-theory">
+      <LessonSectionHeader
+        icon={<BookOpen className="w-5 h-5" />}
+        title="Онол"
+        subtitle={theory?.length ? `${theory.length} дүрэм, тодорхойлолт` : undefined}
+        tone="sky"
+      >
         {isEditable && onAddRule && (
           <button
             type="button"
@@ -38,7 +39,7 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
             <span>Дүрэм нэмэх</span>
           </button>
         )}
-      </div>
+      </LessonSectionHeader>
 
       {prerequisiteNotice && (
         <div className="mb-4 p-3 bg-amber-50/60 border border-amber-200 rounded-md text-xs md:text-sm text-amber-900 print:bg-white print:border-stone-400 print:text-black avoid-break">
@@ -62,24 +63,27 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-3.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 print:grid-cols-2 print:gap-3.5">
           {theory.map((rule, idx) => (
             <div
               key={rule.id || idx}
-              className="avoid-break bg-white border-2 border-stone-800 print:border-black rounded-lg p-3.5 md:p-4 shadow-xs print:shadow-none flex flex-col justify-between relative group"
+              className="avoid-break bg-white border border-stone-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow print:border-stone-500 print:shadow-none print:rounded-lg print:p-3 flex flex-col relative group"
             >
               <div>
                 {/* Header Box */}
-                <div className="flex items-start justify-between gap-2 pb-2 mb-2 border-b border-stone-200 print:border-stone-800">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold text-sm md:text-base text-stone-900 print:text-black uppercase tracking-wide">
-                      {rule.title}
-                    </h3>
-                    {rule.badge && (
-                      <span className="shrink-0 text-[11px] font-semibold px-2 py-0.5 bg-stone-100 print:bg-stone-200 text-stone-800 print:text-black rounded border border-stone-300 print:border-black">
-                        {rule.badge}
-                      </span>
-                    )}
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-start gap-3">
+                    <span className="w-7 h-7 rounded-lg bg-sky-50 text-sky-700 text-xs font-black flex items-center justify-center shrink-0 print:border print:border-black print:bg-white print:text-black">
+                      {idx + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-[15px] leading-snug text-stone-900 print:text-black">{rule.title}</h3>
+                      {rule.badge && (
+                        <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 print:bg-white print:text-black print:border print:border-stone-500">
+                          {rule.badge}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Edit/Delete controls for editable mode */}
@@ -114,13 +118,13 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
                 </div>
 
                 {/* Rule Text */}
-                <div className="text-xs md:text-sm text-stone-800 print:text-black font-normal leading-relaxed">
+                <div className="text-sm text-stone-700 print:text-black leading-relaxed">
                   <MathRenderer content={rule.ruleText} />
                 </div>
 
                 {/* Mathematical Formula Box if exists */}
                 {rule.formula && (
-                  <div className="mt-2.5 p-2 bg-stone-50 print:bg-stone-100 border border-stone-300 print:border-stone-600 rounded text-center">
+                  <div className="mt-4 px-4 py-3 rounded-xl bg-gradient-to-br from-sky-50 to-indigo-50/70 border border-sky-100 text-center overflow-x-auto print:bg-white print:border-stone-500 print:rounded">
                     <MathRenderer content={`$$${rule.formula}$$`} block />
                   </div>
                 )}
@@ -128,9 +132,12 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
 
               {/* Explanatory Note */}
               {rule.note && (
-                <div className="mt-2.5 pt-2 border-t border-dashed border-stone-200 print:border-stone-400 text-[11px] md:text-xs text-stone-600 print:text-stone-800 italic">
-                  <span className="font-semibold not-italic">Тайлбар: </span>
-                  <MathRenderer content={rule.note} className="inline" />
+                <div className="mt-4 flex gap-2 p-3 rounded-xl bg-amber-50 text-xs text-amber-900 leading-relaxed print:bg-white print:border print:border-dashed print:border-stone-500 print:text-black">
+                  <Lightbulb className="w-4 h-4 shrink-0 text-amber-500 print:hidden" />
+                  <div>
+                    <span className="font-bold">Санамж: </span>
+                    <MathRenderer content={rule.note} className="inline" />
+                  </div>
                 </div>
               )}
             </div>

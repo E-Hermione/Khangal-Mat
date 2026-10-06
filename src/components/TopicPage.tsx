@@ -480,7 +480,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           </div>
         </div>
       ) : (
-        <article className="print-container bg-white rounded-xl border border-stone-200 p-6 md:p-10 shadow-xs print:shadow-none print:border-none print:p-0">
+        <article className="print-container pt-2 print:pt-0">
           {/* Admin with nothing selected */}
           {isAdmin && !anyAdminSectionSelected && (
             <div className="py-16 text-center text-stone-400 border-2 border-dashed border-stone-200 rounded-xl my-4 no-print">
