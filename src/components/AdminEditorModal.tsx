@@ -15,6 +15,7 @@ import {
   Award,
   CheckCircle2,
   ShieldCheck,
+  Upload,
 } from 'lucide-react';
 import { backdropClose } from '../utils/backdrop';
 
@@ -61,11 +62,40 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
     setTopic({ ...activeTopic });
   }, [activeTopic]);
 
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   if (!isOpen) return null;
 
   const showStatus = (msg: string) => {
     setStatusMessage(msg);
     setTimeout(() => setStatusMessage(null), 3000);
+  };
+
+  // Fills this topic's lesson from a prepared .json file (theory, examples, exercises, the 3 tests).
+  // The topic keeps its own name, grade and place in the list; item ids get the topic's id in front
+  // so they never clash with another topic's.
+  const importContent = async (file: File) => {
+    try {
+      const data = JSON.parse(await file.text());
+      const pre = (id: string) => (id.startsWith(`${topic.id}-`) ? id : `${topic.id}-${id}`);
+      const withIds = <T extends { id: string }>(list: T[] = []) => list.map((x) => ({ ...x, id: pre(x.id) }));
+      const test = (t: TopicPackage['test1'] | undefined, n: 1 | 2 | 3) =>
+        t ? { ...t, id: pre(t.id || `test${n}`), testNumber: n, questions: withIds(t.questions) } : topic[`test${n}` as 'test1'];
+      if (!Array.isArray(data.theory) && !Array.isArray(data.practice)) throw new Error('bad');
+      setTopic({
+        ...topic,
+        description: data.description ?? topic.description,
+        theory: withIds(data.theory),
+        examples: withIds(data.examples),
+        practice: withIds(data.practice),
+        test1: test(data.test1, 1),
+        test2: test(data.test2, 2),
+        test3: test(data.test3, 3),
+      });
+      showStatus('Файлаас орууллаа. Шалгаад «Хадгалах» дарна уу.');
+    } catch {
+      showStatus('Файлыг уншиж чадсангүй.');
+    }
   };
 
   const handleSave = () => {
@@ -202,6 +232,27 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                 {statusMessage}
               </span>
             )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) importContent(f);
+                e.target.value = '';
+              }}
+              data-testid="import-content-file"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-100 font-bold text-xs flex items-center space-x-1.5 cursor-pointer"
+              title="Бэлэн агуулгыг .json файлаас оруулах"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Файлаас оруулах</span>
+            </button>
             <button
               type="button"
               onClick={handleSave}
