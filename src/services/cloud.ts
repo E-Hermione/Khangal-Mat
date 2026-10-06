@@ -32,6 +32,8 @@ export interface AppSettings {
   placementPerTopic: number;
   // Topics open to everyone as a free sample of the lessons (chosen by the admin)
   freeTopicIds: string[];
+  // Built-in catalog topics the admin deleted from the topic list
+  removedTopicIds: string[];
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -41,6 +43,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   placementEnabled: true,
   placementPerTopic: 3,
   freeTopicIds: [],
+  removedTopicIds: [],
 };
 
 interface CloudState {

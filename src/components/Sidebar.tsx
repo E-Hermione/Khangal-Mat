@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { GradeNumber, AuthUser } from '../types';
-import { GRADES_LIST, GRADE_TOPICS_CATALOG } from '../data/initialData';
+import { GRADES_LIST } from '../data/initialData';
 import { visibilityService, TopicAccessMode } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { storageService } from '../services/storageService';
@@ -28,8 +28,9 @@ import {
   CheckCircle2,
   Home,
   Plus,
+  Trash2,
 } from 'lucide-react';
-import { learningPlan, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
+import { catalogTopics, deleteTopics, learningPlan, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
 import { ProgressRing } from './ProgressRing';
 import { ExamFilter, HomePanel } from './SidebarPanels';
 import { getFirebaseAuth } from '../services/firebase';
@@ -108,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // Get catalog topics + dynamically saved topics that belong or are visible to this grade
   const allTopicsForGrade = useMemo(() => {
-    const baseCatalog = GRADE_TOPICS_CATALOG[selectedGrade] || [];
+    const baseCatalog = catalogTopics(selectedGrade);
     const savedTopics = storageService.getTopics();
 
     // Map by id
@@ -189,8 +190,62 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (parentId) setOpenParents((prev) => (prev.has(parentId) ? prev : new Set(prev).add(parentId)));
   }, [selectedTopicId, allTopicsForGrade]);
 
-  // Admin and general view: add a topic to a category, or a subtopic under a topic
+  // Admin and general view: add a topic to a category, or a subtopic under a topic, or delete one
   const canAddTopics = isAdmin;
+  // Topic waiting for the "delete?" confirmation in its row
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const removeTopic = (id: string) => {
+    const children = allTopicsForGrade.filter((t) => t.parentId === id).map((t) => t.id);
+    deleteTopics([id, ...children]);
+    setConfirmDelete(null);
+    if (selectedTopicId === id || children.includes(selectedTopicId)) {
+      const next = allTopicsForGrade.find((t) => t.id !== id && !children.includes(t.id));
+      if (next) onSelectTopic(next.id);
+    }
+  };
+  const renderRowTools = (topicId: string, withAdd: boolean, category: string) =>
+    confirmDelete === topicId ? (
+      <div className="flex items-center gap-1 shrink-0 pl-1" data-testid="confirm-delete">
+        <span className="text-[10px] font-bold text-rose-300">Устгах уу?</span>
+        <button
+          type="button"
+          onClick={() => removeTopic(topicId)}
+          className="px-1.5 py-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold cursor-pointer"
+        >
+          Тийм
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(null)}
+          className="px-1.5 py-0.5 rounded bg-stone-700 hover:bg-stone-600 text-stone-200 text-[10px] font-bold cursor-pointer"
+        >
+          Үгүй
+        </button>
+      </div>
+    ) : (
+      <div className="flex items-center shrink-0">
+        {withAdd && (
+          <button
+            type="button"
+            onClick={() => startAdding(category, topicId)}
+            className="p-1 rounded text-stone-500 hover:text-amber-400 hover:bg-stone-800 cursor-pointer"
+            title="Дэд сэдэв нэмэх"
+            data-testid={`add-subtopic-${topicId}`}
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(topicId)}
+          className="p-1 rounded text-stone-600 hover:text-rose-400 hover:bg-stone-800 cursor-pointer"
+          title="Сэдэв устгах"
+          data-testid={`delete-topic-${topicId}`}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
   const [adding, setAdding] = useState<{ category: string; parentId?: string } | null>(null);
   const [newTitle, setNewTitle] = useState('');
   const startAdding = (category: string, parentId?: string) => {
@@ -361,7 +416,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     }
                     onSelectGrade(grade);
                     // auto pick first available topic for this grade
-                    const topics = GRADE_TOPICS_CATALOG[grade] || [];
+                    const topics = catalogTopics(grade);
                     const firstAvailable = isAdmin
                       ? topics[0]
                       : topics.find((t) => visibilityService.getTopicAccessMode(t.id) !== 'hidden');
@@ -684,19 +739,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   <div key={topic.id} className="space-y-0.5">
                                     <div className="flex items-center gap-0.5 group/row">
                                       <div className="flex-1 min-w-0">{renderTopic(topic, false)}</div>
-                                      {canAddTopics && (
-                                        <button
-                                          type="button"
-                                          onClick={() => startAdding(group.category, topic.id)}
-                                          className="p-1 rounded text-stone-500 hover:text-amber-400 hover:bg-stone-800 cursor-pointer shrink-0"
-                                          title="Дэд сэдэв нэмэх"
-                                          data-testid={`add-subtopic-${topic.id}`}
-                                        >
-                                          <Plus className="w-3.5 h-3.5" />
-                                        </button>
-                                      )}
+                                      {canAddTopics && renderRowTools(topic.id, true, group.category)}
                                     </div>
-                                    {kids.length > 0 && openParents.has(topic.id) && kids.map((k) => renderTopic(k, true))}
+                                    {kids.length > 0 &&
+                                      openParents.has(topic.id) &&
+                                      kids.map((k) => (
+                                        <div key={k.id} className="flex items-center gap-0.5">
+                                          <div className="flex-1 min-w-0">{renderTopic(k, true)}</div>
+                                          {canAddTopics && renderRowTools(k.id, false, group.category)}
+                                        </div>
+                                      ))}
                                     {adding && adding.parentId === topic.id && renderAddForm('Дэд сэдвийн нэр')}
                                   </div>
                                 );

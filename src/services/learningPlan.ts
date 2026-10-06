@@ -54,11 +54,33 @@ export interface TopicMeta {
   category: string;
 }
 
+/** A grade's built-in topics, without the ones the admin deleted. */
+export function catalogTopics(grade: GradeNumber) {
+  const removed = cloud.getAppSettings().removedTopicIds || [];
+  return (GRADE_TOPICS_CATALOG[grade] || []).filter((t) => !removed.includes(t.id));
+}
+
+/**
+ * Admin: deletes a topic and its subtopics. Saved topics are deleted from Firestore; built-in
+ * catalog topics are hidden from the topic list.
+ */
+export function deleteTopics(ids: string[]) {
+  const catalogIds = new Set(Object.values(GRADE_TOPICS_CATALOG).flat().map((t) => t.id));
+  const saved = new Set(storageService.getTopics().map((t) => t.id));
+  for (const id of ids) if (saved.has(id)) storageService.deleteTopic(id);
+  const settings = cloud.getAppSettings();
+  const removed = ids.filter((id) => catalogIds.has(id));
+  cloud.setAppSettings({
+    removedTopicIds: [...new Set([...(settings.removedTopicIds || []), ...removed])],
+    freeTopicIds: (settings.freeTopicIds || []).filter((id) => !ids.includes(id)),
+  });
+}
+
 /** Every topic the site knows: the catalog plus topics the admin created. */
 export function allTopicMetas(): TopicMeta[] {
   const map = new Map<string, TopicMeta>();
-  for (const [g, items] of Object.entries(GRADE_TOPICS_CATALOG)) {
-    for (const t of items) map.set(t.id, { id: t.id, title: t.title, grade: Number(g) as GradeNumber, category: t.category });
+  for (const [g] of Object.entries(GRADE_TOPICS_CATALOG)) {
+    for (const t of catalogTopics(Number(g) as GradeNumber)) map.set(t.id, { id: t.id, title: t.title, grade: Number(g) as GradeNumber, category: t.category });
   }
   for (const t of storageService.getTopics()) {
     map.set(t.id, { id: t.id, title: t.title, grade: t.grade, category: t.category || 'Ерөнхий сэдэв' });

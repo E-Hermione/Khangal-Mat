@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { GradeNumber, TopicPackage, TestPackage, TestQuestion } from '../types';
-import { GRADE_TOPICS_CATALOG } from '../data/initialData';
 import { MathRenderer } from './MathRenderer';
 import {
   Award,
@@ -15,7 +14,7 @@ import { backdropClose } from '../utils/backdrop';
 import { generateTopicTests } from '../utils/topicTests';
 import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect, questionStem, testForGrade } from '../utils/examGrading';
 import { visibilityService } from '../services/visibilityService';
-import { isGroupTopic, learningPlan } from '../services/learningPlan';
+import { catalogTopics, isGroupTopic, learningPlan } from '../services/learningPlan';
 import type { ExamFilter } from './SidebarPanels';
 import { ProgressRing } from './ProgressRing';
 import { userPermissionsService } from '../services/userPermissionsService';
@@ -162,7 +161,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
   // Build complete list of all topics for the selected grade:
   // combines catalog items + saved storage items to guarantee every topic is present
   const allGradeTopics = useMemo(() => {
-    const catalog = GRADE_TOPICS_CATALOG[selectedGrade] || [];
+    const catalog = catalogTopics(selectedGrade);
     const topicMap = new Map<string, TopicPackage>();
 
     // 1. Add saved topics for this grade

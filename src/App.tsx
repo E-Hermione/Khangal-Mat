@@ -18,7 +18,7 @@ import { PlacementTestView } from './components/PlacementTestView';
 import { LearningPlanView } from './components/LearningPlanView';
 import { StudentHome } from './components/StudentHome';
 import type { ExamFilter } from './components/SidebarPanels';
-import { learningPlan, startLearningPlan, stopLearningPlan, topicMeta, useLearningPlanVersion } from './services/learningPlan';
+import { catalogTopics, learningPlan, startLearningPlan, stopLearningPlan, topicMeta, useLearningPlanVersion } from './services/learningPlan';
 import { AuthUser } from './types';
 import { clearStoredAuth, saveStoredAuth } from './utils/deviceManager';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -128,7 +128,7 @@ export default function App() {
         const ownGrade = session.profile?.grades?.[0];
         if (ownGrade) {
           setSelectedGrade(ownGrade);
-          const first = GRADE_TOPICS_CATALOG[ownGrade]?.[0];
+          const first = catalogTopics(ownGrade)[0];
           if (first) setSelectedTopicId(first.id);
         }
       } else {
@@ -212,7 +212,7 @@ export default function App() {
       const previewGrade: GradeNumber = previewAsUser === 'paid' ? 10 : 9;
       startLearningPlan(uid, currentUser.userId || 'ADMIN-01', previewGrade, previewAsUser === 'paid');
       setSelectedGrade(previewGrade);
-      const first = GRADE_TOPICS_CATALOG[previewGrade]?.[0];
+      const first = catalogTopics(previewGrade)[0];
       if (first) setSelectedTopicId(first.id);
       setActiveView('home');
     } else {
