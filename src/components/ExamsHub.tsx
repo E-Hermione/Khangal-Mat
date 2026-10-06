@@ -15,7 +15,7 @@ import { backdropClose } from '../utils/backdrop';
 import { generateTopicTests } from '../utils/topicTests';
 import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect, questionStem, testForGrade } from '../utils/examGrading';
 import { visibilityService } from '../services/visibilityService';
-import { learningPlan } from '../services/learningPlan';
+import { isGroupTopic, learningPlan } from '../services/learningPlan';
 import type { ExamFilter } from './SidebarPanels';
 import { ProgressRing } from './ProgressRing';
 import { userPermissionsService } from '../services/userPermissionsService';
@@ -208,7 +208,8 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
       }
     });
 
-    return Array.from(topicMap.values());
+    // Topics that group subtopics have no tests of their own; their subtopics are listed instead
+    return Array.from(topicMap.values()).filter((t) => !isGroupTopic(t.id));
   }, [topics, selectedGrade]);
 
   const visibleExamTopics = allGradeTopics

@@ -190,14 +190,19 @@ function inGrade(t: TopicMeta, grade: GradeNumber): boolean {
   return !!saved?.visibleGrades?.includes(grade);
 }
 
-/** Every topic taught in a grade: its own topics and the ones shown in it from other grades. */
-export function topicsInGrade(grade: GradeNumber): TopicMeta[] {
-  return allTopicMetas().filter((t) => inGrade(t, grade));
+/** A topic that groups subtopics: its subtopics are the lessons, so it has no tests or plan entry itself. */
+export function isGroupTopic(topicId: string): boolean {
+  return storageService.getTopics().some((t) => t.parentId === topicId);
 }
 
-// Every topic taught in that grade; each has topic tests to draw from
+/** Every lesson taught in a grade: its own topics and the ones shown in it from other grades. */
+export function topicsInGrade(grade: GradeNumber): TopicMeta[] {
+  return allTopicMetas().filter((t) => inGrade(t, grade) && !isGroupTopic(t.id));
+}
+
+// Every lesson taught in that grade; each has topic tests to draw from
 function placementTopics(grade: GradeNumber): TopicMeta[] {
-  return allTopicMetas().filter((t) => inGrade(t, grade) && questionPool(t, grade).length > 0);
+  return topicsInGrade(grade).filter((t) => questionPool(t, grade).length > 0);
 }
 
 // At least 3 questions per topic, so one slip does not put a topic in the plan

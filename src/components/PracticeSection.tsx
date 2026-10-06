@@ -87,7 +87,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
       </div>
 
       <p className="text-xs text-stone-600 print:text-stone-700 mb-4 italic">
-        Дараах бодлогуудыг бодолтын дэвтэр эсвэл доорх зайд шат дараалан гүйцэтгэнэ үү. (Хялбар $\rightarrow$ Дунд $\rightarrow$ Ахисан шатлалтай)
+        Дараах бодлогуудыг бодолтын дэвтэр эсвэл доорх зайд шат дараалан гүйцэтгэнэ үү. (Хялбар → Дунд → Ахисан шатлалтай)
       </p>
 
       {(!practice || practice.length === 0) ? (

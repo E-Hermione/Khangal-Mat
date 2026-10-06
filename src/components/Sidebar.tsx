@@ -4,6 +4,7 @@ import { GRADES_LIST, GRADE_TOPICS_CATALOG } from '../data/initialData';
 import { visibilityService, TopicAccessMode } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { storageService } from '../services/storageService';
+import { newTopic } from '../utils/newTopic';
 import {
   GraduationCap,
   BookOpen,
@@ -26,6 +27,7 @@ import {
   Award,
   CheckCircle2,
   Home,
+  Plus,
 } from 'lucide-react';
 import { learningPlan, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
 import { ProgressRing } from './ProgressRing';
@@ -88,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const mode = showExamNav ? examMode : lessonMode;
   const setMode = (m: 'all' | 'plan') => (showExamNav ? onExamFilter?.(m) : setLessonMode(m));
   const planMode = (showLessonNav || showExamNav) && canPlanView && mode === 'plan';
-  useLearningPlanVersion();
+  const dataVersion = useLearningPlanVersion();
   const [, setTrigger] = useState(0);
 
   // Active single expanded category (нэг нь нээлттэй байх үед бусдыг автоматаар хаана)
@@ -110,7 +112,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const savedTopics = storageService.getTopics();
 
     // Map by id
-    const topicMap = new Map<string, { id: string; title: string; category: string; hasFullPackage: boolean }>();
+    const topicMap = new Map<
+      string,
+      { id: string; title: string; category: string; hasFullPackage: boolean; parentId?: string; order?: number }
+    >();
 
     // 1. Add base catalog
     baseCatalog.forEach((item) => {
@@ -128,13 +133,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: t.id,
           title: t.title,
           category: t.category || 'Ерөнхий сэдэв',
-          hasFullPackage: true,
+          hasFullPackage: (t.theory?.length || 0) + (t.examples?.length || 0) + (t.practice?.length || 0) > 0,
+          parentId: t.parentId,
+          order: t.order,
         });
       }
     });
 
     return Array.from(topicMap.values());
-  }, [selectedGrade]);
+  }, [selectedGrade, dataVersion]);
 
   // Filter topics for regular users based on TopicAccessMode:
   // - Admin sees everything
@@ -167,6 +174,72 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     return groups;
   }, [displayedTopics]);
+
+  // Topics with subtopics that are open in the list (the selected subtopic's topic opens itself)
+  const [openParents, setOpenParents] = useState<Set<string>>(new Set());
+  const toggleParent = (id: string) =>
+    setOpenParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  useEffect(() => {
+    const parentId = allTopicsForGrade.find((t) => t.id === selectedTopicId)?.parentId;
+    if (parentId) setOpenParents((prev) => (prev.has(parentId) ? prev : new Set(prev).add(parentId)));
+  }, [selectedTopicId, allTopicsForGrade]);
+
+  // Admin and general view: add a topic to a category, or a subtopic under a topic
+  const canAddTopics = isAdmin;
+  const [adding, setAdding] = useState<{ category: string; parentId?: string } | null>(null);
+  const [newTitle, setNewTitle] = useState('');
+  const startAdding = (category: string, parentId?: string) => {
+    setAdding({ category, parentId });
+    setNewTitle('');
+    if (parentId) setOpenParents((prev) => new Set(prev).add(parentId));
+  };
+  const saveNewTopic = () => {
+    const title = newTitle.trim();
+    if (!adding || !title) return;
+    const siblings = allTopicsForGrade.filter((t) => t.category === adding.category && t.parentId === adding.parentId);
+    const parent = adding.parentId ? storageService.getTopicById(adding.parentId) : undefined;
+    const topic = newTopic({
+      grade: selectedGrade,
+      category: adding.category,
+      title,
+      parentId: adding.parentId,
+      order: siblings.length + 1,
+      visibleGrades: parent?.visibleGrades,
+    });
+    storageService.saveTopic(topic);
+    setAdding(null);
+    onSelectTopic(topic.id);
+  };
+  const renderAddForm = (placeholder: string) => (
+    <div className={`flex items-center gap-1 ${adding?.parentId ? 'pl-7' : 'pl-3'} pr-1 py-1`} data-testid="add-topic-form">
+      <input
+        autoFocus
+        value={newTitle}
+        onChange={(e) => setNewTitle(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') saveNewTopic();
+          if (e.key === 'Escape') setAdding(null);
+        }}
+        placeholder={placeholder}
+        className="flex-1 min-w-0 px-2 py-1 rounded-md bg-stone-950 border border-stone-700 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-amber-500"
+      />
+      <button
+        type="button"
+        onClick={saveNewTopic}
+        className="px-2 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-stone-950 text-[11px] font-bold cursor-pointer"
+      >
+        Нэмэх
+      </button>
+      <button type="button" onClick={() => setAdding(null)} className="p-1 text-stone-500 hover:text-white cursor-pointer" aria-label="Болих">
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
 
   // Auto-expand only the category that contains the currently selected topic, automatically closing others
   useEffect(() => {
@@ -471,7 +544,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {/* Subtopics List (Дэд сэдвүүд) */}
                     {expanded && (
                       <div className="p-1 space-y-0.5 border-t border-stone-800/60 bg-stone-900/60">
-                        {group.topics.map((topic) => {
+                        {(() => {
+                          // One topic row; `sub` rows are subtopics, indented under their topic
+                          const renderTopic = (topic: (typeof group.topics)[number], sub: boolean) => {
+                            const kids = group.topics
+                              .filter((t) => t.parentId === topic.id)
+                              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
                           const isSelected = topic.id === selectedTopicId;
                           const accessMode = visibilityService.getTopicAccessMode(topic.id);
                           // Students with a plan: locked unless it is a paid plan topic; ticked once done
@@ -485,10 +563,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               key={topic.id}
                               type="button"
                               onClick={() => {
+                                // A topic with subtopics opens and closes its list
+                                if (kids.length > 0) {
+                                  toggleParent(topic.id);
+                                  return;
+                                }
                                 onSelectTopic(topic.id);
                                 onCloseMobile();
                               }}
-                              className={`w-full text-left pl-4 pr-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center justify-between group cursor-pointer ${
+                              className={`w-full text-left ${sub ? 'pl-8' : 'pl-4'} pr-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center justify-between group cursor-pointer ${
                                 isSelected
                                   ? 'bg-stone-800 text-amber-400 border border-stone-700 shadow-xs font-bold'
                                   : 'text-stone-300 hover:bg-stone-800/60 hover:text-white font-medium'
@@ -555,14 +638,67 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   </span>
                                 )}
 
-                                {/* Topics have no subtopics: progress sits where an arrow would be */}
-                                {planGate && learningPlan.inPlan(topic.id) && (
-                                  <ProgressRing percent={learningPlan.progress(topic.id)} size={16} />
+                                {/* Progress, or the arrow of a topic with subtopics */}
+                                {kids.length > 0 ? (
+                                  openParents.has(topic.id) ? (
+                                    <ChevronDown className="w-3.5 h-3.5 text-stone-400" />
+                                  ) : (
+                                    <ChevronRight className="w-3.5 h-3.5 text-stone-500" />
+                                  )
+                                ) : (
+                                  planGate &&
+                                  learningPlan.inPlan(topic.id) && <ProgressRing percent={learningPlan.progress(topic.id)} size={16} />
                                 )}
                               </div>
                             </button>
                           );
-                        })}
+                          };
+                          const topLevel = group.topics.filter(
+                            (t) => !t.parentId || !group.topics.some((x) => x.id === t.parentId)
+                          );
+                          return (
+                            <>
+                              {topLevel.map((topic) => {
+                                const kids = group.topics
+                                  .filter((t) => t.parentId === topic.id)
+                                  .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+                                return (
+                                  <div key={topic.id} className="space-y-0.5">
+                                    <div className="flex items-center gap-0.5 group/row">
+                                      <div className="flex-1 min-w-0">{renderTopic(topic, false)}</div>
+                                      {canAddTopics && (
+                                        <button
+                                          type="button"
+                                          onClick={() => startAdding(group.category, topic.id)}
+                                          className="p-1 rounded text-stone-500 hover:text-amber-400 hover:bg-stone-800 cursor-pointer shrink-0"
+                                          title="Дэд сэдэв нэмэх"
+                                          data-testid={`add-subtopic-${topic.id}`}
+                                        >
+                                          <Plus className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
+                                    {kids.length > 0 && openParents.has(topic.id) && kids.map((k) => renderTopic(k, true))}
+                                    {adding && adding.parentId === topic.id && renderAddForm('Дэд сэдвийн нэр')}
+                                  </div>
+                                );
+                              })}
+                              {canAddTopics &&
+                                (adding && adding.category === group.category && !adding.parentId ? (
+                                  renderAddForm('Сэдвийн нэр')
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => startAdding(group.category)}
+                                    className="w-full text-left pl-4 pr-2.5 py-1.5 rounded-lg text-[11px] font-bold text-stone-500 hover:text-amber-400 hover:bg-stone-800/60 flex items-center gap-1.5 cursor-pointer"
+                                    data-testid="add-topic"
+                                  >
+                                    <Plus className="w-3 h-3" /> Сэдэв нэмэх
+                                  </button>
+                                ))}
+                            </>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
