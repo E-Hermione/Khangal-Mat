@@ -704,7 +704,10 @@ export default function App() {
         {/* Left Sidebar */}
         <Sidebar
           selectedGrade={selectedGrade}
-          onSelectGrade={setSelectedGrade}
+          onSelectGrade={(g) => {
+            setSelectedGrade(g);
+            setLessonChosen(false);
+          }}
           selectedTopicId={lessonChosen ? selectedTopicId : ''}
           onSelectTopic={(topicId) => {
             setSelectedTopicId(topicId);

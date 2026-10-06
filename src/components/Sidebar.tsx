@@ -478,15 +478,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       alert(`${grade}-р ангийн хичээлийг үзэх эрх таны бүртгэлд олгогдоогүй байна. Админд хандаж нээлгэнэ үү.`);
                       return;
                     }
+                    // The grade's lesson list opens; the home page shows until a lesson is picked
                     onSelectGrade(grade);
-                    // auto pick first available topic for this grade
-                    const topics = catalogTopics(grade);
-                    const firstAvailable = isAdmin
-                      ? topics[0]
-                      : topics.find((t) => visibilityService.getTopicAccessMode(t.id) !== 'hidden');
-                    if (firstAvailable) {
-                      onSelectTopic(firstAvailable.id);
-                    }
                   }}
                   className={`py-1.5 px-2 rounded-md text-xs font-bold transition-all text-center cursor-pointer relative ${
                     isSelected
