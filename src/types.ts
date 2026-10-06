@@ -65,6 +65,10 @@ export interface TopicPackage {
   id: string;
   grade: GradeNumber;
   visibleGrades?: GradeNumber[]; // Support displaying in multiple grades (6, 7, 8, etc.)
+  // A subtopic sits under this topic (the parent then groups its subtopics in the topic list)
+  parentId?: string;
+  // Position among its siblings in the topic list
+  order?: number;
   category: string;
   title: string;
   code?: string;

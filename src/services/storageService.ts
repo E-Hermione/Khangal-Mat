@@ -1,6 +1,5 @@
 import { syncPracticeSolutions } from './practiceSolutions';
 import { TopicPackage, GradeNumber, TheoryRule, WorkedExample, PracticeProblem, TestQuestion } from '../types';
-import { INITIAL_TOPICS } from '../data/initialData';
 import { cloud } from './cloud';
 
 
@@ -44,9 +43,7 @@ export function readLegacyLocalTopics(): TopicPackage[] | null {
 
 export const storageService = {
   getTopics(): TopicPackage[] {
-    const topics = cloud.getTopics();
-    // Until the admin's first sign-in seeds Firestore, show the built-in lessons
-    return topics.length > 0 ? topics.map(normalizeTestTitles) : INITIAL_TOPICS;
+    return cloud.getTopics().map(normalizeTestTitles);
   },
 
   saveTopics(topics: TopicPackage[]): void {
@@ -71,11 +68,6 @@ export const storageService = {
 
   deleteTopic(topicId: string): void {
     cloud.deleteTopic(topicId);
-  },
-
-  resetToDefaults(): TopicPackage[] {
-    this.saveTopics(INITIAL_TOPICS);
-    return INITIAL_TOPICS;
   },
 
   exportAsJSON(): string {

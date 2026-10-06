@@ -24,7 +24,41 @@ service cloud.firestore {
         && myProfile().active == true;
     }
 
+    // Lessons are protected. Members see the topic list and the topic tests (without answers) of
+    // every topic, but a topic's lesson content only if it is a free sample topic, or it is taught
+    // in their own grade and their access is paid.
+    function freeTopic(topicId) {
+      return exists(/databases/$(database)/documents/settings/app)
+        && topicId in get(/databases/$(database)/documents/settings/app).data.get('freeTopicIds', []);
+    }
+
+    function paidAccess() {
+      let path = /databases/$(database)/documents/userPermissions/$(myProfile().userId);
+      return exists(path)
+        && get(path).data.get('isBlocked', false) != true
+        && get(path).data.get('expiresAt', 0) is number
+        && get(path).data.expiresAt > request.time.toMillis();
+    }
+
+    function inMyGrade(topicId) {
+      let entry = get(/databases/$(database)/documents/topicIndex/$(topicId)).data;
+      let grade = myProfile().get('grades', [0])[0];
+      return entry.grade == grade || grade in entry.get('visibleGrades', []);
+    }
+
     match /topics/{topicId} {
+      allow read: if isAdmin()
+        || (isMember() && (freeTopic(topicId)
+          || (exists(/databases/$(database)/documents/topicIndex/$(topicId)) && paidAccess() && inMyGrade(topicId))));
+      allow write: if isAdmin();
+    }
+
+    match /topicIndex/{topicId} {
+      allow read: if isAdmin() || isMember();
+      allow write: if isAdmin();
+    }
+
+    match /topicTests/{topicId} {
       allow read: if isAdmin() || isMember();
       allow write: if isAdmin();
     }

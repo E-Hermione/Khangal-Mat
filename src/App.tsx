@@ -120,7 +120,7 @@ export default function App() {
       }
 
       // Load data first: the site-wide settings decide whether the device limit applies
-      await startCloudSync({ isAdmin: session.isAdmin, userId: session.user.userId });
+      await startCloudSync({ isAdmin: session.isAdmin, userId: session.user.userId, grade: session.profile?.grades?.[0] ?? null });
       // Users follow placement tests and a personal learning plan; everyone starts on the home page
       if (!session.isAdmin) {
         startLearningPlan(fbUser.uid, session.user.userId!, session.profile?.grades?.[0] ?? null);
