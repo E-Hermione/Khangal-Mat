@@ -512,7 +512,7 @@ export default function App() {
       />
       {/* Top Navigation Bar on Screen */}
       <header className="screen-header bg-stone-900 border-b border-stone-800 sticky top-0 z-40 h-14 px-4 flex items-center shadow-2xs no-print">
-        <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
+        <div className="w-full max-w-[1600px] mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
             <button
               type="button"
@@ -701,7 +701,7 @@ export default function App() {
       </header>
 
       {/* Main Workspace Layout: Sidebar + Main Content */}
-      <div className="flex-1 flex w-full max-w-7xl mx-auto items-start bg-stone-100 print:bg-white">
+      <div className="flex-1 flex w-full max-w-[1600px] mx-auto items-start bg-stone-100 print:bg-white">
         {/* Left Sidebar */}
         <Sidebar
           selectedGrade={selectedGrade}
