@@ -462,7 +462,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           return (
             tabs.length > 0 && (
               <div
-                className="grid gap-1.5 p-1.5 mb-4 bg-stone-900 rounded-2xl shadow-sm no-print"
+                className="grid gap-1.5 p-1.5 mb-4 bg-[#161312] rounded-2xl shadow-sm no-print"
                 style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
                 role="tablist"
                 data-testid="lesson-tabs"
@@ -477,7 +477,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                     className={`py-2 rounded-xl text-sm font-extrabold transition-colors cursor-pointer ${
                       lessonTab === key
                         ? 'bg-amber-500 text-stone-950'
-                        : 'bg-stone-800 text-stone-300 hover:bg-stone-700 hover:text-white'
+                        : 'bg-[#161312] text-stone-300 hover:bg-stone-800 hover:text-white'
                     }`}
                   >
                     {label}
