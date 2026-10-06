@@ -352,7 +352,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   return (
     <div className="w-full">
       {/* Screen Breadcrumb & Title Bar */}
-      <div className="no-print mb-5 bg-[#161312] rounded-3xl px-5 md:px-7 py-5">
+      <div className="no-print mb-5 bg-stone-900 rounded-3xl px-5 md:px-7 py-5">
         <div className="text-xs text-stone-400 mb-2">
           <nav className="flex items-center space-x-1.5 font-medium">
             <span className="font-bold text-white">{topic.grade}-р анги</span>
@@ -424,7 +424,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                     >
                       <span
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
-                          on ? 'bg-[#161312] text-amber-400' : 'bg-white/10 text-stone-400'
+                          on ? 'bg-stone-900 text-amber-400' : 'bg-white/10 text-stone-400'
                         }`}
                       >
                         {i + 1}
