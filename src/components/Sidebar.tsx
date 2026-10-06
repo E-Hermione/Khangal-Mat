@@ -52,6 +52,8 @@ interface SidebarProps {
   isAdmin: boolean;
   // Admin mode proper has no "Миний төлөвлөгөө" view (the general view keeps it to show students)
   hidePlanView?: boolean;
+  // The admin's student preview: the grade picker stays (real students only see their own grade)
+  previewGradePicker?: boolean;
   activeView?: 'home' | 'topics' | 'exams' | 'plan' | 'placement' | 'mistakes';
   onSelectView?: (view: 'home' | 'topics' | 'exams' | 'plan' | 'placement' | 'mistakes') => void;
   // Students get a home tab first
@@ -75,6 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenAccessRequests,
   isAdmin,
   hidePlanView,
+  previewGradePicker,
   activeView = 'topics',
   onSelectView,
   showHome = false,
@@ -442,7 +445,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {showLessonNav || showExamNav ? (
           <>
         {/* Grades Selector Tabs (a student only sees their own grade, so they get none) */}
-        {(isAdmin || !learningPlan.state.grade) && (
+        {(isAdmin || previewGradePicker || !learningPlan.state.grade) && (
         <div className="p-3 border-b border-stone-800/80 bg-stone-950/40 shrink-0">
           <div className="flex items-center justify-between mb-2 px-1">
             <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">
@@ -461,7 +464,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {GRADES_LIST.map((grade) => {
               const isSelected = grade === selectedGrade;
               // A user works in their own grade only; the other grades stay greyed out
-              const ownGrade = isAdmin ? null : learningPlan.state.grade;
+              const ownGrade = isAdmin || previewGradePicker ? null : learningPlan.state.grade;
               const notOwn = !!ownGrade && grade !== ownGrade;
               // Plan topics can be in any grade; each topic is gated on its own
               const isAllowed =
