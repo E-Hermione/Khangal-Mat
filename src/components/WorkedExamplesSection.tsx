@@ -54,16 +54,16 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
           )}
         </div>
       ) : (
-        <div className="space-y-10 print:space-y-4">
+        <div className="divide-y divide-stone-200 print:divide-y-0 print:space-y-4">
           {examples.map((ex, idx) => (
             <div
               key={ex.id || ex.number || idx}
-              className="avoid-break relative group"
+              className="avoid-break py-7 first:pt-0 last:pb-0 relative group print:py-0"
             >
               {/* Title & Example Number */}
               <div className="flex items-start justify-between gap-2 mb-1.5">
                 <h3 className="font-bold text-[17px] leading-snug text-stone-900 print:text-black">
-                  {ex.number}. {ex.title || 'Жишээ'}
+                  <span className="text-amber-500 print:text-black">{ex.number}.</span> {ex.title || 'Жишээ'}
                 </h3>
 
                 {/* Edit & Delete actions */}

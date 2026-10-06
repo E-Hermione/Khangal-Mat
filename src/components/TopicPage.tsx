@@ -489,7 +489,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           </div>
         </div>
       ) : (
-        <article className="print-container bg-white rounded-2xl border border-stone-200 px-6 md:px-10 pt-3 pb-8 print:border-none print:p-0">
+        <article className="print-container bg-white rounded-[28px] shadow-[0_20px_40px_-12px_rgba(17,24,39,0.18)] px-5 md:px-10 pt-6 pb-8 print:shadow-none print:rounded-none print:p-0">
           {/* Admin with nothing selected */}
           {isAdmin && !anyAdminSectionSelected && (
             <div className="py-16 text-center text-stone-400 border-2 border-dashed border-stone-200 rounded-xl my-4 no-print">
@@ -528,7 +528,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
             if (tabs.length > 0 && !tabs.some(([key]) => key === lessonTab)) setTimeout(() => setLessonTab(tabs[0][0]));
             return (
               tabs.length > 0 && (
-                <div className="flex gap-7 border-b border-stone-200 mb-7 no-print" role="tablist" data-testid="lesson-tabs">
+                <div className="inline-flex flex-wrap gap-1 p-1 rounded-xl bg-stone-200/80 mb-8 no-print" role="tablist" data-testid="lesson-tabs">
                   {tabs.map(([key, label, count]) => (
                     <button
                       key={key}
@@ -536,8 +536,8 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       role="tab"
                       aria-selected={lessonTab === key}
                       onClick={() => setLessonTab(key)}
-                      className={`py-2.5 -mb-px text-[15px] font-bold border-b-2 transition-colors cursor-pointer ${
-                        lessonTab === key ? 'border-stone-900 text-stone-900' : 'border-transparent text-stone-400 hover:text-stone-600'
+                      className={`px-4 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer ${
+                        lessonTab === key ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-800'
                       }`}
                     >
                       {label} · {count}

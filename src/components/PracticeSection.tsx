@@ -101,7 +101,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
           )}
         </div>
       ) : (
-        <div className="divide-y divide-stone-100 print:divide-y-0 print:space-y-3">
+        <div className="divide-y divide-stone-200 print:divide-y-0 print:space-y-3">
           {practice.map((item, idx) => {
             const diff = difficultyLabels[item.difficulty] || difficultyLabels.medium;
             const showSol = allowSolutions && (teacherVersion || showSolutionsOnScreen);
@@ -109,12 +109,12 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
             return (
               <div
                 key={item.id || item.number || idx}
-                className="avoid-break py-5 first:pt-0 relative group"
+                className="avoid-break py-6 first:pt-0 last:pb-0 relative group print:py-0"
               >
                 {/* Question header */}
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <div className="flex items-baseline gap-2">
-                    <span className="font-bold text-[17px] text-stone-900 print:text-black">{item.number}.</span>
+                    <span className="font-bold text-[17px] text-amber-500 print:text-black">{item.number}.</span>
                     <span className="text-xs text-stone-400 print:text-stone-700">
                       {diff.label}
                     </span>
