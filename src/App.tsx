@@ -500,7 +500,11 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-100 flex flex-col font-sans text-stone-900">
+    <div
+      className={`min-h-screen flex flex-col font-sans text-stone-900 print:bg-white ${
+        activeView === 'topics' && !homeShown ? 'bg-[#161312]' : 'bg-stone-100'
+      }`}
+    >
       {/* The admin edits content, so copying stays allowed for them */}
       <CopyProtection enabled={appSettings.copyProtection && currentUser.role !== 'admin'} />
       <ScreenProtection
