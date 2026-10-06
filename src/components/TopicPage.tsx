@@ -485,7 +485,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           return (
             tabs.length > 0 && (
               <div
-                className="grid gap-1.5 p-1.5 mb-4 bg-white border border-stone-200 border-t-[3px] border-t-[#3D0C02] rounded-2xl no-print"
+                className="grid gap-1.5 p-1.5 mb-4 bg-stone-900 rounded-2xl shadow-sm no-print"
                 style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
                 role="tablist"
                 data-testid="lesson-tabs"
@@ -497,10 +497,10 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                     role="tab"
                     aria-selected={lessonTab === key}
                     onClick={() => setLessonTab(key)}
-                    className={`py-2 rounded-xl border text-sm font-extrabold transition-colors cursor-pointer ${
+                    className={`py-2 rounded-xl text-sm font-extrabold transition-colors cursor-pointer ${
                       lessonTab === key
-                        ? 'bg-[#3D0C02] border-[#3D0C02] text-white'
-                        : 'bg-amber-50 border-amber-200/70 text-[#3D0C02] hover:bg-amber-100'
+                        ? 'bg-amber-500 text-stone-950'
+                        : 'bg-stone-800 text-stone-300 hover:bg-stone-700 hover:text-white'
                     }`}
                   >
                     {label}
