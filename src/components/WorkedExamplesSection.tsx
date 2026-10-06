@@ -62,8 +62,8 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
             >
               {/* Title & Example Number */}
               <div className="flex items-start justify-between gap-2 mb-1.5">
-                <h3 className="font-bold text-[17px] leading-snug text-[#3D0C02] print:text-black">
-                  <span className="text-amber-500 print:text-black">{ex.number}.</span> {ex.title || 'Жишээ'}
+                <h3 className="font-bold text-[17px] leading-snug text-[#3D0C02]">
+                  <span className="text-[#3D0C02]">{ex.number}.</span> {ex.title || 'Жишээ'}
                 </h3>
 
                 {/* Edit & Delete actions */}

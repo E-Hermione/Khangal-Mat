@@ -605,17 +605,18 @@ export default function App() {
                     {/* Which parts of the lesson to print */}
                     <div className="px-3.5 pt-1.5 pb-2" data-testid="print-sections">
                       <div className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1.5">Хэвлэх хэсгүүд</div>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex gap-1.5">
                         {(
                           [
-                            ['theory', 'Онол'],
-                            ['examples', 'Жишээ'],
-                            ['practice', 'Дасгал'],
+                            ['theory', 'О', 'Онол'],
+                            ['examples', 'Ж', 'Жишээ'],
+                            ['practice', 'Д', 'Дасгал'],
                           ] as const
-                        ).map(([key, label]) => (
+                        ).map(([key, label, full]) => (
                           <label
                             key={key}
-                            className={`flex items-center gap-1.5 text-xs font-semibold cursor-pointer select-none px-2 py-1 rounded-lg border ${
+                            title={full}
+                            className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer select-none px-2 py-1 rounded-lg border ${
                               printSelection[key] ? 'bg-amber-50 border-amber-200 text-stone-900' : 'border-stone-200 text-stone-500'
                             }`}
                           >
