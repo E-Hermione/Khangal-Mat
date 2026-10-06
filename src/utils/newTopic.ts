@@ -8,6 +8,8 @@ function emptyTest(n: 1 | 2 | 3, id: string): TestPackage {
 
 /** An empty topic (or subtopic) the admin adds from the topic list and then fills in. */
 export function newTopic(fields: {
+  // Keeps a built-in catalog topic's id when it is saved for the first time
+  id?: string;
   grade: GradeNumber;
   category: string;
   title: string;
@@ -15,7 +17,7 @@ export function newTopic(fields: {
   order?: number;
   visibleGrades?: GradeNumber[];
 }): TopicPackage {
-  const id = `g${fields.grade}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const id = fields.id || `g${fields.grade}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   return {
     id,
     grade: fields.grade,

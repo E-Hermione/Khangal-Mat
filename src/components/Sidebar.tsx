@@ -5,6 +5,7 @@ import { visibilityService, TopicAccessMode } from '../services/visibilityServic
 import { userPermissionsService } from '../services/userPermissionsService';
 import { storageService } from '../services/storageService';
 import { newTopic } from '../utils/newTopic';
+import { cloud } from '../services/cloud';
 import {
   GraduationCap,
   BookOpen,
@@ -29,6 +30,7 @@ import {
   Home,
   Plus,
   Trash2,
+  Pencil,
 } from 'lucide-react';
 import { catalogTopics, deleteTopics, learningPlan, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
 import { ProgressRing } from './ProgressRing';
@@ -169,12 +171,74 @@ export const Sidebar: React.FC<SidebarProps> = ({
       map.get(cat)!.push(topic);
     });
 
+    // Categories the admin added that have no topics yet
+    if (isAdmin) {
+      for (const c of cloud.getAppSettings().extraCategories || []) {
+        if (c.grade === selectedGrade && !map.has(c.name)) map.set(c.name, []);
+      }
+    }
+
     map.forEach((topics, category) => {
       groups.push({ category, topics });
     });
 
     return groups;
-  }, [displayedTopics]);
+  }, [displayedTopics, isAdmin, selectedGrade, dataVersion]);
+
+  // Admin and general view: add, rename and delete categories
+  const [renamingCategory, setRenamingCategory] = useState<string | null>(null);
+  const [categoryName, setCategoryName] = useState('');
+  const [confirmDeleteCategory, setConfirmDeleteCategory] = useState<string | null>(null);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const setExtraCategories = (fn: (list: { grade: number; name: string }[]) => { grade: number; name: string }[]) =>
+    cloud.setAppSettings({ extraCategories: fn(cloud.getAppSettings().extraCategories || []) });
+  const addCategory = () => {
+    const name = categoryName.trim();
+    if (!name) return;
+    setExtraCategories((list) => [...list.filter((c) => !(c.grade === selectedGrade && c.name === name)), { grade: selectedGrade, name }]);
+    setAddingCategory(false);
+    setActiveExpandedCategory(name);
+  };
+  const renameCategory = (oldName: string) => {
+    const name = categoryName.trim();
+    setRenamingCategory(null);
+    if (!name || name === oldName) return;
+    for (const t of allTopicsForGrade.filter((x) => x.category === oldName)) {
+      const saved = storageService.getTopicById(t.id);
+      // Built-in topics are saved (still empty) so they keep the new category
+      storageService.saveTopic(
+        saved ? { ...saved, category: name } : newTopic({ id: t.id, grade: selectedGrade, category: name, title: t.title })
+      );
+    }
+    setExtraCategories((list) => list.map((c) => (c.grade === selectedGrade && c.name === oldName ? { ...c, name } : c)));
+    setActiveExpandedCategory(name);
+  };
+  const deleteCategory = (name: string) => {
+    deleteTopics(allTopicsForGrade.filter((t) => t.category === name).map((t) => t.id));
+    setExtraCategories((list) => list.filter((c) => !(c.grade === selectedGrade && c.name === name)));
+    setConfirmDeleteCategory(null);
+  };
+  const categoryInput = (onSave: () => void, onCancel: () => void, placeholder: string) => (
+    <div className="flex items-center gap-1 px-2 py-1.5" data-testid="category-form">
+      <input
+        autoFocus
+        value={categoryName}
+        onChange={(e) => setCategoryName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') onSave();
+          if (e.key === 'Escape') onCancel();
+        }}
+        placeholder={placeholder}
+        className="flex-1 min-w-0 px-2 py-1 rounded-md bg-stone-950 border border-stone-700 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-amber-500"
+      />
+      <button type="button" onClick={onSave} className="px-2 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-stone-950 text-[11px] font-bold cursor-pointer">
+        Хадгалах
+      </button>
+      <button type="button" onClick={onCancel} className="p-1 text-stone-500 hover:text-white cursor-pointer" aria-label="Болих">
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
 
   // Topics with subtopics that are open in the list (the selected subtopic's topic opens itself)
   const [openParents, setOpenParents] = useState<Set<string>>(new Set());
@@ -553,6 +617,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ) : showExamNav ? null : (
           <>
 
+          {canAddTopics &&
+            (addingCategory ? (
+              <div className="rounded-xl border border-stone-800/90 bg-stone-950/40 mb-2">
+                {categoryInput(addCategory, () => setAddingCategory(false), 'Шинэ бүлгийн нэр')}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setCategoryName('');
+                  setAddingCategory(true);
+                }}
+                className="w-full mb-2 px-3 py-2 rounded-xl border border-dashed border-stone-700 text-[11px] font-bold text-stone-400 hover:text-amber-400 hover:border-amber-500/60 flex items-center gap-1.5 cursor-pointer"
+                data-testid="add-category"
+              >
+                <Plus className="w-3.5 h-3.5" /> Бүлэг нэмэх
+              </button>
+            ))}
           {categoryGroups.length === 0 ? (
             <div className="text-center py-8 text-stone-500 text-xs">
               Энэ ангид одоогоор нээлттэй сэдэв алга байна.
@@ -568,6 +650,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     className="rounded-xl border border-stone-800/90 bg-stone-950/40 overflow-hidden"
                   >
                     {/* Category (Агуулгын аймаг) Header Button, with "+" to add a topic in it */}
+                    {renamingCategory === group.category ? (
+                      categoryInput(() => renameCategory(group.category), () => setRenamingCategory(null), 'Бүлгийн нэр')
+                    ) : confirmDeleteCategory === group.category ? (
+                      <div className="px-3 py-2 flex items-center gap-1.5 bg-rose-950/40" data-testid="confirm-delete-category">
+                        <span className="flex-1 text-[11px] font-bold text-rose-200">
+                          «{group.category}» бүлгийг {group.topics.length} сэдэвтэй нь устгах уу?
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => deleteCategory(group.category)}
+                          className="px-1.5 py-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold cursor-pointer"
+                        >
+                          Тийм
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteCategory(null)}
+                          className="px-1.5 py-0.5 rounded bg-stone-700 hover:bg-stone-600 text-stone-200 text-[10px] font-bold cursor-pointer"
+                        >
+                          Үгүй
+                        </button>
+                      </div>
+                    ) : (
                     <div className="flex items-stretch">
                     <button
                       type="button"
@@ -612,7 +717,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <Plus className="w-4 h-4" />
                       </button>
                     )}
+                    {canAddTopics && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCategoryName(group.category);
+                            setRenamingCategory(group.category);
+                          }}
+                          className={`px-1.5 flex items-center text-stone-500 hover:text-amber-400 cursor-pointer ${expanded ? 'bg-stone-800/90' : ''}`}
+                          title="Бүлгийн нэр өөрчлөх"
+                          data-testid={`rename-category-${group.category}`}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteCategory(group.category)}
+                          className={`pl-1.5 pr-2.5 flex items-center text-stone-600 hover:text-rose-400 cursor-pointer ${expanded ? 'bg-stone-800/90' : ''}`}
+                          title="Бүлэг устгах"
+                          data-testid={`delete-category-${group.category}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
                     </div>
+                    )}
 
                     {/* Subtopics List (Дэд сэдвүүд) */}
                     {expanded && (

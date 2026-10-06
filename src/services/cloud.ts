@@ -34,6 +34,8 @@ export interface AppSettings {
   freeTopicIds: string[];
   // Built-in catalog topics the admin deleted from the topic list
   removedTopicIds: string[];
+  // Categories the admin added that have no topics yet
+  extraCategories: { grade: number; name: string }[];
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -44,6 +46,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   placementPerTopic: 3,
   freeTopicIds: [],
   removedTopicIds: [],
+  extraCategories: [],
 };
 
 interface CloudState {
