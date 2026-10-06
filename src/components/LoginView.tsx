@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AlphaLogo } from './AlphaLogo';
 import {
   Lock,
   Phone,
@@ -73,11 +74,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ notice, onRegistered }) =>
       <div className="w-full max-w-md bg-white rounded-2xl border border-stone-200 shadow-xl overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-b from-stone-900 to-stone-950 px-8 py-8 text-white text-center relative">
-          <div className="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-400 font-black text-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
-            ∑
-          </div>
+          <AlphaLogo className="w-12 h-12 mx-auto mb-3" />
           <h1 className="text-lg font-bold tracking-tight text-white">
-            Математикийн сургалтын сан
+            Alpha сургалтын сан
           </h1>
           <p className="text-xs text-stone-400 mt-1">
             Сурагчдын нэвтрэх хэсэг

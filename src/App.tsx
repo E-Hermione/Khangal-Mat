@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { AlphaLogo } from './components/AlphaLogo';
 import { GradeNumber, TopicPackage } from './types';
 import { storageService } from './services/storageService';
 import { GRADE_TOPICS_CATALOG } from './data/initialData';
@@ -529,11 +530,9 @@ export default function App() {
               onClick={() => setActiveView('home')}
               title="Нүүр хуудас"
             >
-              <span className="w-7 h-7 rounded-md bg-amber-500 text-stone-950 font-black text-sm flex items-center justify-center shrink-0">
-                ∑
-              </span>
+              <AlphaLogo className="w-7 h-7" />
               <span className="font-extrabold text-sm md:text-base tracking-tight text-white hidden lg:inline whitespace-nowrap">
-                Математикийн сургалтын материалын сан
+                Alpha сургалтын сан
               </span>
             </div>
           </div>
