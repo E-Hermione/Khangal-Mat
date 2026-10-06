@@ -54,6 +54,9 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   // Practice solutions: the admin opens them per topic for chosen users
   const grantedSolutions = usePracticeSolutions(isAdmin ? undefined : getFirebaseAuth().currentUser?.uid, topic.id);
   const [grantsOpen, setGrantsOpen] = useState(false);
+  // The lesson shows one part at a time: theory, examples or exercises (printing shows them all)
+  const [lessonTab, setLessonTab] = useState<'theory' | 'examples' | 'practice'>('theory');
+  useEffect(() => setLessonTab('theory'), [topic.id]);
   const [grantCount, setGrantCount] = useState<number | null>(null);
   useEffect(() => {
     setGrantCount(null);
@@ -300,6 +303,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
     <>
               {/* 1. Theory */}
               {((isAdmin && selection.theory) || (!isAdmin && isTheoryAllowed)) && (
+                <div className={lessonTab === 'theory' ? '' : 'hidden print:block'}>
                 <TheorySection
                   theory={t.theory}
                   isEditable={isAdmin && isEditMode}
@@ -307,10 +311,12 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                   onEditRule={handleOpenEditTheory}
                   onDeleteRule={handleDeleteTheory}
                 />
+                </div>
               )}
 
               {/* 2. Worked Examples */}
               {((isAdmin && selection.examples) || (!isAdmin && isExamplesAllowed)) && (
+                <div className={lessonTab === 'examples' ? '' : 'hidden print:block'}>
                 <WorkedExamplesSection
                   examples={t.examples}
                   isEditable={isAdmin && isEditMode}
@@ -318,10 +324,12 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                   onEditExample={handleOpenEditExample}
                   onDeleteExample={handleDeleteExample}
                 />
+                </div>
               )}
 
               {/* 3. Practice Exercises */}
               {((isAdmin && selection.practice) || (!isAdmin && isPracticeAllowed)) && (
+                <div className={lessonTab === 'practice' ? '' : 'hidden print:block'}>
                 <PracticeSection
                   practice={
                     grantedSolutions
@@ -349,6 +357,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                   onEditPractice={handleOpenEditPractice}
                   onDeletePractice={handleDeletePractice}
                 />
+                </div>
               )}
 
     </>
@@ -480,7 +489,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           </div>
         </div>
       ) : (
-        <article className="print-container pt-2 print:pt-0">
+        <article className="print-container bg-white rounded-2xl border border-stone-200 px-6 md:px-10 pt-3 pb-8 print:border-none print:p-0">
           {/* Admin with nothing selected */}
           {isAdmin && !anyAdminSectionSelected && (
             <div className="py-16 text-center text-stone-400 border-2 border-dashed border-stone-200 rounded-xl my-4 no-print">
@@ -507,6 +516,37 @@ export const TopicPage: React.FC<TopicPageProps> = ({
             </div>
           )}
 
+          {/* Tabs: one part of the lesson at a time */}
+          {(() => {
+            const tabs = (
+              [
+                ['theory', 'Онол', mainTopic.theory.length, (isAdmin && selection.theory) || (!isAdmin && isTheoryAllowed)],
+                ['examples', 'Жишээ', mainTopic.examples.length, (isAdmin && selection.examples) || (!isAdmin && isExamplesAllowed)],
+                ['practice', 'Дасгал', mainTopic.practice.length, (isAdmin && selection.practice) || (!isAdmin && isPracticeAllowed)],
+              ] as const
+            ).filter(([, , , shown]) => shown);
+            if (tabs.length > 0 && !tabs.some(([key]) => key === lessonTab)) setTimeout(() => setLessonTab(tabs[0][0]));
+            return (
+              tabs.length > 0 && (
+                <div className="flex gap-7 border-b border-stone-200 mb-7 no-print" role="tablist" data-testid="lesson-tabs">
+                  {tabs.map(([key, label, count]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      role="tab"
+                      aria-selected={lessonTab === key}
+                      onClick={() => setLessonTab(key)}
+                      className={`py-2.5 -mb-px text-[15px] font-bold border-b-2 transition-colors cursor-pointer ${
+                        lessonTab === key ? 'border-stone-900 text-stone-900' : 'border-transparent text-stone-400 hover:text-stone-600'
+                      }`}
+                    >
+                      {label} · {count}
+                    </button>
+                  ))}
+                </div>
+              )
+            );
+          })()}
           {renderSections(mainTopic, true)}
 
           {/* Link to 3-tier Exams Hub for this topic (Neat banner) */}

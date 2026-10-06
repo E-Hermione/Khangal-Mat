@@ -101,7 +101,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
           )}
         </div>
       ) : (
-        <div className="space-y-4 print:space-y-3.5">
+        <div className="divide-y divide-stone-100 print:divide-y-0 print:space-y-3">
           {practice.map((item, idx) => {
             const diff = difficultyLabels[item.difficulty] || difficultyLabels.medium;
             const showSol = allowSolutions && (teacherVersion || showSolutionsOnScreen);
@@ -109,15 +109,13 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
             return (
               <div
                 key={item.id || item.number || idx}
-                className="avoid-break bg-white border border-stone-200 rounded-2xl p-5 shadow-sm print:border-stone-500 print:shadow-none print:rounded-lg print:p-3 relative group"
+                className="avoid-break py-5 first:pt-0 relative group"
               >
                 {/* Question header */}
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-8 h-8 rounded-full bg-stone-900 text-white text-xs font-black flex items-center justify-center print:bg-white print:text-black print:border print:border-black">
-                      {item.number}
-                    </span>
-                    <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${diff.badgeClass}`}>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-bold text-[17px] text-stone-900 print:text-black">{item.number}.</span>
+                    <span className="text-xs text-stone-400 print:text-stone-700">
                       {diff.label}
                     </span>
                   </div>
@@ -153,14 +151,14 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                 </div>
 
                 {/* Question body */}
-                <div className="text-stone-900 print:text-black text-[15px] mb-2 leading-relaxed">
+                <div className="text-stone-800 print:text-black text-[15px] mb-1.5 leading-relaxed">
                   <MathRenderer content={item.question} />
                 </div>
 
                 {/* Optional Hint */}
                 {item.hint && (
-                  <div className="text-xs text-amber-900 bg-amber-50 print:bg-transparent print:border print:border-stone-300 px-3 py-2 rounded-xl mb-2 inline-block">
-                    <span className="font-bold">💡 Зөвлөмж: </span>
+                  <div className="text-[13px] text-stone-500 mb-2 print:text-stone-800">
+                    <span className="font-semibold">Зөвлөмж: </span>
                     <MathRenderer content={item.hint} className="inline" />
                   </div>
                 )}
@@ -175,9 +173,9 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
 
                 {/* Teacher Solution on Screen or in Print */}
                 {showSol && item.answer && (
-                  <div className="mt-3 p-4 bg-emerald-50 print:bg-stone-100 border border-emerald-100 print:border-stone-500 rounded-xl text-sm">
-                    <div className="font-bold text-emerald-900 print:text-black mb-1">
-                      Хариу: <span className="text-emerald-700 print:text-black"><MathRenderer content={item.answer} className="inline" /></span>
+                  <div className="mt-3 pl-3 border-l-2 border-stone-300 text-[15px]">
+                    <div className="font-bold text-stone-900 print:text-black mb-1">
+                      Хариу: <span className="font-normal"><MathRenderer content={item.answer} className="inline" /></span>
                     </div>
                     {item.solution && (
                       <div className="text-stone-700 print:text-black mt-1">

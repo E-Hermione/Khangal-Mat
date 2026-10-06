@@ -1,7 +1,7 @@
 import React from 'react';
 import { TheoryRule } from '../types';
 import { MathRenderer } from './MathRenderer';
-import { BookOpen, Plus, Edit2, Trash2, Lightbulb } from 'lucide-react';
+import { BookOpen, Plus, Edit2, Trash2 } from 'lucide-react';
 import { LessonSectionHeader } from './LessonSectionHeader';
 
 interface TheorySectionProps {
@@ -63,28 +63,16 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 print:grid-cols-2 print:gap-3.5">
+        <div className="space-y-9 print:space-y-4">
           {theory.map((rule, idx) => (
             <div
               key={rule.id || idx}
-              className="avoid-break bg-white border border-stone-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow print:border-stone-500 print:shadow-none print:rounded-lg print:p-3 flex flex-col relative group"
+              className="avoid-break relative group"
             >
               <div>
                 {/* Header Box */}
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="flex items-start gap-3">
-                    <span className="w-7 h-7 rounded-lg bg-sky-50 text-sky-700 text-xs font-black flex items-center justify-center shrink-0 print:border print:border-black print:bg-white print:text-black">
-                      {idx + 1}
-                    </span>
-                    <div className="min-w-0">
-                      <h3 className="font-bold text-[15px] leading-snug text-stone-900 print:text-black">{rule.title}</h3>
-                      {rule.badge && (
-                        <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 print:bg-white print:text-black print:border print:border-stone-500">
-                          {rule.badge}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <h3 className="font-bold text-[17px] leading-snug text-stone-900 print:text-black">{rule.title}</h3>
 
                   {/* Edit/Delete controls for editable mode */}
                   {isEditable && (
@@ -118,13 +106,13 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
                 </div>
 
                 {/* Rule Text */}
-                <div className="text-sm text-stone-700 print:text-black leading-relaxed">
+                <div className="text-[15px] text-stone-700 print:text-black leading-relaxed">
                   <MathRenderer content={rule.ruleText} />
                 </div>
 
                 {/* Mathematical Formula Box if exists */}
                 {rule.formula && (
-                  <div className="mt-4 px-4 py-3 rounded-xl bg-gradient-to-br from-sky-50 to-indigo-50/70 border border-sky-100 text-center overflow-x-auto print:bg-white print:border-stone-500 print:rounded">
+                  <div className="my-3 text-center overflow-x-auto">
                     <MathRenderer content={`$$${rule.formula}$$`} block />
                   </div>
                 )}
@@ -132,12 +120,8 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
 
               {/* Explanatory Note */}
               {rule.note && (
-                <div className="mt-4 flex gap-2 p-3 rounded-xl bg-amber-50 text-xs text-amber-900 leading-relaxed print:bg-white print:border print:border-dashed print:border-stone-500 print:text-black">
-                  <Lightbulb className="w-4 h-4 shrink-0 text-amber-500 print:hidden" />
-                  <div>
-                    <span className="font-bold">Санамж: </span>
-                    <MathRenderer content={rule.note} className="inline" />
-                  </div>
+                <div className="text-[13px] text-stone-500 leading-relaxed print:text-stone-800">
+                  <MathRenderer content={rule.note} className="inline" />
                 </div>
               )}
             </div>
