@@ -512,11 +512,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     key={group.category}
                     className="rounded-xl border border-stone-800/90 bg-stone-950/40 overflow-hidden"
                   >
-                    {/* Category (Агуулгын аймаг) Header Button */}
+                    {/* Category (Агуулгын аймаг) Header Button, with "+" to add a topic in it */}
+                    <div className="flex items-stretch">
                     <button
                       type="button"
                       onClick={() => toggleCategory(group.category)}
-                      className={`w-full px-3 py-2 text-left flex items-center justify-between transition-colors cursor-pointer select-none ${
+                      className={`flex-1 min-w-0 px-3 py-2 text-left flex items-center justify-between transition-colors cursor-pointer select-none ${
                         // Only the open category is highlighted; opening another switches the highlight
                         expanded
                           ? 'bg-stone-800/90 text-amber-300 font-bold'
@@ -540,6 +541,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         )}
                       </div>
                     </button>
+                    {canAddTopics && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!expanded) toggleCategory(group.category);
+                          startAdding(group.category);
+                        }}
+                        className={`px-2.5 flex items-center text-stone-400 hover:text-amber-400 cursor-pointer ${
+                          expanded ? 'bg-stone-800/90' : 'hover:bg-stone-800/60'
+                        }`}
+                        title="Энэ бүлэгт сэдэв нэмэх"
+                        data-testid={`add-topic-${group.category}`}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    )}
+                    </div>
 
                     {/* Subtopics List (Дэд сэдвүүд) */}
                     {expanded && (
