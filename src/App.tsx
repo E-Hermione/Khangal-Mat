@@ -502,7 +502,7 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen flex flex-col font-sans text-stone-900 bg-stone-100"
+      className="min-h-screen flex flex-col font-sans text-stone-900 bg-stone-900 print:bg-white"
     >
       {/* The admin edits content, so copying stays allowed for them */}
       <CopyProtection enabled={appSettings.copyProtection && currentUser.role !== 'admin'} />
@@ -701,7 +701,7 @@ export default function App() {
       </header>
 
       {/* Main Workspace Layout: Sidebar + Main Content */}
-      <div className="flex-1 flex w-full max-w-7xl mx-auto items-start">
+      <div className="flex-1 flex w-full max-w-7xl mx-auto items-start bg-stone-100 print:bg-white">
         {/* Left Sidebar */}
         <Sidebar
           selectedGrade={selectedGrade}
