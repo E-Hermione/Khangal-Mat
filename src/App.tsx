@@ -204,12 +204,29 @@ export default function App() {
   const hasPlan = learningPlan.hasPlan();
   // The admin's "view as user" mode shows the student pages, using the admin's own (test) data
   const isAdminPreview = currentUser?.role === 'admin' && previewAsUser;
+  // Grade of the "paid" preview; the admin changes it next to the view switcher (kept on this device)
+  const [paidPreviewGrade, setPaidPreviewGrade] = useState<GradeNumber>(() => {
+    try {
+      const g = Number(localStorage.getItem('matmate-paid-preview-grade'));
+      return (g >= 6 && g <= 12 ? g : 10) as GradeNumber;
+    } catch {
+      return 10;
+    }
+  });
+  const changePaidPreviewGrade = (g: GradeNumber) => {
+    setPaidPreviewGrade(g);
+    try {
+      localStorage.setItem('matmate-paid-preview-grade', String(g));
+    } catch {
+      // storage blocked: the choice lasts until the page reloads
+    }
+  };
   useEffect(() => {
     if (currentUser?.role !== 'admin') return;
     const uid = getFirebaseAuth().currentUser?.uid;
     if (previewAsUser && uid) {
-      // Previewed as a student: paid in 10th grade, unpaid in 9th
-      const previewGrade: GradeNumber = previewAsUser === 'paid' ? 10 : 9;
+      // Previewed as a student: paid in the grade the admin set (10th by default), unpaid in 9th
+      const previewGrade: GradeNumber = previewAsUser === 'paid' ? paidPreviewGrade : 9;
       startLearningPlan(uid, currentUser.userId || 'ADMIN-01', previewGrade, previewAsUser === 'paid');
       setSelectedGrade(previewGrade);
       const first = catalogTopics(previewGrade)[0];
@@ -219,7 +236,7 @@ export default function App() {
       stopLearningPlan();
       setActiveView((v) => (v === 'plan' || v === 'placement' || v === 'mistakes' ? 'home' : v));
     }
-  }, [previewAsUser, currentUser?.role]);
+  }, [previewAsUser, paidPreviewGrade, currentUser?.role]);
   const isStudent = (currentUser?.role !== 'admin' || isAdminPreview) && !!learningPlan.state.uid;
   // Admin mode proper: content and home texts can be edited
   const canEdit = currentUser?.role === 'admin' && !previewAsUser && !generalView;
@@ -548,6 +565,21 @@ export default function App() {
                     </button>
                   );
                 })}
+                {previewAsUser === 'paid' && (
+                  <select
+                    value={paidPreviewGrade}
+                    onChange={(e) => changePaidPreviewGrade(Number(e.target.value) as GradeNumber)}
+                    className="ml-0.5 mr-0.5 py-1 px-1 rounded-md border border-stone-300 bg-white text-[11px] font-bold text-stone-700 cursor-pointer"
+                    title="Төлбөр төлсөн хэрэглэгчийн анги"
+                    data-testid="paid-preview-grade"
+                  >
+                    {[6, 7, 8, 9, 10, 11, 12].map((g) => (
+                      <option key={g} value={g}>
+                        {g}-р
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             )}
 
