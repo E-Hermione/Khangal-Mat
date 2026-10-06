@@ -19,7 +19,7 @@ import { PlacementTestView } from './components/PlacementTestView';
 import { LearningPlanView } from './components/LearningPlanView';
 import { StudentHome } from './components/StudentHome';
 import type { ExamFilter } from './components/SidebarPanels';
-import { catalogTopics, learningPlan, startLearningPlan, stopLearningPlan, topicMeta, useLearningPlanVersion } from './services/learningPlan';
+import { catalogTopics, isGroupTopic, learningPlan, startLearningPlan, stopLearningPlan, topicMeta, useLearningPlanVersion } from './services/learningPlan';
 import { AuthUser } from './types';
 import { clearStoredAuth, saveStoredAuth } from './utils/deviceManager';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -298,11 +298,18 @@ export default function App() {
     setTopics(loaded);
   };
 
-  // A deleted topic is never shown: if the open topic was deleted, open the grade's first topic
+  // A deleted topic is never shown: if the open topic was deleted, open the grade's first lesson.
+  // A topic with subtopics is only a heading: its first subtopic opens instead.
   useEffect(() => {
+    const kids = topics.filter((t) => t.parentId === selectedTopicId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    if (kids.length) {
+      setSelectedTopicId(kids[0].id);
+      return;
+    }
     const removed = appSettings.removedTopicIds || [];
     if (!removed.includes(selectedTopicId) || topics.some((t) => t.id === selectedTopicId)) return;
-    const first = topics.find((t) => t.grade === selectedGrade) || catalogTopics(selectedGrade)[0];
+    const first =
+      catalogTopics(selectedGrade)[0] || topics.find((t) => t.grade === selectedGrade && !isGroupTopic(t.id));
     if (first) setSelectedTopicId(first.id);
   }, [appSettings, topics, selectedTopicId, selectedGrade]);
 
