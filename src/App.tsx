@@ -66,6 +66,12 @@ export default function App() {
   const [topics, setTopics] = useState<TopicPackage[]>([]);
   const [selectedGrade, setSelectedGrade] = useState<GradeNumber>(6);
   const [selectedTopicId, setSelectedTopicId] = useState<string>('g6-divisibility');
+  // "Хичээл үзэх" shows the home page until the user picks a lesson
+  const [lessonChosen, setLessonChosen] = useState(false);
+  const selectView = (view: typeof activeView) => {
+    if (view === 'topics') setLessonChosen(false);
+    setActiveView(view);
+  };
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [accessRequestsModalOpen, setAccessRequestsModalOpen] = useState(false);
@@ -239,6 +245,8 @@ export default function App() {
       setActiveView((v) => (v === 'plan' || v === 'placement' || v === 'mistakes' ? 'home' : v));
     }
   }, [previewAsUser, paidPreviewGrade, currentUser?.role]);
+  // The home page also shows under "Хичээл үзэх" until a lesson is picked
+  const homeShown = activeView === 'home' || (activeView === 'topics' && !lessonChosen);
   const isStudent = (currentUser?.role !== 'admin' || isAdminPreview) && !!learningPlan.state.uid;
   // Admin mode proper: content and home texts can be edited
   const canEdit = currentUser?.role === 'admin' && !previewAsUser && !generalView;
@@ -263,6 +271,7 @@ export default function App() {
   const openPlanTopic = (topicId: string, view: 'topics' | 'exams') => {
     setSelectedGrade(topicMeta(topicId).grade);
     setSelectedTopicId(topicId);
+    if (view === 'topics') setLessonChosen(true);
     setActiveView(view);
   };
 
@@ -696,9 +705,10 @@ export default function App() {
         <Sidebar
           selectedGrade={selectedGrade}
           onSelectGrade={setSelectedGrade}
-          selectedTopicId={selectedTopicId}
+          selectedTopicId={lessonChosen ? selectedTopicId : ''}
           onSelectTopic={(topicId) => {
             setSelectedTopicId(topicId);
+            setLessonChosen(true);
             setActiveView('topics');
           }}
           onOpenAdmin={() => setAdminModalOpen(true)}
@@ -711,7 +721,7 @@ export default function App() {
           isAdmin={currentUser?.role === 'admin' && !previewAsUser}
           hidePlanView={canEdit}
           activeView={activeView}
-          onSelectView={setActiveView}
+          onSelectView={selectView}
           showHome={isStudent || currentUser.role === 'admin'}
           examFilter={examFilter}
           onExamFilter={setExamFilter}
@@ -760,13 +770,13 @@ export default function App() {
             <div className="text-center py-20 text-sm text-stone-500">Ачаалж байна...</div>
           ) : isStudent && activeView === 'placement' && learningPlan.canTakePlacement(placementGrade) ? (
             <PlacementTestView key={placementGrade} uid={getFirebaseAuth().currentUser!.uid} grade={placementGrade} />
-          ) : currentUser.role === 'admin' && generalView && !previewAsUser && activeView === 'home' ? (
+          ) : currentUser.role === 'admin' && generalView && !previewAsUser && homeShown ? (
             // General view: no student steps or cards on the home page
             <h1 className="max-w-5xl mx-auto text-2xl font-black text-stone-950" data-testid="general-home">
               Сайн байна уу{currentUser.name ? `, ${currentUser.name.split(' ').pop()}` : ''}!
             </h1>
-          ) : (isStudent && (activeView === 'home' || activeView === 'placement')) ||
-            (currentUser.role === 'admin' && !previewAsUser && activeView === 'home') ? (
+          ) : (isStudent && (homeShown || activeView === 'placement')) ||
+            (currentUser.role === 'admin' && !previewAsUser && homeShown) ? (
             <StudentHome
               uid={getFirebaseAuth().currentUser?.uid}
               currentUser={currentUser}
@@ -776,7 +786,7 @@ export default function App() {
                 setActiveView('placement');
               }}
               onOpenPlan={() => setActiveView('plan')}
-              onOpenLessons={() => setActiveView('topics')}
+              onOpenLessons={() => selectView('topics')}
               onOpenExams={() => setActiveView('exams')}
               onOpenTopic={(topicId) => openPlanTopic(topicId, 'topics')}
             />
@@ -810,6 +820,7 @@ export default function App() {
               onSelectGrade={setSelectedGrade}
               onSelectTopic={(topicId) => {
                 setSelectedTopicId(topicId);
+                setLessonChosen(true);
                 setActiveView('topics');
               }}
               isAdmin={currentUser?.role === 'admin' && !previewAsUser}
