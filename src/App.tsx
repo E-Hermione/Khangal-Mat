@@ -204,25 +204,22 @@ export default function App() {
   const hasPlan = learningPlan.hasPlan();
   // The admin's "view as user" mode shows the student pages, using the admin's own (test) data
   const isAdminPreview = currentUser?.role === 'admin' && previewAsUser;
-  // The grade the admin previews as (starts at 10th paid / 9th unpaid; the admin can switch it)
-  const [previewGrade, setPreviewGrade] = useState<GradeNumber | null>(null);
-  useEffect(() => {
-    setPreviewGrade(previewAsUser === 'paid' ? 10 : previewAsUser === 'unpaid' ? 9 : null);
-    if (previewAsUser) setActiveView('home');
-  }, [previewAsUser]);
   useEffect(() => {
     if (currentUser?.role !== 'admin') return;
     const uid = getFirebaseAuth().currentUser?.uid;
-    if (previewAsUser && uid && previewGrade) {
+    if (previewAsUser && uid) {
+      // Previewed as a student: paid in 10th grade, unpaid in 9th
+      const previewGrade: GradeNumber = previewAsUser === 'paid' ? 10 : 9;
       startLearningPlan(uid, currentUser.userId || 'ADMIN-01', previewGrade, previewAsUser === 'paid');
       setSelectedGrade(previewGrade);
       const first = catalogTopics(previewGrade)[0];
       if (first) setSelectedTopicId(first.id);
-    } else if (!previewAsUser) {
+      setActiveView('home');
+    } else {
       stopLearningPlan();
       setActiveView((v) => (v === 'plan' || v === 'placement' || v === 'mistakes' ? 'home' : v));
     }
-  }, [previewAsUser, previewGrade, currentUser?.role]);
+  }, [previewAsUser, currentUser?.role]);
   const isStudent = (currentUser?.role !== 'admin' || isAdminPreview) && !!learningPlan.state.uid;
   // Admin mode proper: content and home texts can be edited
   const canEdit = currentUser?.role === 'admin' && !previewAsUser && !generalView;
@@ -619,9 +616,7 @@ export default function App() {
         {/* Left Sidebar */}
         <Sidebar
           selectedGrade={selectedGrade}
-          onSelectGrade={(g) => (isAdminPreview ? setPreviewGrade(g) : setSelectedGrade(g))}
-          // The admin previewing as a student may switch grades; real students cannot
-          previewGradePicker={!!isAdminPreview}
+          onSelectGrade={setSelectedGrade}
           selectedTopicId={selectedTopicId}
           onSelectTopic={(topicId) => {
             setSelectedTopicId(topicId);
