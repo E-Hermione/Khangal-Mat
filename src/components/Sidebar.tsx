@@ -836,12 +836,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   </span>
                                 )}
 
-                                {topic.hasFullPackage && !isHidden && !isLocked && (
-                                  <span className="text-[10px] px-1.5 py-0.2 bg-amber-500/10 text-amber-300/80 rounded">
-                                    Бэлэн
-                                  </span>
-                                )}
-
                                 {/* Progress, or the arrow of a topic with subtopics */}
                                 {kids.length > 0 ? (
                                   openParents.has(topic.id) ? (
