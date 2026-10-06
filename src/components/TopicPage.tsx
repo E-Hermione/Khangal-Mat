@@ -472,7 +472,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
         </div>
       ) : (
         <>
-        {/* Tabs above the lesson card: one part of the lesson at a time, each part in its own color */}
+        {/* Tabs above the lesson card: one part of the lesson at a time */}
         {(() => {
           const tabs = (
             [
@@ -482,31 +482,28 @@ export const TopicPage: React.FC<TopicPageProps> = ({
             ] as const
           ).filter(([, , , shown]) => shown);
           if (tabs.length > 0 && !tabs.some(([key]) => key === lessonTab)) setTimeout(() => setLessonTab(tabs[0][0]));
-          const COLOR = {
-            theory: { on: 'bg-[#3D0C02] border-[#3D0C02] text-white', off: 'bg-white border-[#3D0C02]/25 text-[#3D0C02] hover:bg-[#3D0C02]/5' },
-            examples: { on: 'bg-sky-800 border-sky-800 text-white', off: 'bg-white border-sky-800/25 text-sky-800 hover:bg-sky-50' },
-            practice: { on: 'bg-emerald-800 border-emerald-800 text-white', off: 'bg-white border-emerald-800/25 text-emerald-800 hover:bg-emerald-50' },
-          } as const;
           return (
             tabs.length > 0 && (
               <div
-                className="grid gap-2 md:gap-3 mb-4 no-print"
+                className="grid gap-1.5 p-1.5 mb-4 bg-white border border-stone-200 border-t-[3px] border-t-[#3D0C02] rounded-2xl no-print"
                 style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
                 role="tablist"
                 data-testid="lesson-tabs"
               >
-                {tabs.map(([key, label, count]) => (
+                {tabs.map(([key, label]) => (
                   <button
                     key={key}
                     type="button"
                     role="tab"
                     aria-selected={lessonTab === key}
                     onClick={() => setLessonTab(key)}
-                    className={`py-3 rounded-2xl border-2 text-sm md:text-base font-black transition-all cursor-pointer shadow-sm ${
-                      lessonTab === key ? COLOR[key].on + ' shadow-md' : COLOR[key].off
+                    className={`py-2 rounded-xl border text-sm font-extrabold transition-colors cursor-pointer ${
+                      lessonTab === key
+                        ? 'bg-[#3D0C02] border-[#3D0C02] text-white'
+                        : 'bg-amber-50 border-amber-200/70 text-[#3D0C02] hover:bg-amber-100'
                     }`}
                   >
-                    {label} <span className="opacity-70 font-bold">· {count}</span>
+                    {label}
                   </button>
                 ))}
               </div>
