@@ -502,7 +502,9 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen flex flex-col font-sans text-stone-900 bg-stone-900 print:bg-white"
+      className={`min-h-screen flex flex-col font-sans text-stone-900 print:bg-white ${
+        activeView === 'topics' && !homeShown ? 'bg-stone-900' : 'bg-stone-100'
+      }`}
     >
       {/* The admin edits content, so copying stays allowed for them */}
       <CopyProtection enabled={appSettings.copyProtection && currentUser.role !== 'admin'} />
@@ -776,7 +778,7 @@ export default function App() {
             <PlacementTestView key={placementGrade} uid={getFirebaseAuth().currentUser!.uid} grade={placementGrade} />
           ) : currentUser.role === 'admin' && generalView && !previewAsUser && homeShown ? (
             // General view: no student steps or cards on the home page
-            <h1 className="max-w-5xl mx-auto text-2xl font-black text-white" data-testid="general-home">
+            <h1 className="max-w-5xl mx-auto text-2xl font-black text-stone-950" data-testid="general-home">
               Сайн байна уу{currentUser.name ? `, ${currentUser.name.split(' ').pop()}` : ''}!
             </h1>
           ) : (isStudent && (homeShown || activeView === 'placement')) ||

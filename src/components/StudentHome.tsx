@@ -237,7 +237,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   return (
     <div className="max-w-5xl mx-auto space-y-6" data-testid="student-home">
       <div>
-        <h1 className="text-2xl font-black text-white">Сайн байна уу{firstName ? `, ${firstName}` : ''}!</h1>
+        <h1 className="text-2xl font-black text-stone-950">Сайн байна уу{firstName ? `, ${firstName}` : ''}!</h1>
         {editing === 'intro' ? (
           <div className="mt-3 bg-white rounded-xl border border-stone-200 p-4">
             <TextEditor fields={[{ key: 'intro', label: 'Танилцуулга (хоосон бол харагдахгүй)', multiline: true }]} content={content} onDone={done} />
@@ -245,8 +245,8 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
         ) : (
           (content.intro || editable) && (
             <div className="mt-2 flex items-start gap-2">
-              <p className="text-sm text-stone-300 whitespace-pre-wrap flex-1" data-testid="home-intro">
-                {content.intro || <span className="text-stone-500 italic">Танилцуулга бичвэр нэмэх</span>}
+              <p className="text-sm text-stone-600 whitespace-pre-wrap flex-1" data-testid="home-intro">
+                {content.intro || <span className="text-stone-400 italic">Танилцуулга бичвэр нэмэх</span>}
               </p>
               {editable && <EditButton onClick={() => setEditing('intro')} />}
             </div>
@@ -384,7 +384,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
       {editable && (
       <div className="space-y-2" id="home-access">
         <div className="flex items-center gap-1.5">
-          <h2 className="text-sm font-black text-stone-200 flex items-center gap-1.5 flex-1">
+          <h2 className="text-sm font-black text-stone-800 flex items-center gap-1.5 flex-1">
             <CreditCard className="w-4 h-4 text-amber-600" /> {content.accessTitle}
           </h2>
           <EditButton onClick={() => setEditing('payment')} title="Төлбөрийн данс, үнэ засах" />

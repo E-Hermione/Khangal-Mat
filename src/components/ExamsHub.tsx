@@ -217,7 +217,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
 
   return (
     <div className="w-full animate-in fade-in duration-150">
-      <h2 className="text-lg font-black text-white mb-3">{selectedGrade}-р ангийн сорилууд</h2>
+      <h2 className="text-lg font-black text-stone-900 mb-3">{selectedGrade}-р ангийн сорилууд</h2>
 
       {/* Styled Table: One row per topic, clean level selector, centered action buttons, fits without cut off */}
       <div className="bg-white rounded-2xl shadow-sm border border-stone-200/90 overflow-hidden ring-1 ring-stone-900/5">
