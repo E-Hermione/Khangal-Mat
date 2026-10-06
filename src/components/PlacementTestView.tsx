@@ -69,7 +69,7 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
   return (
     <div className="max-w-3xl mx-auto space-y-4" data-testid="placement-test">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-black text-stone-900">Түвшин тогтоох шалгалт</h1>
+        <h1 className="text-lg font-black text-white">Түвшин тогтоох шалгалт</h1>
         <span className="text-xs font-bold text-stone-500">
           {answered}/{test.questions.length} хариулсан
         </span>

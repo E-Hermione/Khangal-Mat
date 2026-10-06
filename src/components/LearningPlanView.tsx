@@ -41,11 +41,11 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
     return (
       <div className="max-w-4xl mx-auto space-y-5" data-testid="learning-plan-intro">
         <div>
-          <h1 className="text-2xl font-black text-stone-950 flex items-center gap-2">
+          <h1 className="text-2xl font-black text-white flex items-center gap-2">
             <Route className="w-6 h-6 text-amber-600" />
             Миний сургалтын төлөвлөгөө
           </h1>
-          <p className="text-sm text-stone-600 mt-1">
+          <p className="text-sm text-stone-400 mt-1">
             Танд зориулсан төлөвлөгөө түвшин тогтоох сорил өгсний дараа гарна. Доорх 3 алхмаар явна.
           </p>
         </div>
@@ -71,11 +71,11 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
   return (
     <div className="max-w-4xl mx-auto space-y-5" data-testid="learning-plan">
       <div>
-        <h1 className="text-2xl font-black text-stone-950 flex items-center gap-2">
+        <h1 className="text-2xl font-black text-white flex items-center gap-2">
           <Route className="w-6 h-6 text-amber-600" />
           Миний сургалтын төлөвлөгөө
         </h1>
-        <p className="text-sm text-stone-600 mt-1">
+        <p className="text-sm text-stone-400 mt-1">
           Түвшин тогтоох сорил:{' '}
           {currentResults(results, learningPlan.state.grade).map((r, i) => (
             <span key={r.grade}>
@@ -494,7 +494,7 @@ export const PlanSteps: React.FC<{
     },
   ];
   const stateStyle = {
-    done: { card: 'border-emerald-200 bg-emerald-50/60', icon: 'bg-emerald-500 text-white', pill: 'bg-emerald-100 text-emerald-800', label: 'Хийсэн' },
+    done: { card: 'border-emerald-200 bg-emerald-50', icon: 'bg-emerald-500 text-white', pill: 'bg-emerald-100 text-emerald-800', label: 'Хийсэн' },
     now: { card: 'border-amber-300 bg-amber-50 ring-2 ring-amber-100', icon: 'bg-amber-500 text-stone-950', pill: 'bg-amber-500 text-stone-950', label: 'Одоо' },
     later: { card: 'border-stone-200 bg-white', icon: 'bg-stone-100 text-stone-400', pill: 'bg-stone-100 text-stone-500', label: 'Дараа' },
   };

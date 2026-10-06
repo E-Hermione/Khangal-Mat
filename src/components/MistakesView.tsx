@@ -118,11 +118,11 @@ export const MistakesView: React.FC<{ onOpenExam: (topicId: string) => void }> =
   return (
     <div className="max-w-3xl mx-auto space-y-5" data-testid="mistakes-view">
       <div>
-        <h1 className="text-2xl font-black text-stone-950 flex items-center gap-2">
+        <h1 className="text-2xl font-black text-white flex items-center gap-2">
           <RotateCcw className="w-6 h-6 text-rose-600" />
           Алдсан бодлогууд
         </h1>
-        <p className="text-sm text-stone-600 mt-1">
+        <p className="text-sm text-stone-400 mt-1">
           Сэдэвчилсэн сорилд алдсан бодлогуудаа дахин бодоорой. Сорилоо дахин өгч зөв бодвол жагсаалтаас гарна.
         </p>
       </div>
@@ -135,9 +135,9 @@ export const MistakesView: React.FC<{ onOpenExam: (topicId: string) => void }> =
         [...groups.entries()].map(([key, items]) => (
           <section key={key} className="space-y-2.5">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="font-black text-stone-900">
+              <h2 className="font-black text-white">
                 {topicMeta(items[0].topicId).title}
-                <span className="ml-2 text-xs font-bold text-stone-500">{items[0].tierName} сорил</span>
+                <span className="ml-2 text-xs font-bold text-stone-400">{items[0].tierName} сорил</span>
               </h2>
               <button
                 type="button"
