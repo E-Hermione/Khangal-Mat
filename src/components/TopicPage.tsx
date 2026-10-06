@@ -471,6 +471,48 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           </div>
         </div>
       ) : (
+        <>
+        {/* Tabs above the lesson card: one part of the lesson at a time, each part in its own color */}
+        {(() => {
+          const tabs = (
+            [
+              ['theory', 'Онол', mainTopic.theory.length, (isAdmin && selection.theory) || (!isAdmin && isTheoryAllowed)],
+              ['examples', 'Жишээ', mainTopic.examples.length, (isAdmin && selection.examples) || (!isAdmin && isExamplesAllowed)],
+              ['practice', 'Дасгал', mainTopic.practice.length, (isAdmin && selection.practice) || (!isAdmin && isPracticeAllowed)],
+            ] as const
+          ).filter(([, , , shown]) => shown);
+          if (tabs.length > 0 && !tabs.some(([key]) => key === lessonTab)) setTimeout(() => setLessonTab(tabs[0][0]));
+          const COLOR = {
+            theory: { on: 'bg-[#3D0C02] border-[#3D0C02] text-white', off: 'bg-white border-[#3D0C02]/25 text-[#3D0C02] hover:bg-[#3D0C02]/5' },
+            examples: { on: 'bg-sky-800 border-sky-800 text-white', off: 'bg-white border-sky-800/25 text-sky-800 hover:bg-sky-50' },
+            practice: { on: 'bg-emerald-800 border-emerald-800 text-white', off: 'bg-white border-emerald-800/25 text-emerald-800 hover:bg-emerald-50' },
+          } as const;
+          return (
+            tabs.length > 0 && (
+              <div
+                className="grid gap-2 md:gap-3 mb-4 no-print"
+                style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
+                role="tablist"
+                data-testid="lesson-tabs"
+              >
+                {tabs.map(([key, label, count]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={lessonTab === key}
+                    onClick={() => setLessonTab(key)}
+                    className={`py-3 rounded-2xl border-2 text-sm md:text-base font-black transition-all cursor-pointer shadow-sm ${
+                      lessonTab === key ? COLOR[key].on + ' shadow-md' : COLOR[key].off
+                    }`}
+                  >
+                    {label} <span className="opacity-70 font-bold">· {count}</span>
+                  </button>
+                ))}
+              </div>
+            )
+          );
+        })()}
         <article className="print-container bg-white rounded-[28px] shadow-[0_20px_40px_-12px_rgba(17,24,39,0.18)] px-5 md:px-10 pt-6 pb-8 print:shadow-none print:rounded-none print:p-0">
           {/* Admin with nothing selected */}
           {isAdmin && !anyAdminSectionSelected && (
@@ -498,37 +540,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
             </div>
           )}
 
-          {/* Tabs: one part of the lesson at a time */}
-          {(() => {
-            const tabs = (
-              [
-                ['theory', 'Онол', mainTopic.theory.length, (isAdmin && selection.theory) || (!isAdmin && isTheoryAllowed)],
-                ['examples', 'Жишээ', mainTopic.examples.length, (isAdmin && selection.examples) || (!isAdmin && isExamplesAllowed)],
-                ['practice', 'Дасгал', mainTopic.practice.length, (isAdmin && selection.practice) || (!isAdmin && isPracticeAllowed)],
-              ] as const
-            ).filter(([, , , shown]) => shown);
-            if (tabs.length > 0 && !tabs.some(([key]) => key === lessonTab)) setTimeout(() => setLessonTab(tabs[0][0]));
-            return (
-              tabs.length > 0 && (
-                <div className="inline-flex flex-wrap gap-1 p-1 rounded-xl bg-stone-200/80 mb-8 no-print" role="tablist" data-testid="lesson-tabs">
-                  {tabs.map(([key, label, count]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      role="tab"
-                      aria-selected={lessonTab === key}
-                      onClick={() => setLessonTab(key)}
-                      className={`px-4 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer ${
-                        lessonTab === key ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-800'
-                      }`}
-                    >
-                      {label} · {count}
-                    </button>
-                  ))}
-                </div>
-              )
-            );
-          })()}
           {renderSections(mainTopic, true)}
 
           {/* Link to 3-tier Exams Hub for this topic (Neat banner) */}
@@ -559,6 +570,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
             </div>
           )}
         </article>
+        </>
       )}
 
       {grantsOpen && (
