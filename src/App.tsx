@@ -512,16 +512,16 @@ export default function App() {
         watermark={[currentUser.userId, currentUser.phoneNumber].filter(Boolean).join(' • ')}
       />
       {/* Top Navigation Bar on Screen */}
-      <header className="screen-header bg-white border-b border-stone-200 sticky top-0 z-40 h-14 px-4 flex items-center shadow-2xs no-print">
+      <header className="screen-header bg-stone-900 border-b border-stone-800 sticky top-0 z-40 h-14 px-4 flex items-center shadow-2xs no-print">
         <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
             <button
               type="button"
               onClick={() => setMobileSidebarOpen((prev) => !prev)}
-              className="p-1.5 rounded-lg text-stone-700 hover:bg-stone-100 lg:hidden cursor-pointer"
+              className="p-1.5 rounded-lg text-stone-300 hover:bg-stone-800 lg:hidden cursor-pointer"
               aria-label={mobileSidebarOpen ? 'Цэс хаах' : 'Цэс нээх'}
             >
-              {mobileSidebarOpen ? <X className="w-5 h-5 text-stone-900" /> : <Menu className="w-5 h-5" />}
+              {mobileSidebarOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5" />}
             </button>
 
             <div
@@ -529,10 +529,10 @@ export default function App() {
               onClick={() => setActiveView('home')}
               title="Нүүр хуудас"
             >
-              <span className="w-7 h-7 rounded-md bg-stone-900 text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
+              <span className="w-7 h-7 rounded-md bg-amber-500 text-stone-950 font-black text-sm flex items-center justify-center shrink-0">
                 ∑
               </span>
-              <span className="font-extrabold text-sm md:text-base tracking-tight text-stone-950 hidden lg:inline whitespace-nowrap">
+              <span className="font-extrabold text-sm md:text-base tracking-tight text-white hidden lg:inline whitespace-nowrap">
                 Математикийн сургалтын материалын сан
               </span>
             </div>
@@ -557,7 +557,7 @@ export default function App() {
               </span>
             )}
             {currentUser?.role === 'admin' && !generalLocked && (
-              <div className="flex items-center bg-stone-100 p-0.5 rounded-lg border border-stone-200">
+              <div className="flex items-center bg-stone-800 p-0.5 rounded-lg border border-stone-700">
                 {([
                   ['admin', 'Админ', 'Админ горим', Shield],
                   ['general', 'Ерөнхий', 'Ерөнхий харагдац: админы эрхтэй, засах товчгүй', Presentation],
@@ -581,11 +581,11 @@ export default function App() {
                       className={`p-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
                         active
                           ? mode === 'admin'
-                            ? 'bg-stone-900 text-amber-400 shadow-xs'
+                            ? 'bg-stone-950 text-amber-400 shadow-xs'
                             : mode === 'general'
                             ? 'bg-sky-600 text-white shadow-xs'
                             : 'bg-amber-500 text-stone-950 shadow-xs'
-                          : 'text-stone-500 hover:text-stone-900'
+                          : 'text-stone-400 hover:text-white'
                       }`}
                       title={title}
                       aria-label={title}
@@ -599,7 +599,7 @@ export default function App() {
                   <select
                     value={paidPreviewGrade}
                     onChange={(e) => changePaidPreviewGrade(Number(e.target.value) as GradeNumber)}
-                    className="ml-0.5 mr-0.5 py-1 px-1 rounded-md border border-stone-300 bg-white text-[11px] font-bold text-stone-700 cursor-pointer"
+                    className="ml-0.5 mr-0.5 py-1 px-1 rounded-md border border-stone-600 bg-stone-900 text-[11px] font-bold text-stone-200 cursor-pointer"
                     title="Төлбөр төлсөн хэрэглэгчийн анги"
                     data-testid="paid-preview-grade"
                   >
@@ -619,7 +619,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setPrintMenuOpen((prev) => !prev)}
-                  className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold bg-stone-900 hover:bg-black text-white flex items-center space-x-1.5 shadow-xs transition-colors cursor-pointer"
+                  className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold bg-stone-800 hover:bg-stone-700 text-white flex items-center space-x-1.5 shadow-xs transition-colors cursor-pointer"
                   aria-expanded={printMenuOpen}
                   aria-label="Хэвлэх"
                 >

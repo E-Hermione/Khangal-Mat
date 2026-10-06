@@ -49,7 +49,7 @@ export const AnnouncementsBell: React.FC<{ uid: string }> = ({ uid }) => {
       <button
         type="button"
         onClick={() => setOpen('all')}
-        className="relative p-1.5 rounded-lg text-stone-700 hover:bg-stone-100 cursor-pointer"
+        className="relative p-1.5 rounded-lg text-stone-300 hover:bg-stone-800 hover:text-white cursor-pointer"
         title="Зарлал"
         aria-label="Зарлал"
         data-testid="announcements-bell"
