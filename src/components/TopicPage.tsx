@@ -462,27 +462,37 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           return (
             tabs.length > 0 && (
               <div
-                className="grid gap-1.5 p-1.5 mb-4 bg-[#161312] rounded-2xl shadow-sm no-print"
+                className="grid gap-2 mb-4 no-print"
                 style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
                 role="tablist"
                 data-testid="lesson-tabs"
               >
-                {tabs.map(([key, label]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    role="tab"
-                    aria-selected={lessonTab === key}
-                    onClick={() => setLessonTab(key)}
-                    className={`py-2 rounded-xl text-sm font-extrabold transition-colors cursor-pointer ${
-                      lessonTab === key
-                        ? 'bg-amber-500 text-stone-950'
-                        : 'bg-[#161312] text-stone-300 hover:bg-stone-800 hover:text-white'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+                {tabs.map(([key, label], i) => {
+                  const on = lessonTab === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      role="tab"
+                      aria-selected={on}
+                      onClick={() => setLessonTab(key)}
+                      className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-sm font-extrabold transition-colors cursor-pointer ${
+                        on
+                          ? 'bg-[#161312] border-[#161312] text-white'
+                          : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300 hover:text-stone-900'
+                      }`}
+                    >
+                      <span
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                          on ? 'bg-amber-500 text-stone-950' : 'bg-stone-100 text-stone-500'
+                        }`}
+                      >
+                        {i + 1}
+                      </span>
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
             )
           );
