@@ -396,7 +396,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar container */}
       <aside
-        className={`fixed top-14 bottom-0 left-0 z-30 w-72 bg-stone-900 text-stone-100 flex flex-col border-r border-stone-800 transition-transform duration-200 ease-in-out lg:sticky lg:top-14 lg:self-start lg:h-[calc(100vh-3.5rem)] lg:translate-x-0 lg:shrink-0 no-print ${
+        className={`fixed top-14 bottom-0 left-0 z-30 w-72 bg-stone-900 text-stone-100 flex flex-col border-r lg:border-l border-stone-800 transition-transform duration-200 ease-in-out lg:sticky lg:top-14 lg:self-start lg:h-[calc(100vh-3.5rem)] lg:translate-x-0 lg:shrink-0 no-print ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
