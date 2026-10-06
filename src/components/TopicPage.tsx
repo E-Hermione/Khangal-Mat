@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { TopicPackage, PrintSectionsSelection, PrintOptions, TheoryRule, WorkedExample, PracticeProblem } from '../types';
+import { TopicPackage, PrintOptions, TheoryRule, WorkedExample, PracticeProblem } from '../types';
 import { TheorySection } from './TheorySection';
 import { WorkedExamplesSection } from './WorkedExamplesSection';
 import { PracticeSection } from './PracticeSection';
-import { PrintControlPanel } from './PrintControlPanel';
+import { usePrintSelection } from '../services/printSelection';
 import { ItemEditorModal, ItemEditorType } from './ItemEditorModal';
 import { visibilityService, TopicAccessMode } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
@@ -65,17 +65,9 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   // Students with a learning plan see paid plan topics in full and nothing else
   const planGate = isAdmin ? null : learningPlan.topicGate(topic.id);
   // Selection for core lesson sections: Theory, Examples, Practice
-  const [selection, setSelection] = useState<PrintSectionsSelection>({
-    theory: true,
-    examples: true,
-    practice: true,
-    test1: false,
-    test2: false,
-    test3: false,
-    answers: false,
-  });
+  const [selection] = usePrintSelection();
 
-  const [options, setOptions] = useState<PrintOptions>({
+  const [options] = useState<PrintOptions>({
     includeWorkSpace: true,
     teacherVersion: false,
     fontSize: 'md',
@@ -417,16 +409,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           </p>
         )}
       </div>
-
-      {/* ADMIN CONTROLS: Print Selection Control Panel (Admin only) */}
-      {isAdmin ? (
-        <PrintControlPanel
-          selection={selection}
-          onChangeSelection={setSelection}
-          options={options}
-          onChangeOptions={setOptions}
-        />
-      ) : null}
 
       {/* MAIN DOCUMENT CANVAS */}
       {planGate && planGate !== 'open' ? (

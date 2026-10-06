@@ -14,6 +14,7 @@ import { CopyProtection } from './components/CopyProtection';
 import { SettingsModal } from './components/SettingsModal';
 import { ExamsHub } from './components/ExamsHub';
 import { MistakesView } from './components/MistakesView';
+import { usePrintSelection } from './services/printSelection';
 import { PlacementTestView } from './components/PlacementTestView';
 import { LearningPlanView } from './components/LearningPlanView';
 import { StudentHome } from './components/StudentHome';
@@ -90,6 +91,7 @@ export default function App() {
   }, []);
 
   const [printMenuOpen, setPrintMenuOpen] = useState(false);
+  const [printSelection, setPrintSelection] = usePrintSelection();
   const printMenuRef = React.useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
@@ -599,7 +601,36 @@ export default function App() {
                 </button>
 
                 {printMenuOpen && (
-                  <div className="absolute right-0 mt-1.5 w-52 bg-white rounded-xl shadow-lg border border-stone-200 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="absolute right-0 mt-1.5 w-56 bg-white rounded-xl shadow-lg border border-stone-200 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                    {/* Which parts of the lesson to print */}
+                    <div className="px-3.5 pt-1.5 pb-2" data-testid="print-sections">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1.5">Хэвлэх хэсгүүд</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(
+                          [
+                            ['theory', 'Онол'],
+                            ['examples', 'Жишээ'],
+                            ['practice', 'Дасгал'],
+                          ] as const
+                        ).map(([key, label]) => (
+                          <label
+                            key={key}
+                            className={`flex items-center gap-1.5 text-xs font-semibold cursor-pointer select-none px-2 py-1 rounded-lg border ${
+                              printSelection[key] ? 'bg-amber-50 border-amber-200 text-stone-900' : 'border-stone-200 text-stone-500'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={printSelection[key]}
+                              onChange={() => setPrintSelection({ ...printSelection, [key]: !printSelection[key] })}
+                              className="w-3.5 h-3.5 accent-amber-700 cursor-pointer"
+                            />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="my-1 border-t border-stone-100" />
                     <button
                       type="button"
                       onClick={() => {
