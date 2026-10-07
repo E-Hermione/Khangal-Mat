@@ -143,14 +143,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   return (
     <div {...backdropClose(onClose)} className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop bg-stone-950/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div
-        className={`bg-stone-100 w-full ${currentView === 'devices' ? 'max-w-2xl' : 'max-w-md'} max-h-[92vh] rounded-3xl shadow-2xl border border-stone-200 flex flex-col overflow-hidden text-stone-900 animate-in zoom-in-95 duration-200 transition-all`}
+        className={`bg-stone-100 w-full ${currentView === 'devices' ? 'max-w-2xl' : 'max-w-[340px] sm:max-w-md'} max-h-[92vh] rounded-2xl sm:rounded-3xl shadow-2xl border border-stone-200 flex flex-col overflow-hidden text-stone-900 animate-in zoom-in-95 duration-200 transition-all`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-title"
       >
         {/* Phone-style Top Navigation Bar */}
         {currentView === 'main' ? (
-          <div className="bg-white px-5 py-3.5 border-b border-stone-200/80 flex items-center justify-between shrink-0 shadow-xs">
+          <div className="bg-white px-4 py-2.5 sm:px-5 sm:py-3.5 border-b border-stone-200/80 flex items-center justify-between shrink-0 shadow-xs">
             <div className="flex items-center space-x-2.5">
               <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center font-bold">
                 <Sliders className="w-4 h-4" />
@@ -199,13 +199,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         )}
 
         {/* Dynamic View Body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2.5 sm:space-y-3.5">
           {/* VIEW 1: MAIN MENU (Phone-style stacked list) */}
           {currentView === 'main' && (
             <>
               {/* User Profile Card */}
-              <div className="bg-white p-4 rounded-2xl border border-stone-200/90 shadow-xs flex items-center space-x-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 text-white font-black text-base flex items-center justify-center shadow-xs shrink-0">
+              <div className="bg-white p-3 sm:p-4 rounded-2xl border border-stone-200/90 shadow-xs flex items-center space-x-3 sm:space-x-3.5">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 text-white font-black text-base flex items-center justify-center shadow-xs shrink-0">
                   {currentUser.name ? currentUser.name[0].toUpperCase() : 'U'}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -232,10 +232,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setCurrentView('profile')}
-                    className="w-full p-3.5 flex items-center justify-between hover:bg-stone-50 active:bg-stone-100 transition-colors text-left group cursor-pointer"
+                    className="w-full px-3 py-2.5 sm:p-3.5 flex items-center justify-between hover:bg-stone-50 active:bg-stone-100 transition-colors text-left group cursor-pointer"
                   >
-                    <div className="flex items-center space-x-3 min-w-0">
-                      <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                    <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
                         <User className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
@@ -254,10 +254,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setCurrentView('security')}
-                    className="w-full p-3.5 flex items-center justify-between hover:bg-stone-50 active:bg-stone-100 transition-colors text-left group cursor-pointer"
+                    className="w-full px-3 py-2.5 sm:p-3.5 flex items-center justify-between hover:bg-stone-50 active:bg-stone-100 transition-colors text-left group cursor-pointer"
                   >
-                    <div className="flex items-center space-x-3 min-w-0">
-                      <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                    <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
                         <Lock className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
@@ -277,10 +277,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setCurrentView('devices')}
-                      className="w-full p-3.5 flex items-center justify-between hover:bg-stone-50 active:bg-stone-100 transition-colors text-left group cursor-pointer"
+                      className="w-full px-3 py-2.5 sm:p-3.5 flex items-center justify-between hover:bg-stone-50 active:bg-stone-100 transition-colors text-left group cursor-pointer"
                     >
-                      <div className="flex items-center space-x-3 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                      <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
                           <Smartphone className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
@@ -301,10 +301,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setCurrentView('system')}
-                      className="w-full p-3.5 flex items-center justify-between hover:bg-stone-50 active:bg-stone-100 transition-colors text-left group cursor-pointer"
+                      className="w-full px-3 py-2.5 sm:p-3.5 flex items-center justify-between hover:bg-stone-50 active:bg-stone-100 transition-colors text-left group cursor-pointer"
                     >
-                      <div className="flex items-center space-x-3 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                      <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
                           <Shield className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
@@ -330,7 +330,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onClose();
                     onLogout();
                   }}
-                  className="w-full py-3 px-4 rounded-2xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-bold transition-colors flex items-center justify-center space-x-2 cursor-pointer shadow-xs"
+                  className="w-full py-2.5 sm:py-3 px-4 rounded-xl sm:rounded-2xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-bold transition-colors flex items-center justify-center space-x-2 cursor-pointer shadow-xs"
                 >
                   <LogOut className="w-4 h-4 text-red-600" />
                   <span>Системээс гарах</span>
