@@ -588,9 +588,6 @@ const TierGuide: React.FC = () => {
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-stone-600">
           <span className="flex items-center gap-1">
-            <Lock className="w-3.5 h-3.5 text-stone-400" /> Төлбөрийн дараа нээгдэнэ
-          </span>
-          <span className="flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Сэдэв үзэж дууссан
           </span>
         </div>
