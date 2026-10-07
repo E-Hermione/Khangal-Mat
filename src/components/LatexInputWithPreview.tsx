@@ -1,6 +1,8 @@
 import React, { useRef } from 'react';
 import { MathRenderer } from './MathRenderer';
 import { Eye, Sparkles } from 'lucide-react';
+// Copying a rendered formula copies its LaTeX code
+import 'katex/contrib/copy-tex';
 
 interface LatexInputWithPreviewProps {
   label: string;
