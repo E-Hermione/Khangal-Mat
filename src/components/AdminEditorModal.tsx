@@ -401,19 +401,6 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                             setTopic({ ...topic, theory: updated });
                           }}
                         />
-                        <label className="flex items-center gap-1 text-xs font-bold text-stone-700 whitespace-nowrap cursor-pointer" title="Дээрх онолын дэд хэсэг: 1.1, 1.2 гэж дугаарлана">
-                          <input
-                            type="checkbox"
-                            checked={!!rule.sub}
-                            disabled={idx === 0}
-                            onChange={(e) => {
-                              const updated = [...topic.theory];
-                              updated[idx] = { ...updated[idx], sub: e.target.checked || undefined };
-                              setTopic({ ...topic, theory: updated });
-                            }}
-                          />
-                          Дэд хэсэг
-                        </label>
                       </div>
                       <button
                         type="button"

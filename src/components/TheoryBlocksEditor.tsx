@@ -8,6 +8,7 @@ const LABEL: Record<TheoryBlock['type'], string> = {
   text: 'Бичвэр',
   formula: 'Голд томьёо (LaTeX)',
   note: 'Тайлбар / санамж',
+  heading: 'Дэд гарчиг (1.1, 1.2 гэж дугаарлагдана)',
 };
 
 /** Edits a theory item as a list of blocks; a new block can be added under any block. */
@@ -23,14 +24,14 @@ export const TheoryBlocksEditor: React.FC<{ rule: TheoryRule; onChange: (rule: T
   const addButtons = (i: number) => (
     <div className="flex items-center gap-1.5 flex-wrap">
       <span className="text-[11px] text-stone-400 font-semibold">Доор нь нэмэх:</span>
-      {(['text', 'formula', 'note'] as const).map((type) => (
+      {(['heading', 'text', 'formula', 'note'] as const).map((type) => (
         <button
           key={type}
           type="button"
           onClick={() => addAfter(i, type)}
           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-stone-300 bg-white hover:bg-amber-50 hover:border-amber-400 text-[11px] font-bold text-stone-700 cursor-pointer"
         >
-          <Plus className="w-3 h-3" /> {type === 'text' ? 'Бичвэр' : type === 'formula' ? 'Томьёо' : 'Тайлбар'}
+          <Plus className="w-3 h-3" /> {{ heading: 'Дэд гарчиг', text: 'Бичвэр', formula: 'Томьёо', note: 'Тайлбар' }[type]}
         </button>
       ))}
     </div>
@@ -47,7 +48,7 @@ export const TheoryBlocksEditor: React.FC<{ rule: TheoryRule; onChange: (rule: T
               label={LABEL[block.type]}
               value={block.value}
               onChange={(value) => save(blocks.map((b, j) => (j === i ? { ...b, value } : b)))}
-              multiline={block.type !== 'formula'}
+              multiline={block.type === 'text' || block.type === 'note'}
               rows={block.type === 'text' ? 3 : 2}
               previewBlock={block.type === 'formula'}
             />
