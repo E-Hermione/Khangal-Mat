@@ -45,7 +45,8 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
   };
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (!(e.ctrlKey || e.metaKey)) return;
-    const key = e.key.toLowerCase();
+    // By the physical key, so it works with the Mongolian keyboard layout too
+    const key = e.code === 'KeyZ' ? 'z' : e.code === 'KeyY' ? 'y' : e.key.toLowerCase();
     const h = history.current;
     if (key === 'z' && !e.shiftKey) {
       e.preventDefault();
