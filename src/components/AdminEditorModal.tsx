@@ -63,6 +63,8 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   // Theory tab: the one theory item being edited
   const [theoryIdx, setTheoryIdx] = useState(0);
+  // Examples tab: the one example being edited
+  const [exampleIdx, setExampleIdx] = useState(0);
 
   // Sync state when activeTopic changes
   // The topic as last saved: closing asks for confirmation only when there are unsaved changes
@@ -148,6 +150,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       answer: 'Хариу',
     };
     setTopic({ ...topic, examples: [...(topic.examples || []), newEx] });
+    setExampleIdx(topic.examples?.length || 0);
   };
 
   const removeWorkedExample = (index: number) => {
@@ -157,6 +160,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       item.number = idx + 1;
     });
     setTopic({ ...topic, examples: updated });
+    setExampleIdx(Math.max(0, Math.min(index, updated.length - 1)));
   };
 
   const addPracticeProblem = () => {
@@ -481,9 +485,27 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           )}
 
           {/* 2. EXAMPLES TAB */}
-          {activeTab === 'examples' && (
+          {activeTab === 'examples' && (() => {
+            const list = topic.examples || [];
+            const sel = Math.min(exampleIdx, list.length - 1);
+            // Changes one example; numbers always follow the order
+            const setList = (next: WorkedExample[]) =>
+              setTopic({ ...topic, examples: next.map((x, i) => ({ ...x, number: i + 1 })) });
+            const update = (i: number, patch: Partial<WorkedExample>) =>
+              setList(list.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+            const move = (i: number, step: -1 | 1) => {
+              const j = i + step;
+              if (j < 0 || j >= list.length) return;
+              const next = [...list];
+              [next[i], next[j]] = [next[j], next[i]];
+              setList(next);
+              setExampleIdx(j);
+            };
+            const plain = (t: string) => t.replace(/\$+/g, '').replace(/\\[a-zA-Z]+/g, ' ').replace(/[{}]/g, '').trim();
+            return (
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-stone-200">
+              {/* Stays on screen while scrolling */}
+              <div className="sticky -top-4 md:-top-6 z-10 bg-white flex items-center justify-between py-2 border-b border-stone-200">
                 <CheckOption
                   checked={!!topic.examplesTwoColumns}
                   onChange={(on) => setTopic({ ...topic, examplesTwoColumns: on || undefined })}
@@ -499,71 +521,96 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-4">
-                {topic.examples.map((ex, idx) => (
-                  <div key={ex.id || idx} className="p-4 border border-stone-200 rounded-xl bg-stone-50/60 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-black text-xs text-stone-900">
-                        Жишээ {ex.number}
-                      </span>
-                      <div className="flex items-center space-x-2">
-                        <ItemGradePicker
-                          value={ex.prerequisiteGrade}
-                          onChange={(g) => {
-                            const updated = [...topic.examples];
-                            updated[idx] = { ...updated[idx], prerequisiteGrade: g };
-                            setTopic({ ...topic, examples: updated });
-                          }}
-                        />
-                      <button
-                        type="button"
-                        onClick={() => removeWorkedExample(idx)}
-                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"
-                        title="Устгах"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+              <div className="flex gap-4 items-start">
+                {/* Pick the example to edit */}
+                <nav className="w-40 md:w-48 shrink-0 sticky top-12 space-y-0.5 max-h-[60vh] overflow-y-auto">
+                  {list.map((ex, idx) => {
+                    const on = idx === sel;
+                    return (
+                      <div key={ex.id || idx} className={`flex items-center rounded-lg ${on ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}>
+                        <button
+                          type="button"
+                          onClick={() => setExampleIdx(idx)}
+                          className={`flex-1 min-w-0 text-left px-2 py-1.5 text-xs cursor-pointer truncate ${on ? 'font-bold' : ''}`}
+                          title={plain(ex.problem)}
+                        >
+                          <span className="font-bold">{idx + 1}.</span> {plain(ex.problem) || 'Жишээ'}
+                        </button>
+                        <button type="button" onClick={() => move(idx, -1)} disabled={idx === 0} title="Дээш зөөх" className="p-0.5 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
+                          <ArrowUp className="w-3 h-3" />
+                        </button>
+                        <button type="button" onClick={() => move(idx, 1)} disabled={idx === list.length - 1} title="Доош зөөх" className="p-0.5 pr-1 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
+                          <ArrowDown className="w-3 h-3" />
+                        </button>
                       </div>
+                    );
+                  })}
+                </nav>
+
+                {sel >= 0 && list[sel] && (() => {
+                  const ex = list[sel];
+                  const steps = ex.solutionSteps || [];
+                  const setSteps = (next: string[]) => update(sel, { solutionSteps: next });
+                  return (
+                    <div key={ex.id || sel} className="flex-1 min-w-0 p-4 border border-stone-200 rounded-xl bg-stone-50/60 space-y-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-black text-sm text-stone-900">Жишээ {sel + 1}</span>
+                        <div className="flex items-center gap-2">
+                          <ItemGradePicker value={ex.prerequisiteGrade} onChange={(g) => update(sel, { prerequisiteGrade: g })} />
+                          <button
+                            type="button"
+                            onClick={() => removeWorkedExample(sel)}
+                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"
+                            title="Жишээг устгах"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <LatexInputWithPreview label="Бодлого:" value={ex.problem} onChange={(val) => update(sel, { problem: val })} multiline rows={2} />
+
+                      {/* One field per step, in order */}
+                      <div className="space-y-3">
+                        <div className="text-xs font-bold text-stone-800">Бодолтын алхмууд:</div>
+                        {steps.map((step, i) => (
+                          <div key={i} className="flex items-start gap-2">
+                            <span className="mt-8 w-6 h-6 rounded-full bg-stone-900 text-white text-[11px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
+                            <LatexInputWithPreview
+                              className="flex-1 min-w-0"
+                              label={`Алхам ${i + 1}`}
+                              value={step}
+                              onChange={(val) => setSteps(steps.map((x, j) => (j === i ? val : x)))}
+                              multiline
+                              rows={2}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setSteps(steps.filter((_, j) => j !== i))}
+                              className="mt-7 p-1.5 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"
+                              title="Алхмыг устгах"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setSteps([...steps, ''])}
+                          className="text-xs px-3 py-1.5 rounded-lg border border-dashed border-stone-400 text-stone-700 hover:bg-white font-bold flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Алхам нэмэх
+                        </button>
+                      </div>
+
+                      <LatexInputWithPreview label="Хариу:" value={ex.answer} onChange={(val) => update(sel, { answer: val })} />
                     </div>
-
-                    <LatexInputWithPreview
-                      label="Бодлогын нөхцөл:"
-                      value={ex.problem}
-                      onChange={(val) => {
-                        const updated = [...topic.examples];
-                        updated[idx].problem = val;
-                        setTopic({ ...topic, examples: updated });
-                      }}
-                      multiline
-                      rows={2}
-                    />
-
-                    <LatexInputWithPreview
-                      label="Бодолтын алхмууд (Мөр бүр 1 алхам болно):"
-                      value={ex.solutionSteps.join('\n')}
-                      onChange={(val) => {
-                        const updated = [...topic.examples];
-                        updated[idx].solutionSteps = val.split('\n');
-                        setTopic({ ...topic, examples: updated });
-                      }}
-                      multiline
-                      rows={3}
-                    />
-
-                    <LatexInputWithPreview
-                      label="Эцсийн хариу:"
-                      value={ex.answer}
-                      onChange={(val) => {
-                        const updated = [...topic.examples];
-                        updated[idx].answer = val;
-                        setTopic({ ...topic, examples: updated });
-                      }}
-                    />
-                  </div>
-                ))}
+                  );
+                })()}
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* 3. PRACTICE TAB */}
           {activeTab === 'practice' && (
