@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useCtrlS } from '../utils/useCtrlS';
 import { CheckOption } from './CheckOption';
 import { TheoryBlocksEditor } from './TheoryBlocksEditor';
 import { TheoryRule, WorkedExample, PracticeProblem, TestQuestion, DifficultyLevel } from '../types';
@@ -50,6 +51,7 @@ export const ItemEditorModal: React.FC<ItemEditorModalProps> = ({
   onSaveTestQuestion,
   onDelete,
 }) => {
+  useCtrlS(isOpen && !!target);
   if (!isOpen || !target) return null;
 
   return (
@@ -217,6 +219,7 @@ function TheoryEditor({
           <button
             type="button"
             onClick={() => onSave(rule)}
+            data-ctrl-s
             className="px-4 py-1.5 text-xs font-bold text-stone-950 bg-amber-500 hover:bg-amber-400 rounded-lg flex items-center space-x-1.5 shadow-xs"
           >
             <Save className="w-3.5 h-3.5" />
@@ -356,6 +359,7 @@ function ExampleEditor({
           <button
             type="button"
             onClick={handleSave}
+            data-ctrl-s
             className="px-4 py-1.5 text-xs font-bold text-stone-950 bg-amber-500 hover:bg-amber-400 rounded-lg flex items-center space-x-1.5 shadow-xs"
           >
             <Save className="w-3.5 h-3.5" />
@@ -502,6 +506,7 @@ function PracticeEditor({
           <button
             type="button"
             onClick={() => onSave(practice)}
+            data-ctrl-s
             className="px-4 py-1.5 text-xs font-bold text-stone-950 bg-amber-500 hover:bg-amber-400 rounded-lg flex items-center space-x-1.5 shadow-xs"
           >
             <Save className="w-3.5 h-3.5" />
@@ -648,6 +653,7 @@ function TestQuestionEditor({
           <button
             type="button"
             onClick={() => onSave(question)}
+            data-ctrl-s
             className="px-4 py-1.5 text-xs font-bold text-stone-950 bg-amber-500 hover:bg-amber-400 rounded-lg flex items-center space-x-1.5 shadow-xs"
           >
             <Save className="w-3.5 h-3.5" />

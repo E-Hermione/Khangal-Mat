@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useCtrlS } from '../utils/useCtrlS';
 import { CheckOption } from './CheckOption';
 import { theoryNumbers } from '../utils/theoryBlocks';
 import { TheoryBlocksEditor } from './TheoryBlocksEditor';
@@ -69,6 +70,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   }, [activeTopic]);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  useCtrlS(isOpen);
 
   if (!isOpen) return null;
 
@@ -264,6 +266,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
             <button
               type="button"
               onClick={handleSave}
+              data-ctrl-s
               className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center space-x-1.5 shadow-xs cursor-pointer"
             >
               <Save className="w-3.5 h-3.5" />
