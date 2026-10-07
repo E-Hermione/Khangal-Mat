@@ -66,6 +66,8 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   const [theoryIdx, setTheoryIdx] = useState(0);
   // Examples tab: the one example being edited
   const [exampleIdx, setExampleIdx] = useState(0);
+  // Practice tab: the one exercise being edited
+  const [practiceIdx, setPracticeIdx] = useState(0);
 
   // Sync state when activeTopic changes
   // The topic as last saved: closing asks for confirmation only when there are unsaved changes
@@ -176,6 +178,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       workSpaceLines: 4,
     };
     setTopic({ ...topic, practice: [...(topic.practice || []), newPr] });
+    setPracticeIdx(topic.practice?.length || 0);
   };
 
   const removePracticeProblem = (index: number) => {
@@ -185,6 +188,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       item.number = idx + 1;
     });
     setTopic({ ...topic, practice: updated });
+    setPracticeIdx(Math.max(0, Math.min(index, updated.length - 1)));
   };
 
   const addTestQuestion = (testNum: 1 | 2 | 3) => {
@@ -651,70 +655,74 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                 <LatexToolbar />
               </div>
 
-              <div className="space-y-4">
-                {topic.practice.map((item, idx) => (
-                  <div key={item.id || idx} className="p-4 border border-stone-200 rounded-xl bg-stone-50/60 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-black text-xs text-stone-900">
-                        Дасгал {item.number}
-                      </span>
-                      <div className="flex items-center space-x-2">
-                        <ItemGradePicker
-                          value={item.prerequisiteGrade}
-                          onChange={(g) => {
-                            const updated = [...topic.practice];
-                            updated[idx] = { ...updated[idx], prerequisiteGrade: g };
-                            setTopic({ ...topic, practice: updated });
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removePracticeProblem(idx)}
-                          className="p-1.5 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+              {(() => {
+                const list = topic.practice || [];
+                const sel = Math.min(practiceIdx, list.length - 1);
+                // Numbers always follow the order
+                const setList = (next: PracticeProblem[]) =>
+                  setTopic({ ...topic, practice: next.map((x, i) => ({ ...x, number: i + 1 })) });
+                const update = (i: number, patch: Partial<PracticeProblem>) =>
+                  setList(list.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+                const move = (i: number, step: -1 | 1) => {
+                  const j = i + step;
+                  if (j < 0 || j >= list.length) return;
+                  const next = [...list];
+                  [next[i], next[j]] = [next[j], next[i]];
+                  setList(next);
+                  setPracticeIdx(j);
+                };
+                const item = sel >= 0 ? list[sel] : undefined;
+                return (
+                  <div className="flex gap-4 items-start">
+                    {/* Pick the exercise to edit */}
+                    <nav className="w-40 md:w-48 shrink-0 sticky top-28 space-y-0.5 max-h-[60vh] overflow-y-auto">
+                      {list.map((p, idx) => {
+                        const on = idx === sel;
+                        return (
+                          <div key={p.id || idx} className={`flex items-center rounded-lg ${on ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}>
+                            <button
+                              type="button"
+                              onClick={() => setPracticeIdx(idx)}
+                              className={`flex-1 min-w-0 text-left px-2 py-1.5 text-xs cursor-pointer truncate ${on ? 'font-bold' : ''}`}
+                            >
+                              Дасгал {idx + 1}
+                            </button>
+                            <button type="button" onClick={() => move(idx, -1)} disabled={idx === 0} title="Дээш зөөх" className="p-0.5 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
+                              <ArrowUp className="w-3 h-3" />
+                            </button>
+                            <button type="button" onClick={() => move(idx, 1)} disabled={idx === list.length - 1} title="Доош зөөх" className="p-0.5 pr-1 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
+                              <ArrowDown className="w-3 h-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </nav>
+
+                    {item && (
+                      <div key={item.id || sel} className="flex-1 min-w-0 p-4 border border-stone-200 rounded-xl bg-stone-50/60 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-black text-sm text-stone-900">Дасгал {sel + 1}</span>
+                          <div className="flex items-center gap-2">
+                            <ItemGradePicker value={item.prerequisiteGrade} onChange={(g) => update(sel, { prerequisiteGrade: g })} />
+                            <button
+                              type="button"
+                              onClick={() => removePracticeProblem(sel)}
+                              className="p-1.5 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"
+                              title="Дасгалыг устгах"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <LatexInputWithPreview hideToolbar label="Бодлого:" value={item.question} onChange={(val) => update(sel, { question: val })} multiline rows={3} />
+                        <LatexInputWithPreview hideToolbar label="Зөв хариу:" value={item.answer} onChange={(val) => update(sel, { answer: val })} />
+                        <LatexInputWithPreview hideToolbar label="Зөвлөмж / Санамж:" value={item.hint || ''} onChange={(val) => update(sel, { hint: val })} />
                       </div>
-                    </div>
-
-                    <LatexInputWithPreview
-                              hideToolbar
-                      label="Бодлогын нөхцөл:"
-                      value={item.question}
-                      onChange={(val) => {
-                        const updated = [...topic.practice];
-                        updated[idx].question = val;
-                        setTopic({ ...topic, practice: updated });
-                      }}
-                      multiline
-                      rows={2}
-                    />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <LatexInputWithPreview
-                              hideToolbar
-                        label="Зөв хариу:"
-                        value={item.answer}
-                        onChange={(val) => {
-                          const updated = [...topic.practice];
-                          updated[idx].answer = val;
-                          setTopic({ ...topic, practice: updated });
-                        }}
-                      />
-                      <LatexInputWithPreview
-                              hideToolbar
-                        label="Зөвлөмж / Санамж:"
-                        value={item.hint || ''}
-                        onChange={(val) => {
-                          const updated = [...topic.practice];
-                          updated[idx].hint = val;
-                          setTopic({ ...topic, practice: updated });
-                        }}
-                      />
-                    </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </div>
           )}
 
