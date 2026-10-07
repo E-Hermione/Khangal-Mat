@@ -14,8 +14,8 @@ interface LatexInputWithPreviewProps {
   helpText?: string;
 }
 
-// Toolbar marker for a tab-wide space
-const TAB = '<tab>';
+// Toolbar marker: wrap the selection in $…$
+const WRAP = '<wrap>';
 
 export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
   label,
@@ -75,10 +75,15 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
 
     const start = input.selectionStart || 0;
     const end = input.selectionEnd || 0;
-    // A tab-wide space: inside a formula as is, in plain text wrapped as a formula
-    if (snippet === TAB) {
-      const insideMath = (value.substring(0, start).match(/\$/g) || []).length % 2 === 1;
-      snippet = insideMath ? '\\qquad ' : '$\\qquad$';
+    // $: put dollar signs on both sides of the selected text (cursor between them if none is selected)
+    if (snippet === WRAP) {
+      const selected = value.substring(start, end);
+      change(value.substring(0, start) + '$' + selected + '$' + value.substring(end), false);
+      setTimeout(() => {
+        input.focus();
+        input.setSelectionRange(start + 1, start + 1 + selected.length);
+      }, 10);
+      return;
     }
     const before = value.substring(0, start);
     const after = value.substring(end);
@@ -105,7 +110,8 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
     { label: '≥', snippet: '\\ge ', desc: 'Их буюу тэнцүү' },
     { label: '≠', snippet: '\\neq ', desc: 'Тэнцүү биш' },
     { label: 'π', snippet: '\\pi ', desc: 'Пи тоо' },
-    { label: 'Таб', snippet: TAB, desc: 'Таб шиг зай авах' },
+    { label: 'Таб', snippet: '\\qquad ', desc: 'Таб шиг зай авах' },
+    { label: '$', snippet: WRAP, desc: 'Сонгосон хэсгийг $...$ дотор оруулах' },
     { label: '→', snippet: ' \\;\\rightarrow\\; ', desc: 'Сум' },
     { label: '↔', snippet: ' \\;\\leftrightarrow\\; ', desc: 'Хоёр тийш сум' },
   ];
