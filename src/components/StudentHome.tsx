@@ -227,6 +227,8 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
         (g): g is GradeNumber => !!g && learningPlan.canTakePlacement(g)
       ) ?? null)
     : null;
+  // A student without a grade on record chooses which grade's test to take
+  const [pickGrade, setPickGrade] = useState<GradeNumber>(suggested ?? 6);
   const edit = (target: EditTarget) => (editable ? () => setEditing(target) : undefined);
   const done = () => setEditing(null);
 
@@ -300,6 +302,8 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               ? { label: 'Дахин түвшин тест бөглөх', onClick: () => startPlacement(retakeGrade) }
               : grade && learningPlan.canTakePlacement(grade)
               ? { label: 'Сорил өгөх', onClick: () => startPlacement(grade) }
+              : !grade && learningPlan.canTakePlacement(pickGrade)
+              ? { label: 'Сорил өгөх', onClick: () => startPlacement(pickGrade) }
               : null
           }
         >
@@ -309,40 +313,22 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               <b className="text-stone-900">{grade}-р ангийн түвшин тогтоох сорил</b>
             </div>
           ) : (
-          <div className="rounded-xl bg-stone-50 border border-stone-100 p-2.5">
-            <div className="grid grid-cols-7 gap-1.5" data-testid="placement-grades">
-              {GRADES.map((g) => {
-                const taken = learningPlan.resultFor(g);
-                const open = learningPlan.canTakePlacement(g);
-                const count = placementSize(g).questions;
-                const mine = g === grade;
-                return (
-                  <button
-                    key={g}
-                    type="button"
-                    disabled={!open}
-                    onClick={() => startPlacement(g)}
-                    title={
-                      taken
-                        ? `${g}-р анги: ${taken.correct}/${taken.total} зөв • дахин өгөх`
-                        : open
-                        ? `${g}-р анги: ${count} бодлого • сорил эхлэх`
-                        : `${g}-р анги: удахгүй`
-                    }
-                    className={`aspect-square rounded-lg border flex items-center justify-center text-sm font-black transition-all ${
-                      taken
-                        ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:border-emerald-500 cursor-pointer'
-                        : open
-                        ? 'border-stone-300 bg-white text-stone-900 hover:border-amber-400 hover:bg-amber-50 cursor-pointer'
-                        : 'border-transparent bg-transparent text-stone-300'
-                    } ${mine ? 'ring-2 ring-amber-400 ring-offset-1 ring-offset-stone-50' : ''}`}
-                  >
+            // No grade on record: pick it in the box, then take the test with the button below
+            <label className="flex items-center gap-1 rounded-xl bg-stone-50 border border-stone-100 px-3 py-2.5 text-sm" data-testid="placement-grades">
+              <select
+                value={pickGrade}
+                onChange={(e) => setPickGrade(Number(e.target.value) as GradeNumber)}
+                className="font-bold text-stone-900 bg-white border border-stone-300 rounded-md px-1.5 py-0.5 cursor-pointer focus:outline-none focus:border-amber-400"
+                aria-label="Анги"
+              >
+                {GRADES.map((g) => (
+                  <option key={g} value={g}>
                     {g}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                  </option>
+                ))}
+              </select>
+              <b className="text-stone-900">-р ангийн түвшин тогтоох сорил</b>
+            </label>
           )}
           {editable && (
             <button
