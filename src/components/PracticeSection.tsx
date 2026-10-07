@@ -32,20 +32,6 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
 }) => {
   const [showSolutionsOnScreen, setShowSolutionsOnScreen] = React.useState<boolean>(false);
 
-  const difficultyLabels: Record<string, { label: string; badgeClass: string }> = {
-    easy: {
-      label: 'Хялбар',
-      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 print:bg-white print:text-black print:border-black',
-    },
-    medium: {
-      label: 'Дунд',
-      badgeClass: 'bg-amber-50 text-amber-700 border-amber-200 print:bg-white print:text-black print:border-black',
-    },
-    hard: {
-      label: 'Ахисан',
-      badgeClass: 'bg-rose-50 text-rose-700 border-rose-200 print:bg-white print:text-black print:border-black',
-    },
-  };
 
   return (
     <section className="mb-12 print:mb-6" id="section-practice">
@@ -104,7 +90,6 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
       ) : (
         <div className="divide-y divide-stone-200 print:divide-y-0 print:space-y-3">
           {practice.map((item, idx) => {
-            const diff = difficultyLabels[item.difficulty] || difficultyLabels.medium;
             const showSol = allowSolutions && (teacherVersion || showSolutionsOnScreen);
 
             return (
@@ -113,12 +98,11 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                 className="avoid-break py-6 first:pt-0 last:pb-0 relative group print:py-0"
               >
                 {/* Question header */}
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-bold text-[17px] text-stone-950">{item.number}.</span>
-                    <span className="text-xs text-stone-400 print:text-stone-700">
-                      {diff.label}
-                    </span>
+                {/* The number, then the problem itself */}
+                <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <div className="flex gap-2 text-stone-800 print:text-black text-[15px] leading-relaxed">
+                    <span className="font-bold text-[17px] text-stone-950 shrink-0">{item.number}.</span>
+                    <MathRenderer content={item.question} />
                   </div>
 
                   {isEditable && (
@@ -149,11 +133,6 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                       )}
                     </div>
                   )}
-                </div>
-
-                {/* Question body */}
-                <div className="text-stone-800 print:text-black text-[15px] mb-1.5 leading-relaxed">
-                  <MathRenderer content={item.question} />
                 </div>
 
                 {/* Optional Hint */}
