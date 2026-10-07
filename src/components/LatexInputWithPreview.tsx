@@ -27,11 +27,45 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
 }) => {
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
 
+  // Own undo / redo (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z): the browser's own history is lost when the
+  // value is set from outside, e.g. by the LaTeX buttons
+  const history = useRef<{ past: string[]; future: string[]; last: number }>({ past: [], future: [], last: 0 });
+  const change = (next: string, group = true) => {
+    const h = history.current;
+    const now = Date.now();
+    // Typing in quick succession is one undo step
+    if (!group || now - h.last > 700 || h.past.length === 0) h.past.push(value);
+    if (h.past.length > 200) h.past.shift();
+    h.future = [];
+    h.last = group ? now : 0;
+    onChange(next);
+  };
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    const key = e.key.toLowerCase();
+    const h = history.current;
+    if (key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      const prev = h.past.pop();
+      if (prev === undefined) return;
+      h.future.push(value);
+      h.last = 0;
+      onChange(prev);
+    } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
+      e.preventDefault();
+      const next = h.future.pop();
+      if (next === undefined) return;
+      h.past.push(value);
+      h.last = 0;
+      onChange(next);
+    }
+  };
+
   // Insert LaTeX snippet at current cursor position
   const insertSnippet = (snippet: string) => {
     const input = inputRef.current;
     if (!input) {
-      onChange(value ? `${value} ${snippet}` : snippet);
+      change(value ? `${value} ${snippet}` : snippet, false);
       return;
     }
 
@@ -41,7 +75,7 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
     const after = value.substring(end);
     const newValue = before + snippet + after;
 
-    onChange(newValue);
+    change(newValue, false);
 
     setTimeout(() => {
       input.focus();
@@ -116,7 +150,8 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
         <textarea
           ref={inputRef as React.RefObject<HTMLTextAreaElement>}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => change(e.target.value)}
+          onKeyDown={onKeyDown}
           rows={rows}
           placeholder={placeholder}
           className="w-full text-xs md:text-sm font-mono p-2.5 bg-white border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 outline-none leading-relaxed"
@@ -126,7 +161,8 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
           ref={inputRef as React.RefObject<HTMLInputElement>}
           type="text"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => change(e.target.value)}
+          onKeyDown={onKeyDown}
           placeholder={placeholder}
           className="w-full text-xs md:text-sm font-mono p-2 bg-white border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 outline-none"
         />
