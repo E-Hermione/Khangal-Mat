@@ -124,9 +124,6 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
                       </span>
                     )}
                   </div>
-                  <div className="text-[11px] text-stone-500">
-                    {meta.grade}-р анги • {meta.category} • {p.grade}-р ангийн сорилын {p.missed.join(', ')}-р бодлого алдсан
-                  </div>
                   {/* Each test tier: passed, open (with best score) or still locked */}
                   <div className="flex flex-wrap gap-1.5 mt-1.5" data-testid="tier-chips">
                     {([1, 2, 3] as const).map((t) => {
