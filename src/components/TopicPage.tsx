@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TopicPackage, PrintOptions, TheoryRule, WorkedExample, PracticeProblem } from '../types';
+import { GradeNumber, TopicPackage, PrintOptions, TheoryRule, WorkedExample, PracticeProblem } from '../types';
 import { TheorySection } from './TheorySection';
 import { WorkedExamplesSection } from './WorkedExamplesSection';
 import { PracticeSection } from './PracticeSection';
@@ -7,7 +7,7 @@ import { usePrintSelection } from '../services/printSelection';
 import { ItemEditorModal, ItemEditorType } from './ItemEditorModal';
 import { visibilityService, TopicAccessMode } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
-import { allTopicMetas, learningPlan, useLearningPlanVersion } from '../services/learningPlan';
+import { allTopicMetas, learningPlan, lessonSequence, useLearningPlanVersion } from '../services/learningPlan';
 import { loadPracticeGrants, usePracticeSolutions } from '../services/practiceSolutions';
 import { PracticeGrantsDialog } from './PracticeGrantsDialog';
 import { getFirebaseAuth } from '../services/firebase';
@@ -15,6 +15,7 @@ import { AuthUser } from '../types';
 import {
   Printer,
   ChevronRight,
+  ChevronLeft,
   Lock,
   BookOpen,
   Pencil,
@@ -36,6 +37,8 @@ interface TopicPageProps {
   onOpenPlan?: () => void;
   // The grade the topic is shown for (the student's own grade, or the grade the admin is browsing)
   viewGrade?: number;
+  // Opens another lesson (the previous and next lesson buttons)
+  onOpenTopic?: (topicId: string) => void;
 }
 
 export const TopicPage: React.FC<TopicPageProps> = ({
@@ -47,6 +50,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   onOpenExamsHub,
   onOpenPlan,
   viewGrade,
+  onOpenTopic,
 }) => {
   useLearningPlanVersion();
   // Practice solutions: the admin opens them per topic for chosen users
@@ -562,6 +566,27 @@ export const TopicPage: React.FC<TopicPageProps> = ({
         </article>
         </>
       )}
+
+      {/* Previous and next lesson in the topic list */}
+      {onOpenTopic &&
+        (() => {
+          const seq = lessonSequence((viewGrade ?? topic.grade) as GradeNumber);
+          const i = seq.indexOf(topic.id);
+          const prev = i > 0 ? seq[i - 1] : undefined;
+          const next = i >= 0 && i < seq.length - 1 ? seq[i + 1] : undefined;
+          const btn =
+            'inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-stone-200 bg-white text-xs font-semibold text-stone-600 hover:text-stone-900 hover:bg-stone-50 cursor-pointer disabled:opacity-40 disabled:cursor-default';
+          return (
+            <div className="flex justify-end gap-2 mt-4 no-print" data-testid="lesson-nav">
+              <button type="button" className={btn} disabled={!prev} onClick={() => prev && onOpenTopic(prev)}>
+                <ChevronLeft className="w-3.5 h-3.5" /> Өмнөх сэдэв
+              </button>
+              <button type="button" className={btn} disabled={!next} onClick={() => next && onOpenTopic(next)}>
+                Дараагийн сэдэв <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          );
+        })()}
 
       {grantsOpen && (
         <PracticeGrantsDialog topic={topic} onClose={() => setGrantsOpen(false)} onSaved={setGrantCount} />

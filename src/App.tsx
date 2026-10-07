@@ -836,6 +836,11 @@ export default function App() {
             <TopicPage
               topic={currentTopic}
               viewGrade={selectedGrade}
+              onOpenTopic={(topicId) => {
+                setSelectedTopicId(topicId);
+                setLessonChosen(true);
+                window.scrollTo({ top: 0 });
+              }}
               isAdmin={currentUser?.role === 'admin' && !previewAsUser}
               currentUser={currentUser}
               onUpdateTopic={(updated) => {

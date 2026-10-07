@@ -61,6 +61,44 @@ export function catalogTopics(grade: GradeNumber) {
 }
 
 /**
+ * A grade's lessons in the order of the topic list: categories as they appear, topics in the order
+ * the admin arranged them, and a topic with subtopics replaced by its subtopics.
+ */
+export function lessonSequence(grade: GradeNumber): string[] {
+  const all = new Map<string, { id: string; category: string; parentId?: string; order?: number }>();
+  for (const t of catalogTopics(grade)) all.set(t.id, { id: t.id, category: t.category });
+  for (const t of storageService.getTopics()) {
+    if (t.grade === grade || t.visibleGrades?.includes(grade)) {
+      all.set(t.id, { id: t.id, category: t.category || 'Ерөнхий сэдэв', parentId: t.parentId, order: t.order });
+    }
+  }
+  const order = cloud.getAppSettings().topicOrder || [];
+  const list = [...all.values()];
+  const rank = (id: string, i: number) => (order.includes(id) ? order.indexOf(id) : order.length + i);
+  const categories = [...new Set(list.map((t) => t.category))];
+  const out: string[] = [];
+  for (const cat of categories) {
+    const inCat = list
+      .map((t, i) => ({ t, r: rank(t.id, i) }))
+      .filter(({ t }) => t.category === cat)
+      .sort((a, b) => a.r - b.r)
+      .map(({ t }) => t);
+    for (const t of inCat.filter((x) => !x.parentId || !inCat.some((y) => y.id === x.parentId))) {
+      const kids = inCat
+        .filter((k) => k.parentId === t.id)
+        .sort((a, b) => {
+          const ra = order.indexOf(a.id);
+          const rb = order.indexOf(b.id);
+          return ra >= 0 && rb >= 0 ? ra - rb : (a.order ?? 0) - (b.order ?? 0);
+        });
+      if (kids.length) out.push(...kids.map((k) => k.id));
+      else out.push(t.id);
+    }
+  }
+  return out;
+}
+
+/**
  * Admin: deletes a topic and its subtopics. Saved topics are deleted from Firestore; built-in
  * catalog topics are hidden from the topic list.
  */
