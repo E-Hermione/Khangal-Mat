@@ -348,9 +348,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
             <div className="space-y-4">
               {/* Stays on screen while scrolling */}
               <div className="sticky -top-4 md:-top-6 z-10 bg-white flex items-center justify-between py-2 border-b border-stone-200">
-                <span className="text-xs text-stone-500 font-medium">
-                  Зүүн талаас засах онолоо сонгоно уу.
-                </span>
+                <span />
                 <button
                   type="button"
                   onClick={addTheoryRule}

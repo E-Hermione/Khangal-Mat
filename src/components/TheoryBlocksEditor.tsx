@@ -14,6 +14,5 @@ export const TheoryBlocksEditor: React.FC<{ rule: TheoryRule; onChange: (rule: T
     onChange={(text) => onChange(withText(rule, text))}
     multiline
     rows={6}
-    helpText="«Голд томьёо» товчоор мөрийн голд томьёо оруулна"
   />
 );
