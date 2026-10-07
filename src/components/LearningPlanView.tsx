@@ -44,7 +44,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
         <div>
           <h1 className="text-2xl font-black text-stone-950 flex items-center gap-2">
             <Route className="w-6 h-6 text-amber-600" />
-            Миний сургалтын төлөвлөгөө
+            Хувийн төлөвлөгөө
           </h1>
           <p className="text-sm text-stone-600 mt-1">
             Танд зориулсан төлөвлөгөө түвшин тогтоох сорил өгсний дараа гарна. Доорх 3 алхмаар явна.
@@ -74,7 +74,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
       <div>
         <h1 className="text-2xl font-black text-stone-950 flex items-center gap-2">
           <Route className="w-6 h-6 text-amber-600" />
-          Миний сургалтын төлөвлөгөө
+          Хувийн төлөвлөгөө
         </h1>
         <p className="mt-1 text-xs italic font-semibold text-amber-800">«Оролдлого сайт оройд, оролдлого муут ёроолд.»</p>
         <p className="text-sm text-stone-600 mt-1 leading-relaxed">
