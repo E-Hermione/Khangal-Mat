@@ -61,10 +61,12 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
               className="avoid-break py-7 first:pt-0 last:pb-0 relative group print:py-0"
             >
               {/* Title & Example Number */}
-              <div className="flex items-start justify-between gap-2 mb-1.5">
-                <h3 className="font-bold text-[17px] leading-snug text-stone-950">
-                  <span>{ex.number}.</span> {ex.title || 'Жишээ'}
-                </h3>
+              <div className="flex items-start justify-between gap-2 mb-3">
+                {/* The number, then the problem itself (no title) */}
+                <div className="flex gap-2 text-stone-900 print:text-black text-[15px] leading-relaxed">
+                  <span className="font-bold text-[17px] text-stone-950 shrink-0">{ex.number}.</span>
+                  <MathRenderer content={ex.problem} />
+                </div>
 
                 {/* Edit & Delete actions */}
                 {isEditable && (
@@ -95,11 +97,6 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
                     )}
                   </div>
                 )}
-              </div>
-
-              {/* Problem Statement */}
-              <div className="text-stone-800 print:text-black text-[15px] mb-3 leading-relaxed">
-                <MathRenderer content={ex.problem} />
               </div>
 
               {/* Step-by-step Solution */}
