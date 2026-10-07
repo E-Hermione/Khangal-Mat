@@ -869,7 +869,6 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                                     </div>
                                   ))}
                                 </div>
-                                <div className="text-[11px] text-stone-500">Зөв хариуны үсэг дээр дарж сонгоно. Сонгосон: <b className="text-emerald-700">{q.answer || '—'}</b></div>
 
                                 <LatexInputWithPreview label="Бодолт:" value={q.solution || ''} onChange={(val) => setQ({ solution: val || undefined })} multiline rows={2} hidePreview hideToolbar />
 
