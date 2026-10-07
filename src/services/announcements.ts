@@ -76,10 +76,13 @@ export async function updateAnnouncementExpiry(ann: Announcement, expiresAt: num
 /** Admin: removes it for everyone. */
 export async function deleteAnnouncement(ann: Announcement): Promise<void> {
   const db = getDb();
-  const reads = await getDocs(query(collectionGroup(db, 'announcementReads'), where('announcementId', '==', ann.id)));
+  // Filtered here: a collection-group query with a filter needs an index the project does not have
+  const reads = (await getDocs(collectionGroup(db, 'announcementReads'))).docs.filter(
+    (d) => d.id === ann.id || d.data().announcementId === ann.id
+  );
   await commitInChunks([
-    ...ann.recipientUids.map((uid) => (b: ReturnType<typeof writeBatch>) => b.delete(doc(db, 'users', uid, 'inbox', ann.id))),
-    ...reads.docs.map((d) => (b: ReturnType<typeof writeBatch>) => b.delete(d.ref)),
+    ...(ann.recipientUids || []).map((uid) => (b: ReturnType<typeof writeBatch>) => b.delete(doc(db, 'users', uid, 'inbox', ann.id))),
+    ...reads.map((d) => (b: ReturnType<typeof writeBatch>) => b.delete(d.ref)),
     (b) => b.delete(doc(db, 'announcements', ann.id)),
   ]);
 }
