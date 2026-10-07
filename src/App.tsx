@@ -809,11 +809,6 @@ export default function App() {
               topics={topics}
               selectedGrade={selectedGrade}
               onSelectGrade={setSelectedGrade}
-              onSelectTopic={(topicId) => {
-                setSelectedTopicId(topicId);
-                setLessonChosen(true);
-                setActiveView('topics');
-              }}
               isAdmin={currentUser?.role === 'admin' && !previewAsUser}
               userId={currentUser?.userId}
               uid={getFirebaseAuth().currentUser?.uid}

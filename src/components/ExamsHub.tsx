@@ -24,7 +24,6 @@ interface ExamsHubProps {
   topics: TopicPackage[];
   selectedGrade: GradeNumber;
   onSelectGrade: (grade: GradeNumber) => void;
-  onSelectTopic?: (topicId: string) => void;
   isAdmin?: boolean;
   // Signed-in user's permission id (USR-####); non-admins only see what the admin allows
   userId?: string;
@@ -57,7 +56,6 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
   topics,
   selectedGrade,
   onSelectGrade,
-  onSelectTopic,
   isAdmin = false,
   userId,
   uid,
@@ -296,14 +294,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
 
                       {/* Сэдвийн нэр */}
                       <td className="py-2.5 px-3">
-                        <button
-                          type="button"
-                          onClick={() => onSelectTopic && onSelectTopic(topic.id)}
-                          className="font-bold text-stone-900 hover:text-amber-700 text-left hover:underline cursor-pointer block leading-tight text-xs md:text-sm"
-                          title="Энэ сэдвийн хичээл рүү очих"
-                        >
-                          {topic.title}
-                        </button>
+                        <div className="font-bold text-stone-900 leading-tight text-xs md:text-sm">{topic.title}</div>
                         {!isAdmin && learningPlan.inPlan(topic.id) && (
                           <ProgressRing percent={learningPlan.progress(topic.id)} size={18} className="mt-1" />
                         )}
