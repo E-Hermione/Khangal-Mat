@@ -474,7 +474,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           return (
             tabs.length > 0 && (
               <div
-                className="flex px-4 md:px-6 lg:px-8 -mx-4 md:-mx-6 lg:-mx-8 mb-4 bg-stone-900 no-print"
+                className="flex p-1.5 mb-4 rounded-2xl bg-stone-200 no-print"
                 role="tablist"
                 data-testid="lesson-tabs"
               >
@@ -488,7 +488,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       aria-selected={on}
                       onClick={() => setLessonTab(key)}
                       className={`flex-1 py-3 px-2 text-sm md:text-base font-extrabold transition-colors cursor-pointer ${
-                        on ? 'text-amber-400' : 'text-stone-400 hover:text-stone-200'
+                        on ? 'text-[#3D0C02]' : 'text-stone-400 hover:text-stone-600'
                       }`}
                     >
                       {label}
