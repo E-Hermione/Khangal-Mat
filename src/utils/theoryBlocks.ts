@@ -31,3 +31,15 @@ export function theoryNumbers(theory: TheoryRule[]): string[] {
     return String(++main);
   });
 }
+
+/** A theory item's whole content as one text: text, then centred formulas as $$…$$ on their own lines. */
+export function theoryText(rule: TheoryRule): string {
+  return theoryBlocks(rule)
+    .map((b) => (b.type === 'formula' ? `$$${b.value}$$` : b.value))
+    .join('\n');
+}
+
+/** The theory item with all its content in one text field. */
+export function withText(rule: TheoryRule, text: string): TheoryRule {
+  return { ...rule, ruleText: text, formula: undefined, note: undefined, blocks: undefined };
+}
