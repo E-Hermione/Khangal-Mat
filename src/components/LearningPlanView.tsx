@@ -76,6 +76,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
           <Route className="w-6 h-6 text-amber-600" />
           Миний сургалтын төлөвлөгөө
         </h1>
+        <p className="mt-1 text-xs italic font-semibold text-amber-800">«Оролдлого сайт оройд, оролдлого муут ёроолд.»</p>
         <p className="text-sm text-stone-600 mt-1 leading-relaxed">
           Таны төлөвлөгөөг төлөвлөж дууслаа. Сэдэв бүрийн гүйцэтгэлээ хэрхэн тооцуулах мэдээлэлтэйгээ танилцаж, зөвхөн
           танд зориулж боловсруулсан төлөвлөгөөтэйгөө танилцана уу.
@@ -179,12 +180,6 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
         </div>
       )}
 
-      {/* A saying to close the plan */}
-      <div className="rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 px-6 py-5 text-center">
-        <p className="text-lg md:text-xl font-black text-amber-900 tracking-tight">
-          Оролдлого сайт оройд, оролдлого муут ёроолд.
-        </p>
-      </div>
 
     </div>
   );
