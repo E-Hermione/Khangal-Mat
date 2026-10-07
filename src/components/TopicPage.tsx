@@ -70,7 +70,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   const [selection] = usePrintSelection();
 
   const [options] = useState<PrintOptions>({
-    includeWorkSpace: true,
     teacherVersion: false,
     fontSize: 'md',
     twoColumnPractice: false,
@@ -223,7 +222,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
         difficulty: 'medium',
         answer: '$x = 4$',
         solution: '$3x - 3 = 9 \\implies 3x = 12 \\implies x = 4$',
-        workSpaceLines: 4,
       },
       isNew: true,
     });
@@ -324,7 +322,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       ? (t.practice || []).map((p) => (grantedSolutions[p.id] ? { ...p, ...grantedSolutions[p.id] } : p))
                       : t.practice
                   }
-                  includeWorkSpace={isAdmin ? options.includeWorkSpace : false}
                   teacherVersion={isAdmin ? options.teacherVersion : false}
                   allowSolutions={isAdmin || !!grantedSolutions}
                   headerExtra={

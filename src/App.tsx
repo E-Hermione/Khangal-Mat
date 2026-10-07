@@ -375,7 +375,6 @@ export default function App() {
             difficulty: 'easy',
             answer: 'Зөв хариу',
             solution: 'Шалгах бодолт',
-            workSpaceLines: 3,
           },
           {
             id: `pr-${catItem.id}-2`,
@@ -384,7 +383,6 @@ export default function App() {
             difficulty: 'medium',
             answer: 'Зөв хариу',
             solution: 'Шалгах бодолт',
-            workSpaceLines: 4,
           },
         ],
         test1: {
@@ -401,7 +399,6 @@ export default function App() {
               question: 'Сэдвийн хүрээнд анхан шатны сорилын асуулт 1.',
               points: 5,
               answer: 'Хариу 1',
-              workSpaceLines: 3,
             },
             {
               id: `t1-q2-${catItem.id}`,
@@ -409,7 +406,6 @@ export default function App() {
               question: 'Сэдвийн хүрээнд анхан шатны сорилын асуулт 2.',
               points: 5,
               answer: 'Хариу 2',
-              workSpaceLines: 3,
             },
           ],
         },
@@ -427,7 +423,6 @@ export default function App() {
               question: 'Стандарт түвшний сорилын асуулт 1.',
               points: 5,
               answer: 'Хариу 1',
-              workSpaceLines: 3,
             },
             {
               id: `t2-q2-${catItem.id}`,
@@ -435,7 +430,6 @@ export default function App() {
               question: 'Стандарт түвшний сорилын асуулт 2.',
               points: 5,
               answer: 'Хариу 2',
-              workSpaceLines: 3,
             },
           ],
         },
@@ -453,7 +447,6 @@ export default function App() {
               question: 'Гүнзгийрүүлсэн түвшний сорилын асуулт 1.',
               points: 5,
               answer: 'Хариу 1',
-              workSpaceLines: 4,
             },
             {
               id: `t3-q2-${catItem.id}`,
@@ -461,7 +454,6 @@ export default function App() {
               question: 'Гүнзгийрүүлсэн түвшний сорилын асуулт 2.',
               points: 5,
               answer: 'Хариу 2',
-              workSpaceLines: 4,
             },
           ],
         },

@@ -10,7 +10,6 @@ interface TestSectionProps {
   topicTitle: string;
   category?: string;
   isFirstPrintedSection?: boolean;
-  includeWorkSpace?: boolean;
   teacherVersion?: boolean;
   isEditable?: boolean;
   onEditQuestion?: (question: TestQuestion) => void;
@@ -24,7 +23,6 @@ export const TestSection: React.FC<TestSectionProps> = ({
   topicTitle,
   category,
   isFirstPrintedSection = false,
-  includeWorkSpace = true,
   teacherVersion = false,
   isEditable = false,
   onEditQuestion,
@@ -156,13 +154,6 @@ export const TestSection: React.FC<TestSectionProps> = ({
                 </div>
               )}
 
-              {/* Workspace for students in print and screen if enabled */}
-              {includeWorkSpace && !teacherVersion && (
-                <div
-                  className="workspace-grid mt-2 mb-1 border-t border-b border-stone-200 print:border-stone-400"
-                  style={{ height: `${(q.workSpaceLines || 3) * 23}px` }}
-                />
-              )}
             </div>
           ))}
         </div>

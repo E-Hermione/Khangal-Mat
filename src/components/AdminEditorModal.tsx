@@ -176,7 +176,6 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       difficulty: 'medium',
       answer: '$x = 1$',
       solution: 'Бодолтын тайлбар',
-      workSpaceLines: 4,
     };
     setTopic({ ...topic, practice: [...(topic.practice || []), newPr] });
     setPracticeIdx(topic.practice?.length || 0);
@@ -203,7 +202,6 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       points: 5,
       answer: 'Хариу',
       solution: 'Бодолт',
-      workSpaceLines: 3,
     };
     const newQuestions = [...(currentTest.questions || []), newQ];
     const totalPoints = newQuestions.reduce((sum, q) => sum + (q.points || 0), 0);
@@ -762,7 +760,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                         <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
                           <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-2">Сайт дээр харагдах байдал</div>
                           <div className="bg-white rounded-lg p-4">
-                            <PracticeSection practice={[{ ...item, number: sel + 1 }]} includeWorkSpace={false} teacherVersion allowSolutions />
+                            <PracticeSection practice={[{ ...item, number: sel + 1 }]} teacherVersion allowSolutions />
                           </div>
                         </div>
                       </div>

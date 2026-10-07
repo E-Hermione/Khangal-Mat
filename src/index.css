@@ -75,27 +75,6 @@
   }
 }
 
-/* Lined work space for students */
-.workspace-grid {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent,
-    transparent 22px,
-    #e5e7eb 23px
-  );
-  min-height: 60px;
-}
-
-@media print {
-  .workspace-grid {
-    background-image: repeating-linear-gradient(
-      to bottom,
-      transparent,
-      transparent 22px,
-      #cccccc 23px
-    ) !important;
-  }
-}
 
 /* KaTeX formula readability */
 .katex {

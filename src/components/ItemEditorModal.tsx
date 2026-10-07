@@ -413,17 +413,6 @@ function PracticeEditor({
               className="w-full text-xs p-2 bg-white border border-stone-300 rounded-lg font-bold"
             />
           </div>
-          <div>
-            <label className="text-xs font-bold text-stone-700 block mb-1">Зай (Мөрний тоо):</label>
-            <input
-              type="number"
-              min={2}
-              max={15}
-              value={practice.workSpaceLines || 4}
-              onChange={(e) => setPractice({ ...practice, workSpaceLines: Number(e.target.value) })}
-              className="w-full text-xs p-2 bg-white border border-stone-300 rounded-lg"
-            />
-          </div>
         </div>
 
         <div>
@@ -565,17 +554,6 @@ function TestQuestionEditor({
               value={question.points}
               onChange={(e) => setQuestion({ ...question, points: Number(e.target.value) })}
               className="w-full text-xs p-2 bg-white border border-stone-300 rounded-lg font-bold text-amber-900"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-stone-700 block mb-1">Зай (Мөрний тоо):</label>
-            <input
-              type="number"
-              min={2}
-              max={15}
-              value={question.workSpaceLines || 3}
-              onChange={(e) => setQuestion({ ...question, workSpaceLines: Number(e.target.value) })}
-              className="w-full text-xs p-2 bg-white border border-stone-300 rounded-lg"
             />
           </div>
         </div>

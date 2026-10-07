@@ -7,7 +7,6 @@ import { LessonSectionHeader } from './LessonSectionHeader';
 
 interface PracticeSectionProps {
   practice: PracticeProblem[];
-  includeWorkSpace?: boolean;
   teacherVersion?: boolean;
   // Students never see practice answers or solutions
   allowSolutions?: boolean;
@@ -21,7 +20,6 @@ interface PracticeSectionProps {
 
 export const PracticeSection: React.FC<PracticeSectionProps> = ({
   practice,
-  includeWorkSpace = true,
   teacherVersion = false,
   allowSolutions = false,
   headerExtra,
@@ -142,14 +140,6 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                     <span className="font-semibold">Зөвлөмж: </span>
                     <MathRenderer content={item.hint} className="inline" />
                   </div>
-                )}
-
-                {/* Workspace grid lines */}
-                {includeWorkSpace && !showSol && (
-                  <div
-                    className="workspace-grid mt-2 mb-1 border-t border-b border-stone-200 print:border-stone-400"
-                    style={{ height: `${(item.workSpaceLines || 4) * 23}px` }}
-                  />
                 )}
 
                 {/* Teacher Solution on Screen or in Print: steps like the worked examples */}
