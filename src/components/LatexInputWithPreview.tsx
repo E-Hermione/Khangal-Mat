@@ -96,6 +96,27 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
             {item.label}
           </button>
         ))}
+        {/* Multi-line text: a centred formula on its own line, then more text below it */}
+        {multiline && (
+          <>
+            <button
+              type="button"
+              onClick={() => insertSnippet('\n$$ x $$\n')}
+              title="Мөрийн голд томьёо оруулах (доор нь үргэлжлүүлэн бичнэ)"
+              className="px-1.5 py-0.5 text-[11px] font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded shadow-2xs cursor-pointer"
+            >
+              Голд томьёо
+            </button>
+            <button
+              type="button"
+              onClick={() => insertSnippet('\n')}
+              title="Шинэ мөрөөс бичих"
+              className="px-1.5 py-0.5 text-[11px] font-bold bg-white hover:bg-amber-100 text-stone-800 border border-stone-300 rounded shadow-2xs cursor-pointer"
+            >
+              Шинэ мөр
+            </button>
+          </>
+        )}
       </div>
 
       {/* Input or Textarea */}
