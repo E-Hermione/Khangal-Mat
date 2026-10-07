@@ -16,10 +16,77 @@ interface LatexInputWithPreviewProps {
   helpText?: string;
   // No preview under the field (the editor shows one preview of the whole item instead)
   hidePreview?: boolean;
+  // No LaTeX buttons above the field (the editor shows one shared toolbar instead)
+  hideToolbar?: boolean;
 }
 
 // Toolbar marker: wrap the selection in $…$
 const WRAP = '<wrap>';
+const CENTRED = '\n$$ x $$\n';
+
+const MATH_SNIPPETS = [
+  { label: 'x²', snippet: '^2', desc: 'Зэрэг' },
+  { label: 'xₙ', snippet: '_n', desc: 'Индекс' },
+  { label: 'a/b', snippet: '\\frac{a}{b}', desc: 'Энгийн бутархай' },
+  { label: '√x', snippet: '\\sqrt{x}', desc: 'Язгуур' },
+  { label: 'ⁿ√x', snippet: '\\sqrt[n]{x}', desc: 'n зэргийн язгуур' },
+  { label: '±', snippet: '\\pm ', desc: 'Нэмэх хасах' },
+  { label: '·', snippet: '\\cdot ', desc: 'Үржүүлэх' },
+  { label: '≤', snippet: '\\le ', desc: 'Бага буюу тэнцүү' },
+  { label: '≥', snippet: '\\ge ', desc: 'Их буюу тэнцүү' },
+  { label: '≠', snippet: '\\neq ', desc: 'Тэнцүү биш' },
+  { label: 'π', snippet: '\\pi ', desc: 'Пи тоо' },
+  { label: 'Таб', snippet: '\\qquad ', desc: 'Таб шиг зай авах' },
+  { label: '$', snippet: WRAP, desc: 'Сонгосон хэсгийг $...$ дотор оруулах' },
+  { label: '→', snippet: ' \\;\\rightarrow\\; ', desc: 'Сум' },
+  { label: '↔', snippet: ' \\;\\leftrightarrow\\; ', desc: 'Хоёр тийш сум' },
+];
+
+// The field the shared toolbar writes into: the one focused last
+let activeField: ((snippet: string) => void) | null = null;
+
+/** The LaTeX buttons; with no `onInsert` they write into the field focused last. */
+export const LatexToolbar: React.FC<{ onInsert?: (snippet: string) => void; centred?: boolean; className?: string }> = ({
+  onInsert,
+  centred = true,
+  className = '',
+}) => {
+  const insert = (snippet: string) => (onInsert ? onInsert(snippet) : activeField?.(snippet));
+  const btn = 'px-1.5 py-0.5 text-[11px] font-bold border rounded shadow-2xs transition-colors cursor-pointer';
+  return (
+    <div className={`flex items-center flex-wrap gap-1 bg-stone-100 p-1.5 rounded-lg border border-stone-200 ${className}`}>
+      <span className="text-[10px] uppercase font-bold text-stone-500 flex items-center gap-1 pl-1 pr-1.5">
+        <Sparkles className="w-3 h-3 text-amber-600" />
+        <span>LaTeX:</span>
+      </span>
+      {MATH_SNIPPETS.map((item) => (
+        <button
+          key={item.label}
+          type="button"
+          // Keep the cursor in the field being written
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => insert(item.snippet)}
+          title={item.desc}
+          className={`${btn} font-mono bg-white hover:bg-amber-100 text-stone-800 hover:text-amber-950 border-stone-300`}
+        >
+          {item.label}
+        </button>
+      ))}
+      {centred && (
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => insert(CENTRED)}
+          title="Мөрийн голд томьёо оруулах"
+          className={`${btn} bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-300`}
+        >
+          Голд томьёо
+        </button>
+      )}
+    </div>
+  );
+};
+
 
 export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
   label,
@@ -32,6 +99,7 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
   className = '',
   helpText,
   hidePreview = false,
+  hideToolbar = false,
 }) => {
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
 
@@ -103,23 +171,10 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
     }, 10);
   };
 
-  const mathSnippets = [
-    { label: 'x²', snippet: '^2', desc: 'Зэрэг' },
-    { label: 'xₙ', snippet: '_n', desc: 'Индекс' },
-    { label: 'a/b', snippet: '\\frac{a}{b}', desc: 'Энгийн бутархай' },
-    { label: '√x', snippet: '\\sqrt{x}', desc: 'Язгуур' },
-    { label: 'ⁿ√x', snippet: '\\sqrt[n]{x}', desc: 'n зэргийн язгуур' },
-    { label: '±', snippet: '\\pm ', desc: 'Нэмэх хасах' },
-    { label: '·', snippet: '\\cdot ', desc: 'Үржүүлэх' },
-    { label: '≤', snippet: '\\le ', desc: 'Бага буюу тэнцүү' },
-    { label: '≥', snippet: '\\ge ', desc: 'Их буюу тэнцүү' },
-    { label: '≠', snippet: '\\neq ', desc: 'Тэнцүү биш' },
-    { label: 'π', snippet: '\\pi ', desc: 'Пи тоо' },
-    { label: 'Таб', snippet: '\\qquad ', desc: 'Таб шиг зай авах' },
-    { label: '$', snippet: WRAP, desc: 'Сонгосон хэсгийг $...$ дотор оруулах' },
-    { label: '→', snippet: ' \\;\\rightarrow\\; ', desc: 'Сум' },
-    { label: '↔', snippet: ' \\;\\leftrightarrow\\; ', desc: 'Хоёр тийш сум' },
-  ];
+
+  // The shared toolbar always uses this field's latest value
+  const insertRef = useRef(insertSnippet);
+  insertRef.current = insertSnippet;
 
   return (
     <div className={`space-y-1.5 ${className}`}>
@@ -130,37 +185,8 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
         {helpText && <span className="text-[11px] text-stone-500">{helpText}</span>}
       </div>
 
-      {/* Math quick insert helper toolbar */}
-      <div className="flex items-center flex-wrap gap-1 bg-stone-100 p-1.5 rounded-lg border border-stone-200">
-        <span className="text-[10px] uppercase font-bold text-stone-500 flex items-center gap-1 pl-1 pr-1.5">
-          <Sparkles className="w-3 h-3 text-amber-600" />
-          <span>LaTeX:</span>
-        </span>
-        {mathSnippets.map((item, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => insertSnippet(item.snippet)}
-            title={item.desc}
-            className="px-1.5 py-0.5 text-[11px] font-mono font-bold bg-white hover:bg-amber-100 text-stone-800 hover:text-amber-950 border border-stone-300 rounded shadow-2xs transition-colors cursor-pointer"
-          >
-            {item.label}
-          </button>
-        ))}
-        {/* Multi-line text: a centred formula on its own line */}
-        {multiline && (
-          <>
-            <button
-              type="button"
-              onClick={() => insertSnippet('\n$$ x $$\n')}
-              title="Мөрийн голд томьёо оруулах (доор нь үргэлжлүүлэн бичнэ)"
-              className="px-1.5 py-0.5 text-[11px] font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded shadow-2xs cursor-pointer"
-            >
-              Голд томьёо
-            </button>
-          </>
-        )}
-      </div>
+      {/* LaTeX buttons, unless the editor shows one shared toolbar */}
+      {!hideToolbar && <LatexToolbar onInsert={insertSnippet} centred={multiline} />}
 
       {/* Input or Textarea */}
       {multiline ? (
@@ -169,6 +195,7 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
           value={value}
           onChange={(e) => change(e.target.value)}
           onKeyDown={onKeyDown}
+          onFocus={() => (activeField = (snippet) => insertRef.current(snippet))}
           rows={rows}
           placeholder={placeholder}
           className="w-full text-xs md:text-sm font-mono p-2.5 bg-white border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 outline-none leading-relaxed"
@@ -180,6 +207,7 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
           value={value}
           onChange={(e) => change(e.target.value)}
           onKeyDown={onKeyDown}
+          onFocus={() => (activeField = (snippet) => insertRef.current(snippet))}
           placeholder={placeholder}
           className="w-full text-xs md:text-sm font-mono p-2 bg-white border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 outline-none"
         />

@@ -7,7 +7,7 @@ import { TheoryBlocksEditor } from './TheoryBlocksEditor';
 import { TopicPackage, GradeNumber, TheoryRule, WorkedExample, PracticeProblem, TestQuestion } from '../types';
 import { storageService } from '../services/storageService';
 import { MathRenderer } from './MathRenderer';
-import { LatexInputWithPreview } from './LatexInputWithPreview';
+import { LatexInputWithPreview, LatexToolbar } from './LatexInputWithPreview';
 import { UserVisibilityPanel } from './UserVisibilityPanel';
 import {
   X,
@@ -360,21 +360,25 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           {activeTab === 'theory' && (
             <div className="space-y-4">
               {/* Stays on screen while scrolling */}
-              <div className="sticky -top-4 md:-top-6 z-10 bg-white flex items-center justify-between py-2 border-b border-stone-200">
-                <span />
-                <button
-                  type="button"
-                  onClick={addTheoryRule}
-                  className="text-xs px-3 py-1.5 bg-stone-900 hover:bg-black text-white rounded-lg font-bold flex items-center space-x-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Шинэ дүрэм нэмэх</span>
-                </button>
+              <div className="sticky -top-4 md:-top-6 z-10 bg-white py-2 border-b border-stone-200 space-y-2">
+    <div className="flex items-center justify-between">
+                  <span />
+                  <button
+                    type="button"
+                    onClick={addTheoryRule}
+                    className="text-xs px-3 py-1.5 bg-stone-900 hover:bg-black text-white rounded-lg font-bold flex items-center space-x-1 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Шинэ дүрэм нэмэх</span>
+                  </button>
+                </div>
+                {/* One LaTeX toolbar for every field below: writes into the field clicked last */}
+                <LatexToolbar />
               </div>
 
               <div className="flex gap-4 items-start">
                 {/* 1, 1.1, 1.2, 2, …: pick the one to edit */}
-                <nav className="w-40 md:w-48 shrink-0 sticky top-12 space-y-0.5 max-h-[60vh] overflow-y-auto">
+                <nav className="w-40 md:w-48 shrink-0 sticky top-28 space-y-0.5 max-h-[60vh] overflow-y-auto">
                   {(() => {
                     const numbers = theoryNumbers(topic.theory || []);
                     const list = topic.theory || [];
@@ -471,6 +475,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                     </div>
 
                     <TheoryBlocksEditor
+                      hideToolbar
                       rule={rule}
                       onChange={(next) => {
                         const updated = [...topic.theory];
@@ -505,25 +510,29 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
             return (
             <div className="space-y-4">
               {/* Stays on screen while scrolling */}
-              <div className="sticky -top-4 md:-top-6 z-10 bg-white flex items-center justify-between py-2 border-b border-stone-200">
-                <CheckOption
-                  checked={!!topic.examplesTwoColumns}
-                  onChange={(on) => setTopic({ ...topic, examplesTwoColumns: on || undefined })}
-                  label="Жишээг 2 эгнээгээр харуулах"
-                />
-                <button
-                  type="button"
-                  onClick={addWorkedExample}
-                  className="text-xs px-3 py-1.5 bg-stone-900 hover:bg-black text-white rounded-lg font-bold flex items-center space-x-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Шинэ жишээ нэмэх</span>
-                </button>
+              <div className="sticky -top-4 md:-top-6 z-10 bg-white py-2 border-b border-stone-200 space-y-2">
+    <div className="flex items-center justify-between">
+                  <CheckOption
+                    checked={!!topic.examplesTwoColumns}
+                    onChange={(on) => setTopic({ ...topic, examplesTwoColumns: on || undefined })}
+                    label="Жишээг 2 эгнээгээр харуулах"
+                  />
+                  <button
+                    type="button"
+                    onClick={addWorkedExample}
+                    className="text-xs px-3 py-1.5 bg-stone-900 hover:bg-black text-white rounded-lg font-bold flex items-center space-x-1 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Шинэ жишээ нэмэх</span>
+                  </button>
+                </div>
+                {/* One LaTeX toolbar for every field below: writes into the field clicked last */}
+                <LatexToolbar />
               </div>
 
               <div className="flex gap-4 items-start">
                 {/* Pick the example to edit */}
-                <nav className="w-40 md:w-48 shrink-0 sticky top-12 space-y-0.5 max-h-[60vh] overflow-y-auto">
+                <nav className="w-40 md:w-48 shrink-0 sticky top-28 space-y-0.5 max-h-[60vh] overflow-y-auto">
                   {list.map((ex, idx) => {
                     const on = idx === sel;
                     return (
@@ -567,15 +576,17 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                         </div>
                       </div>
 
-                      <LatexInputWithPreview label="Бодлого:" value={ex.problem} onChange={(val) => update(sel, { problem: val })} multiline rows={2} hidePreview />
+                      <LatexInputWithPreview
+                              hideToolbar label="Бодлого:" value={ex.problem} onChange={(val) => update(sel, { problem: val })} multiline rows={2} hidePreview />
 
                       {/* One field per step, in order */}
                       <div className="space-y-3">
                         <div className="text-xs font-bold text-stone-800">Бодолтын алхмууд:</div>
                         {steps.map((step, i) => (
                           <div key={i} className="flex items-start gap-2">
-                            <span className="mt-[3.25rem] w-6 h-6 rounded-full bg-stone-900 text-white text-[11px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
+                            <span className="mt-7 w-6 h-6 rounded-full bg-stone-900 text-white text-[11px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
                             <LatexInputWithPreview
+                              hideToolbar
                               className="flex-1 min-w-0"
                               label={`Алхам ${i + 1}`}
                               value={step}
@@ -603,7 +614,8 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                         </button>
                       </div>
 
-                      <LatexInputWithPreview label="Хариу:" value={ex.answer} onChange={(val) => update(sel, { answer: val })} hidePreview />
+                      <LatexInputWithPreview
+                              hideToolbar label="Хариу:" value={ex.answer} onChange={(val) => update(sel, { answer: val })} hidePreview />
 
                       {/* The whole example as it looks on the lesson page */}
                       <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
@@ -621,18 +633,22 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           {/* 3. PRACTICE TAB */}
           {activeTab === 'practice' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-stone-200">
-                <span className="text-xs text-stone-500 font-medium">
-                  Бие даах дасгал (Хялбар, Дунд, Ахисан түвшин)
-                </span>
-                <button
-                  type="button"
-                  onClick={addPracticeProblem}
-                  className="text-xs px-3 py-1.5 bg-stone-900 hover:bg-black text-white rounded-lg font-bold flex items-center space-x-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Шинэ дасгал нэмэх</span>
-                </button>
+              <div className="sticky -top-4 md:-top-6 z-10 bg-white py-2 border-b border-stone-200 space-y-2">
+    <div className="flex items-center justify-between">
+                  <span className="text-xs text-stone-500 font-medium">
+                    Бие даах дасгал (Хялбар, Дунд, Ахисан түвшин)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={addPracticeProblem}
+                    className="text-xs px-3 py-1.5 bg-stone-900 hover:bg-black text-white rounded-lg font-bold flex items-center space-x-1 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Шинэ дасгал нэмэх</span>
+                  </button>
+                </div>
+                {/* One LaTeX toolbar for every field below: writes into the field clicked last */}
+                <LatexToolbar />
               </div>
 
               <div className="space-y-4">
@@ -675,6 +691,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                     </div>
 
                     <LatexInputWithPreview
+                              hideToolbar
                       label="Бодлогын нөхцөл:"
                       value={item.question}
                       onChange={(val) => {
@@ -688,6 +705,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <LatexInputWithPreview
+                              hideToolbar
                         label="Зөв хариу:"
                         value={item.answer}
                         onChange={(val) => {
@@ -697,6 +715,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                         }}
                       />
                       <LatexInputWithPreview
+                              hideToolbar
                         label="Зөвлөмж / Санамж:"
                         value={item.hint || ''}
                         onChange={(val) => {

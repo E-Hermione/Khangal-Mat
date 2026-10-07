@@ -4,9 +4,10 @@ import { theoryText, withText } from '../utils/theoryBlocks';
 import { LatexInputWithPreview } from './LatexInputWithPreview';
 
 /** A theory item's content in one field: text with $…$ formulas, and centred formulas via «Голд томьёо». */
-export const TheoryBlocksEditor: React.FC<{ rule: TheoryRule; onChange: (rule: TheoryRule) => void }> = ({
+export const TheoryBlocksEditor: React.FC<{ rule: TheoryRule; onChange: (rule: TheoryRule) => void; hideToolbar?: boolean }> = ({
   rule,
   onChange,
+  hideToolbar,
 }) => (
   <LatexInputWithPreview
     label="Агуулга:"
@@ -14,5 +15,6 @@ export const TheoryBlocksEditor: React.FC<{ rule: TheoryRule; onChange: (rule: T
     onChange={(text) => onChange(withText(rule, text))}
     multiline
     rows={6}
+    hideToolbar={hideToolbar}
   />
 );
