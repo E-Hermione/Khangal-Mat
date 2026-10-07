@@ -363,7 +363,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
             )
           }
           locked={needsPlacement ? 'Түвшин тогтоох сорилын дараа нээгдэнэ' : undefined}
-          action={hasPlan ? { label: 'Миний төлөвлөгөө', onClick: onOpenPlan } : { label: 'Хичээл үзэх', onClick: onOpenLessons }}
+          action={hasPlan ? { label: 'Хувийн төлөвлөгөө', onClick: onOpenPlan } : { label: 'Хичээл үзэх', onClick: onOpenLessons }}
         >
           {hasPlan ? (
             <div className="flex items-center gap-3">

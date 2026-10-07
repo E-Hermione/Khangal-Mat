@@ -45,7 +45,7 @@ interface SidebarProps {
   onLogout: () => void;
   onOpenAccessRequests?: () => void;
   isAdmin: boolean;
-  // Admin mode proper has no "Миний төлөвлөгөө" view (the general view keeps it to show students)
+  // Admin mode proper has no "Хувийн төлөвлөгөө" view (the general view keeps it to show students)
   hidePlanView?: boolean;
   activeView?: 'home' | 'topics' | 'exams' | 'plan' | 'placement' | 'mistakes';
   onSelectView?: (view: 'home' | 'topics' | 'exams' | 'plan' | 'placement' | 'mistakes') => void;
@@ -557,14 +557,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {(
                 [
                   ['all', showExamNav ? 'Бүх сорил' : 'Бүх сэдэв'],
-                  ['plan', 'Миний төлөвлөгөө'],
+                  ['plan', 'Хувийн төлөвлөгөө'],
                 ] as const
               ).map(([m, label]) => (
                 <button
                   key={m}
                   type="button"
                   onClick={() => setMode(m)}
-                  className={`py-1.5 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                  className={`py-1.5 px-1 rounded-md text-[11px] font-bold whitespace-nowrap truncate transition-all cursor-pointer ${
                     mode === m ? 'bg-stone-700 text-white' : 'text-stone-400 hover:text-stone-200'
                   }`}
                 >

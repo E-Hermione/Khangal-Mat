@@ -44,7 +44,7 @@ const MemberHome: React.FC<{ uid?: string; userId?: string; onOpenPlan: () => vo
 
   return (
     <div className="p-3 space-y-3" data-testid="home-panel">
-      <Label>Миний төлөвлөгөө</Label>
+      <Label>Хувийн төлөвлөгөө</Label>
       {hasPlan ? (
         <Panel className="space-y-3">
           <div className="flex items-center gap-3">
@@ -70,7 +70,7 @@ const MemberHome: React.FC<{ uid?: string; userId?: string; onOpenPlan: () => vo
             className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold cursor-pointer"
             data-testid="open-plan"
           >
-            Миний төлөвлөгөө харах
+            Хувийн төлөвлөгөө харах
           </button>
         </Panel>
       ) : (
@@ -85,7 +85,7 @@ const MemberHome: React.FC<{ uid?: string; userId?: string; onOpenPlan: () => vo
             className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold cursor-pointer"
             data-testid="open-plan"
           >
-            Миний төлөвлөгөө харах
+            Хувийн төлөвлөгөө харах
           </button>
         </Panel>
       )}
