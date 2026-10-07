@@ -65,6 +65,14 @@ export default function App() {
   const [previewStudentId, setPreviewStudentId] = useState('');
   // Phone width: the site in a narrow frame
   const [phoneView, setPhoneView] = useState(false);
+  // A view button clicked: a short note on what the admin now sees
+  const [viewHint, setViewHint] = useState<string | null>(null);
+  const hintTimer = React.useRef<number | undefined>(undefined);
+  const showViewHint = (text: string) => {
+    setViewHint(text);
+    window.clearTimeout(hintTimer.current);
+    hintTimer.current = window.setTimeout(() => setViewHint(null), 3500);
+  };
   // General view: the admin's rights without the editing buttons (signing in as "Ерөнхий" locks it on)
   const [generalView, setGeneralView] = useState<boolean>(() => isGeneralLogin());
   const generalLocked = generalView && isGeneralLogin();
@@ -608,6 +616,7 @@ export default function App() {
                       onClick={() => {
                         setGeneralView(mode === 'general');
                         setPreviewAsUser(mode === 'admin' || mode === 'general' ? false : mode);
+                        showViewHint(title);
                       }}
                       className={`p-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
                         active
@@ -647,7 +656,10 @@ export default function App() {
                 )}
                 <button
                   type="button"
-                  onClick={() => setPhoneView(true)}
+                  onClick={() => {
+                    setPhoneView(true);
+                    showViewHint('Утасны харагдац: сайтыг утасны өргөнөөр харна');
+                  }}
                   className="p-1.5 rounded-md text-stone-400 hover:text-white cursor-pointer"
                   title="Утасны харагдац"
                   aria-label="Утасны харагдац"
@@ -970,6 +982,16 @@ export default function App() {
         onToggleCopyProtection={handleToggleCopyProtection}
         isAdmin={currentUser?.role === 'admin'}
       />
+
+      {viewHint && (
+        <div
+          className="fixed top-16 right-3 left-3 sm:left-auto z-[70] sm:max-w-sm px-3.5 py-2 rounded-xl bg-stone-900 text-amber-300 text-xs font-bold shadow-xl border border-stone-700 animate-in fade-in duration-150"
+          role="status"
+          data-testid="view-hint"
+        >
+          {viewHint}
+        </div>
+      )}
 
       {/* Phone view: the site at a phone's width (the admin switches views inside it too) */}
       {phoneView && (
