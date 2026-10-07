@@ -600,6 +600,26 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                               {st.name} <span className="text-amber-400">+{st.share}%</span>
                             </div>
                             <div className="text-[11px] text-stone-400 leading-snug">{st.text}</div>
+                            {/* The student marks the lesson as done themselves */}
+                            {i === 0 && tracking && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  learningPlan.saveLesson(
+                                    topic.id,
+                                    st.done
+                                      ? { understood: false, solved: [] }
+                                      : { understood: true, solved: (topic.practice || []).map((p) => p.id) }
+                                  )
+                                }
+                                className={`mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-black cursor-pointer ${
+                                  st.done ? 'bg-white/10 text-stone-300 hover:bg-white/15' : 'bg-amber-500 hover:bg-amber-400 text-stone-950'
+                                }`}
+                                data-testid="lesson-done"
+                              >
+                                {st.done ? 'Буцаах' : 'Хичээлээ үзэж дуусгасан'}
+                              </button>
+                            )}
                           </div>
                         </li>
                       ))}
