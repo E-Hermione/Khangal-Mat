@@ -117,6 +117,14 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullName', 'phoneNumber'])
         && request.resource.data.phoneNumber.matches('^[0-9]{8}$')
         && getAfter(/databases/$(database)/documents/phones/$(request.resource.data.phoneNumber)).data.uid == uid
+      ) || (
+        // A student without a grade on record sets it once
+        signedIn()
+        && request.auth.uid == uid
+        && resource.data.get('grades', []).size() == 0
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['grades'])
+        && request.resource.data.grades.size() == 1
+        && request.resource.data.grades[0] in [6, 7, 8, 9, 10, 11, 12]
       );
 
       allow delete: if isAdmin();

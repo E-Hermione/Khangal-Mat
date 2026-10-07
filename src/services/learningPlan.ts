@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, deleteDoc, doc, getDocs, onSnapshot, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { getDb } from './firebase';
 import { subscribeAttempts, AttemptMap } from './examAttempts';
 import { userPermissionsService } from './userPermissionsService';
@@ -471,6 +471,16 @@ export const learningPlan = {
       cloud.getAppSettings().placementEnabled &&
       placementSize(grade).questions > 0
     );
+  },
+  /** A real student whose profile has no grade (older accounts): they set it once. */
+  needsGrade(): boolean {
+    return !!state.uid && !state.grade && state.paidOverride === null;
+  },
+  async setGrade(grade: GradeNumber): Promise<void> {
+    if (!state.uid) return;
+    await updateDoc(doc(getDb(), 'users', state.uid), { grades: [grade] });
+    state.grade = grade;
+    notify();
   },
   resultFor(grade: GradeNumber): PlacementResult | undefined {
     return state.results?.find((r) => r.grade === grade);

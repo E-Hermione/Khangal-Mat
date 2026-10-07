@@ -207,8 +207,18 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   const next = plan.find((p) => !learningPlan.isDone(p.topicId));
   const firstName = (currentUser.name || '').split(' ').pop();
   // Retaking replaces that grade's result, so ask first
-  const startPlacement = (g: GradeNumber) => {
-    if (learningPlan.resultFor(g) && !window.confirm(`${g}-р ангийн түвшин тогтоох сорилыг дахин өгөх үү?`)) return;
+  const startPlacement = async (g: GradeNumber) => {
+    // A student without a grade on record picks theirs once; after that only that grade is open
+    if (learningPlan.needsGrade()) {
+      if (!window.confirm(`Та ${g}-р ангийн сурагч мөн үү? Ангиа сонгосны дараа солих боломжгүй.`)) return;
+      try {
+        await learningPlan.setGrade(g);
+      } catch (err) {
+        console.error('Grade not saved', err);
+        window.alert('Анги хадгалагдсангүй. Дахин оролдоно уу.');
+        return;
+      }
+    } else if (learningPlan.resultFor(g) && !window.confirm(`${g}-р ангийн түвшин тогтоох сорилыг дахин өгөх үү?`)) return;
     onStartPlacement(g);
   };
   // "Take it again" opens the user's own grade, else the last grade they took
