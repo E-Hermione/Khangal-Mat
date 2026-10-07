@@ -295,9 +295,6 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
                       {/* Сэдвийн нэр */}
                       <td className="py-2.5 px-3">
                         <div className="font-bold text-stone-900 leading-tight text-xs md:text-sm">{topic.title}</div>
-                        {!isAdmin && learningPlan.inPlan(topic.id) && (
-                          <ProgressRing percent={learningPlan.progress(topic.id)} size={18} className="mt-1" />
-                        )}
                       </td>
 
                       {/* Түвшин: 3-tier Interactive Selector */}
