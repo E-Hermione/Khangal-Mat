@@ -106,6 +106,7 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
     { label: 'π', snippet: '\\pi ', desc: 'Пи тоо' },
     { label: 'Таб', snippet: TAB, desc: 'Таб шиг зай авах' },
     { label: '→', snippet: ' \\;\\rightarrow\\; ', desc: 'Сум' },
+    { label: '↔', snippet: ' \\;\\leftrightarrow\\; ', desc: 'Хоёр тийш сум' },
   ];
 
   return (
