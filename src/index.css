@@ -97,3 +97,11 @@ body.copy-protected *:not(input):not(textarea) {
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* A strip that scrolls sideways without showing a scrollbar (the admin's view switcher on phones) */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

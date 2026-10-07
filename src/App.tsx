@@ -531,7 +531,7 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen flex flex-col font-sans text-stone-900 bg-stone-900 print:bg-white"
+      className="min-h-screen flex flex-col font-sans text-stone-900 bg-stone-900 print:bg-white overflow-x-clip"
     >
       {/* The admin edits content, so copying stays allowed for them */}
       <CopyProtection enabled={appSettings.copyProtection && currentUser.role !== 'admin'} />
@@ -567,7 +567,7 @@ export default function App() {
           <div className="flex-1" />
 
           {/* Action buttons */}
-          <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+          <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
             {currentUser.role !== 'admin' && getFirebaseAuth().currentUser && (
               <AnnouncementsBell uid={getFirebaseAuth().currentUser!.uid} />
             )}
@@ -583,7 +583,8 @@ export default function App() {
               </span>
             )}
             {currentUser?.role === 'admin' && !generalLocked && (
-              <div className="flex items-center bg-stone-800 p-0.5 rounded-lg border border-stone-700">
+              // Phones: the switcher scrolls inside itself instead of widening the page
+              <div className="flex items-center bg-stone-800 p-0.5 rounded-lg border border-stone-700 min-w-0 overflow-x-auto scrollbar-none [&>*]:shrink-0">
                 {([
                   ['admin', 'Админ', 'Админ горим', Shield],
                   ['general', 'Ерөнхий', 'Ерөнхий харагдац: админы эрхтэй, засах товчгүй', Presentation],
