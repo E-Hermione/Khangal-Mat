@@ -13,6 +13,8 @@ import {
   Settings,
   ChevronRight,
   ChevronDown,
+  ArrowUp,
+  ArrowDown,
   Printer,
   Sparkles,
   Layers,
@@ -178,8 +180,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }
     }
 
+    // Topics in the order the admin arranged them; the rest keep their place after them
+    const order = cloud.getAppSettings().topicOrder || [];
+    const rank = (id: string, i: number) => {
+      const r = order.indexOf(id);
+      return r >= 0 ? r : order.length + i;
+    };
     map.forEach((topics, category) => {
-      groups.push({ category, topics });
+      const sorted = topics
+        .map((t, i) => ({ t, r: rank(t.id, i) }))
+        .sort((a, b) => a.r - b.r)
+        .map(({ t }) => t);
+      groups.push({ category, topics: sorted });
     });
 
     return groups;
@@ -267,7 +279,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       if (next) onSelectTopic(next.id);
     }
   };
-  const renderRowTools = (topicId: string, withAdd: boolean, category: string) =>
+  // Admin: move a topic up or down among the topics next to it
+  const moveTopic = (siblings: string[], id: string, step: -1 | 1) => {
+    const i = siblings.indexOf(id);
+    const j = i + step;
+    if (i < 0 || j < 0 || j >= siblings.length) return;
+    const next = [...siblings];
+    [next[i], next[j]] = [next[j], next[i]];
+    const rest = (cloud.getAppSettings().topicOrder || []).filter((x) => !next.includes(x));
+    cloud.setAppSettings({ topicOrder: [...rest, ...next] });
+  };
+  const renderRowTools = (topicId: string, withAdd: boolean, category: string, siblings?: string[]) =>
     confirmDelete === topicId ? (
       <div className="flex items-center gap-1 shrink-0 pl-1" data-testid="confirm-delete">
         <span className="text-[10px] font-bold text-rose-300">Устгах уу?</span>
@@ -288,6 +310,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
     ) : (
       <div className="flex items-center shrink-0">
+        {siblings && siblings.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => moveTopic(siblings, topicId, -1)}
+              disabled={siblings[0] === topicId}
+              className="p-0.5 rounded text-stone-500 hover:text-amber-400 hover:bg-stone-800 cursor-pointer disabled:opacity-30 disabled:cursor-default"
+              title="Дээш зөөх"
+            >
+              <ArrowUp className="w-3 h-3" />
+            </button>
+            <button
+              type="button"
+              onClick={() => moveTopic(siblings, topicId, 1)}
+              disabled={siblings[siblings.length - 1] === topicId}
+              className="p-0.5 rounded text-stone-500 hover:text-amber-400 hover:bg-stone-800 cursor-pointer disabled:opacity-30 disabled:cursor-default"
+              title="Доош зөөх"
+            >
+              <ArrowDown className="w-3 h-3" />
+            </button>
+          </>
+        )}
         {withAdd && (
           <button
             type="button"
@@ -857,7 +901,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   <div key={topic.id} className="space-y-0.5">
                                     <div className="flex items-center gap-0.5 group/row">
                                       <div className="flex-1 min-w-0">{renderTopic(topic, false)}</div>
-                                      {canAddTopics && renderRowTools(topic.id, true, group.category)}
+                                      {canAddTopics && renderRowTools(topic.id, true, group.category, topLevel.map((t) => t.id))}
                                     </div>
                                     {kids.length > 0 &&
                                       openParents.has(topic.id) &&

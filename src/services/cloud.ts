@@ -36,6 +36,8 @@ export interface AppSettings {
   removedTopicIds: string[];
   // Categories the admin added that have no topics yet
   extraCategories: { grade: number; name: string }[];
+  // Order of topics in the topic list, as the admin arranged them (topic ids)
+  topicOrder?: string[];
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
