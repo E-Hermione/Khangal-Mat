@@ -488,7 +488,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       aria-selected={on}
                       onClick={() => setLessonTab(key)}
                       className={`flex-1 py-3 px-2 rounded-lg border-2 text-sm md:text-base font-extrabold transition-colors cursor-pointer ${
-                        on ? 'border-stone-800 text-[#3D0C02]' : 'border-stone-300 text-stone-400 hover:text-stone-600'
+                        on ? 'border-stone-300 text-amber-600' : 'border-stone-300 text-stone-400 hover:text-stone-600'
                       }`}
                     >
                       {label}
