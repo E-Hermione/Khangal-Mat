@@ -372,7 +372,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
         </div>
 
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl md:text-3xl font-black text-stone-950 tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-normal text-stone-950 tracking-tight">
             {topic.title}
           </h1>
 
