@@ -70,7 +70,7 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
           {theory.map((rule, idx) => (
             <div
               key={rule.id || idx}
-              className="avoid-break py-7 first:pt-0 last:pb-0 relative group print:py-0"
+              className={`avoid-break py-7 first:pt-0 last:pb-0 relative group print:py-0 ${rule.sub ? 'pl-6 md:pl-10 print:pl-8' : ''}`}
             >
               <div>
                 {/* Header Box */}
