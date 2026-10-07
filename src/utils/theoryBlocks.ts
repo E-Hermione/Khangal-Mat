@@ -10,17 +10,6 @@ export function theoryBlocks(rule: TheoryRule): TheoryBlock[] {
   return out;
 }
 
-/** The theory item with new blocks; the first text block also stays in ruleText. */
-export function withBlocks(rule: TheoryRule, blocks: TheoryBlock[]): TheoryRule {
-  return {
-    ...rule,
-    blocks,
-    ruleText: blocks.find((b) => b.type === 'text')?.value || '',
-    formula: undefined,
-    note: undefined,
-  };
-}
-
 /** Numbers of theory items: 1, 2, … and 1.1, 1.2, … for sub-parts of the item above. */
 export function theoryNumbers(theory: TheoryRule[]): string[] {
   let main = 0;

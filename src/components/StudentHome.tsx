@@ -5,8 +5,6 @@ import {
   GRADES,
   learningPlan,
   placementSize,
-  tiersPassed,
-  topicMeta,
   useLearningPlanVersion,
 } from '../services/learningPlan';
 import { HomeContent, saveHomeContent, useHomeContent } from '../services/homeContent';

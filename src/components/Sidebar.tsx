@@ -1,27 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { GradeNumber, AuthUser } from '../types';
 import { GRADES_LIST } from '../data/initialData';
-import { visibilityService, TopicAccessMode } from '../services/visibilityService';
+import { visibilityService } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { storageService } from '../services/storageService';
 import { newTopic } from '../utils/newTopic';
 import { cloud } from '../services/cloud';
 import {
-  GraduationCap,
   BookOpen,
-  FolderKanban,
-  Settings,
   ChevronRight,
   ChevronDown,
   ArrowUp,
   ArrowDown,
-  Printer,
-  Sparkles,
-  Layers,
   X,
   Sliders,
   LogOut,
-  User,
   UserCheck,
   EyeOff,
   Lock,

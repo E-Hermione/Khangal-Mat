@@ -1,6 +1,5 @@
 export type GradeNumber = 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
-export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 
 // One piece of a theory item, in reading order: text, a centred formula, or a small note
 export interface TheoryBlock {
@@ -38,7 +37,6 @@ export interface PracticeProblem {
   number: number;
   question: string;
   hint?: string;
-  difficulty: DifficultyLevel;
   answer: string;
   solution?: string;
   // The grade this exercise belongs to (unset: the topic's own grade)

@@ -2,7 +2,7 @@ import React from 'react';
 import { TestPackage, TestQuestion } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { PrintHeader } from './PrintHeader';
-import { Award, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 
 interface TestSectionProps {
   test: TestPackage;

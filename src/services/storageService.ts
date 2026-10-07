@@ -1,5 +1,5 @@
 import { syncPracticeSolutions } from './practiceSolutions';
-import { TopicPackage, GradeNumber, TheoryRule, WorkedExample, PracticeProblem, TestQuestion } from '../types';
+import { TopicPackage, GradeNumber } from '../types';
 import { cloud } from './cloud';
 
 

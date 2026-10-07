@@ -219,7 +219,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
         number: nextNum,
         question: 'Дасгал бодлогын нөхцөл энд бичнэ. Жишээ: $3(x - 1) = 9$',
         hint: 'Хаалтыг задалж бодоорой.',
-        difficulty: 'medium',
         answer: '$x = 4$',
         solution: '$3x - 3 = 9 \\implies 3x = 12 \\implies x = 4$',
       },
@@ -272,7 +271,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   // the rest reads as one lesson from the lowest grade up (exercises also from easy to hard).
   const viewerGrade = viewGrade ?? topic.grade;
   const partGrade = (x: { prerequisiteGrade?: number }) => x.prerequisiteGrade ?? topic.grade;
-  const LEVEL = { easy: 0, medium: 1, hard: 2 } as const;
   const upTo = <T extends { prerequisiteGrade?: number }>(list: T[] = []) =>
     list.filter((x) => partGrade(x) <= viewerGrade).sort((x, y) => partGrade(x) - partGrade(y));
   const mainTopic: TopicPackage = {
@@ -280,7 +278,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
     theory: upTo(topic.theory),
     examples: upTo(topic.examples).map((ex, i) => ({ ...ex, number: i + 1 })),
     practice: upTo<PracticeProblem>(topic.practice)
-      .sort((x, y) => partGrade(x) - partGrade(y) || (LEVEL[x.difficulty] ?? 1) - (LEVEL[y.difficulty] ?? 1))
+      .sort((x, y) => partGrade(x) - partGrade(y))
       .map((p, i) => ({ ...p, number: i + 1 })),
   };
 

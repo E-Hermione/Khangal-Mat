@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { GradeNumber, TopicPackage, TestPackage, TestQuestion } from '../types';
+import { GradeNumber, TopicPackage, TestPackage } from '../types';
 import { MathRenderer } from './MathRenderer';
 import {
   Award,

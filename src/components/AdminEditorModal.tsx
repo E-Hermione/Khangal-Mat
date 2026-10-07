@@ -9,7 +9,6 @@ import { TopicPackage, GradeNumber, TheoryRule, WorkedExample, PracticeProblem, 
 import { storageService } from '../services/storageService';
 import { MathRenderer } from './MathRenderer';
 import { LatexInputWithPreview, LatexToolbar } from './LatexInputWithPreview';
-import { UserVisibilityPanel } from './UserVisibilityPanel';
 import {
   X,
   Plus,
@@ -19,7 +18,6 @@ import {
   Lightbulb,
   PencilLine,
   Award,
-  CheckCircle2,
   Upload,
   ArrowUp,
   ArrowDown,
@@ -173,7 +171,6 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       id: `pr-${Date.now()}`,
       number: nextNum,
       question: 'Шинэ дасгал бодлого ($x + 1 = 2$)',
-      difficulty: 'medium',
       answer: '$x = 1$',
       solution: 'Бодолтын тайлбар',
     };

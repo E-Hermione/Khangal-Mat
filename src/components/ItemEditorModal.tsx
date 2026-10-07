@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useCtrlS } from '../utils/useCtrlS';
 import { CheckOption } from './CheckOption';
 import { TheoryBlocksEditor } from './TheoryBlocksEditor';
-import { TheoryRule, WorkedExample, PracticeProblem, TestQuestion, DifficultyLevel } from '../types';
+import { TheoryRule, WorkedExample, PracticeProblem, TestQuestion } from '../types';
 import { LatexInputWithPreview } from './LatexInputWithPreview';
-import { X, Save, Trash2, Plus, HelpCircle } from 'lucide-react';
+import { X, Save, Trash2 } from 'lucide-react';
 import { backdropClose } from '../utils/backdrop';
 
 // Which grade a theory part, example or exercise belongs to; students of lower grades do not see it
