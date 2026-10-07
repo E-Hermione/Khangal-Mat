@@ -165,7 +165,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
                       onClick={() => onOpenTopic(p.topicId)}
                       className="px-3 py-1.5 rounded-lg border border-stone-200 text-xs font-bold text-stone-700 hover:bg-stone-50 flex items-center gap-1 cursor-pointer"
                     >
-                      <BookOpen className="w-3.5 h-3.5" /> Үзэх
+                      <BookOpen className="w-3.5 h-3.5" /> Хичээл үзэх
                     </button>
                     <button
                       type="button"
