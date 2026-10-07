@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { GradeNumber, TopicPackage, TestPackage } from '../types';
+import { GradeTestTakers } from './GradeTestTakers';
 import { MathRenderer } from './MathRenderer';
 import {
   Award,
@@ -544,6 +545,8 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
           }}
         />
       )}
+      {/* Admin: who took this grade's topic tests, by user ID */}
+      {isAdmin && <GradeTestTakers topics={visibleExamTopics} />}
     </div>
   );
 };
