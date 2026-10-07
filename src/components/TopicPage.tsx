@@ -579,7 +579,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                         <div className="text-sm md:text-base font-black text-white">
                           Сэдвийн гүйцэтгэл{tracking ? `: ${learningPlan.progress(topic.id)}%` : ''}
                         </div>
-                        <div className="text-xs text-stone-400">Доорх 4 алхмыг дараалан хийвэл сэдвээ 100% гүйцэтгэнэ.</div>
+                        <div className="text-xs text-stone-400">Доорх 4 алхмыг дараалан хийвэл сэдвээ 100% гүйцэтгэж тооцуулна.</div>
                       </div>
                     </div>
                     <ol className="grid sm:grid-cols-2 gap-2">
