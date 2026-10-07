@@ -45,7 +45,8 @@ const MemberHome: React.FC<{ uid?: string; userId?: string; onOpenPlan: () => vo
   return (
     <div className="p-3 space-y-3" data-testid="home-panel">
       <Label>Хувийн төлөвлөгөө</Label>
-      {hasPlan ? (
+      {/* The plan itself is for paid students; the others see what opens it */}
+      {hasPlan && learningPlan.isPaid() ? (
         <Panel className="space-y-3">
           <div className="flex items-center gap-3">
             <ProgressRing percent={overall} size={44} />
@@ -54,9 +55,7 @@ const MemberHome: React.FC<{ uid?: string; userId?: string; onOpenPlan: () => vo
                 {done}/{plan.length}
               </b>{' '}
               сэдэв үзсэн
-              <span className="block text-stone-500">
-                {learningPlan.isPaid() ? 'Хичээлүүд нээлттэй' : 'Төлбөрийн дараа нээгдэнэ'}
-              </span>
+              <span className="block text-stone-500">Хичээлүүд нээлттэй</span>
             </div>
           </div>
           {next && (
@@ -77,16 +76,8 @@ const MemberHome: React.FC<{ uid?: string; userId?: string; onOpenPlan: () => vo
         <Panel className="space-y-2">
           <div className="flex items-start gap-2 text-xs text-stone-400">
             <ClipboardCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            Түвшин тогтоох сорилын дараа нээгдэнэ.
+            {hasPlan ? 'Төлбөр төлсний дараа нээгдэнэ.' : 'Түвшин тогтоох сорилын дараа нээгдэнэ.'}
           </div>
-          <button
-            type="button"
-            onClick={onOpenPlan}
-            className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold cursor-pointer"
-            data-testid="open-plan"
-          >
-            Хувийн төлөвлөгөө харах
-          </button>
         </Panel>
       )}
     </div>
