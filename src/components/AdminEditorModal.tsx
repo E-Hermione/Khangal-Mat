@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CheckOption } from './CheckOption';
 import { theoryNumbers } from '../utils/theoryBlocks';
 import { TheoryBlocksEditor } from './TheoryBlocksEditor';
 import { TopicPackage, GradeNumber, TheoryRule, WorkedExample, PracticeProblem, TestQuestion } from '../types';
@@ -434,19 +435,17 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                         />
                         {/* Main topic (1, 2, …) or sub-topic of the main one above it (1.1, 1.2, …) */}
                         {([false, true] as const).map((sub) => (
-                          <label key={String(sub)} className="flex items-center gap-1 text-xs font-bold text-stone-700 whitespace-nowrap cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={!!rule.sub === sub}
-                              disabled={sub && idx === 0}
-                              onChange={() => {
-                                const updated = [...topic.theory];
-                                updated[idx] = { ...updated[idx], sub: sub || undefined };
-                                setTopic({ ...topic, theory: updated });
-                              }}
-                            />
-                            {sub ? 'Дэд сэдэв' : 'Ерөнхий сэдэв'}
-                          </label>
+                          <CheckOption
+                            key={String(sub)}
+                            checked={!!rule.sub === sub}
+                            disabled={sub && idx === 0}
+                            onChange={() => {
+                              const updated = [...topic.theory];
+                              updated[idx] = { ...updated[idx], sub: sub || undefined };
+                              setTopic({ ...topic, theory: updated });
+                            }}
+                            label={sub ? 'Дэд сэдэв' : 'Ерөнхий сэдэв'}
+                          />
                         ))}
                       </div>
                       <button
