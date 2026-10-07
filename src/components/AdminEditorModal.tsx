@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCtrlS } from '../utils/useCtrlS';
 import { WorkedExamplesSection } from './WorkedExamplesSection';
+import { PracticeSection } from './PracticeSection';
 import { CheckOption } from './CheckOption';
 import { theoryNumbers } from '../utils/theoryBlocks';
 import { TheoryBlocksEditor } from './TheoryBlocksEditor';
@@ -715,9 +716,17 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                           </div>
                         </div>
 
-                        <LatexInputWithPreview hideToolbar label="Бодлого:" value={item.question} onChange={(val) => update(sel, { question: val })} multiline rows={3} />
-                        <LatexInputWithPreview hideToolbar label="Зөв хариу:" value={item.answer} onChange={(val) => update(sel, { answer: val })} />
-                        <LatexInputWithPreview hideToolbar label="Зөвлөмж / Санамж:" value={item.hint || ''} onChange={(val) => update(sel, { hint: val })} />
+                        <LatexInputWithPreview hideToolbar label="Бодлого:" value={item.question} onChange={(val) => update(sel, { question: val })} multiline rows={3} hidePreview />
+                        <LatexInputWithPreview hideToolbar label="Зөв хариу:" value={item.answer} onChange={(val) => update(sel, { answer: val })} hidePreview />
+                        <LatexInputWithPreview hideToolbar label="Зөвлөмж / Санамж:" value={item.hint || ''} onChange={(val) => update(sel, { hint: val })} hidePreview />
+
+                        {/* The whole exercise as it looks on the lesson page (with its answer) */}
+                        <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-2">Сайт дээр харагдах байдал</div>
+                          <div className="bg-white rounded-lg p-4">
+                            <PracticeSection practice={[{ ...item, number: sel + 1 }]} includeWorkSpace={false} teacherVersion allowSolutions />
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
