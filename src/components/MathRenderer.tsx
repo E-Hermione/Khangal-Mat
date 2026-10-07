@@ -8,10 +8,12 @@ interface MathRendererProps {
 }
 
 export const MathRenderer: React.FC<MathRendererProps> = ({
-  content,
+  content: rawContent,
   className = '',
   block = false,
 }) => {
+  // Empty lines and spaces before or after the text never add space
+  const content = (rawContent || '').replace(/^\s+|\s+$/g, '');
   const renderedHtml = useMemo(() => {
     if (!content) return '';
 
