@@ -86,7 +86,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
       <TierGuide />
 
       {/* Topics */}
-      <p className="text-sm font-bold text-stone-800">
+      <p className="pt-10 text-sm font-bold text-stone-800">
         Дараах сэдвүүд таны үзэж, сэргээх ёстой сэдвүүд. Сэдвүүдээ яг дарааллаар нь үзнэ үү. Амжилт хүсье.
       </p>
       {total === 0 ? (
