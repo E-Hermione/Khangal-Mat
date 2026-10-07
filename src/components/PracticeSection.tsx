@@ -1,4 +1,5 @@
 import React from 'react';
+import { SolutionSteps, solutionLines } from './SolutionSteps';
 import { PracticeProblem } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { PencilLine, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
@@ -171,18 +172,10 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                   />
                 )}
 
-                {/* Teacher Solution on Screen or in Print */}
-                {showSol && item.answer && (
-                  <div className="mt-3 pl-3 border-l-2 border-stone-300 text-[15px]">
-                    <div className="font-bold text-stone-900 print:text-black mb-1">
-                      Хариу: <span className="font-normal"><MathRenderer content={item.answer} className="inline" /></span>
-                    </div>
-                    {item.solution && (
-                      <div className="text-stone-700 print:text-black mt-1">
-                        <span className="font-semibold">Бодолт: </span>
-                        <MathRenderer content={item.solution} className="inline" />
-                      </div>
-                    )}
+                {/* Teacher Solution on Screen or in Print: steps like the worked examples */}
+                {showSol && (item.answer || item.solution) && (
+                  <div className="mt-3">
+                    <SolutionSteps steps={solutionLines(item.solution)} answer={item.answer} />
                   </div>
                 )}
               </div>

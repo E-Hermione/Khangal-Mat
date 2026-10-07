@@ -1,7 +1,8 @@
 import React from 'react';
 import { WorkedExample } from '../types';
 import { MathRenderer } from './MathRenderer';
-import { ArrowRight, Lightbulb, Plus, Edit2, Trash2 } from 'lucide-react';
+import { SolutionSteps } from './SolutionSteps';
+import { Lightbulb, Plus, Edit2, Trash2 } from 'lucide-react';
 import { LessonSectionHeader } from './LessonSectionHeader';
 
 interface WorkedExamplesSectionProps {
@@ -109,36 +110,7 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
               </div>
 
               {/* Solution steps as boxes joined by arrows, the answer below them */}
-              {(() => {
-                const boxes = ex.solutionSteps || [];
-                return (
-                  <>
-                  {/* Two steps per row, an arrow between them; further steps continue on the next rows */}
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 md:pl-8 text-[15px] text-stone-700 print:text-black leading-relaxed">
-                    {boxes.map((step, sIdx) => (
-                      <React.Fragment key={sIdx}>
-                        {sIdx % 2 === 1 && (
-                          <span className="self-center w-7 h-7 rounded-full border border-stone-200 bg-white flex items-center justify-center text-amber-700 shrink-0">
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </span>
-                        )}
-                        <div className="min-w-0 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 flex items-center">
-                          <div className="min-w-0 break-words">
-                            <MathRenderer content={step} className="inline" />
-                          </div>
-                        </div>
-                      </React.Fragment>
-                    ))}
-                  </div>
-                  {ex.answer && (
-                    <div className="mt-3 pl-[17px] md:pl-[49px] text-[15px] text-stone-800 print:text-black">
-                      <span className="font-bold text-stone-950">Хариу:</span>{' '}
-                      <MathRenderer content={ex.answer} className="inline" />
-                    </div>
-                  )}
-                  </>
-                );
-              })()}
+              <SolutionSteps steps={ex.solutionSteps || []} answer={ex.answer} />
             </div>
           ))}
         </div>

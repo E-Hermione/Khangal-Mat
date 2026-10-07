@@ -717,6 +717,46 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                         </div>
 
                         <LatexInputWithPreview hideToolbar label="Бодлого:" value={item.question} onChange={(val) => update(sel, { question: val })} multiline rows={3} hidePreview />
+                        {/* Solution steps, one field each (stored one per line) */}
+                        {(() => {
+                          const steps = item.solution ? item.solution.split('\n') : [];
+                          // An empty step is kept as a space so it stays in the list
+                          const setSteps = (next: string[]) =>
+                            update(sel, { solution: next.length ? next.map((x) => x || ' ').join('\n') : undefined });
+                          return (
+                            <div className="space-y-3">
+                              <div className="text-xs font-bold text-stone-800">Бодолтын алхмууд:</div>
+                              {steps.map((step, i) => (
+                                <div key={i} className="flex items-start gap-2">
+                                  <span className="mt-7 w-6 h-6 rounded-full bg-stone-900 text-white text-[11px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
+                                  <LatexInputWithPreview
+                                    hideToolbar
+                                    hidePreview
+                                    className="flex-1 min-w-0"
+                                    label={`Алхам ${i + 1}`}
+                                    value={step}
+                                    onChange={(val) => setSteps(steps.map((x, j) => (j === i ? val.replace(/\n/g, ' ') : x)))}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setSteps(steps.filter((_, j) => j !== i))}
+                                    className="mt-6 p-1.5 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"
+                                    title="Алхмыг устгах"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => setSteps([...steps, ''])}
+                                className="text-xs px-3 py-1.5 rounded-lg border border-dashed border-stone-400 text-stone-700 hover:bg-white font-bold flex items-center gap-1 cursor-pointer"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> Алхам нэмэх
+                              </button>
+                            </div>
+                          );
+                        })()}
                         <LatexInputWithPreview hideToolbar label="Зөв хариу:" value={item.answer} onChange={(val) => update(sel, { answer: val })} hidePreview />
                         <LatexInputWithPreview hideToolbar label="Зөвлөмж / Санамж:" value={item.hint || ''} onChange={(val) => update(sel, { hint: val })} hidePreview />
 
