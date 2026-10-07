@@ -476,7 +476,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           return (
             tabs.length > 0 && (
               <div
-                className="flex gap-1.5 p-1.5 mb-4 rounded-2xl bg-stone-200 no-print"
+                className="flex gap-1.5 p-1.5 mb-4 rounded-2xl bg-[#3D0C02] no-print"
                 role="tablist"
                 data-testid="lesson-tabs"
               >
@@ -492,11 +492,11 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       className={`flex-1 py-2 px-2 rounded-lg transition-all cursor-pointer ${
                         on
                           ? 'bg-white shadow-[inset_0_-3px_0_#f59e0b,0_1px_4px_rgba(0,0,0,0.1)]'
-                          : 'hover:bg-stone-100'
+                          : 'hover:bg-white/10'
                       }`}
                     >
-                      <div className={`text-sm md:text-base font-extrabold ${on ? 'text-stone-950' : 'text-stone-500'}`}>{label}</div>
-                      <div className="text-[11px] md:text-xs text-stone-400 mt-0.5 hidden sm:block">{TAB_HINT[key]}</div>
+                      <div className={`text-sm md:text-base font-extrabold ${on ? 'text-stone-950' : 'text-white'}`}>{label}</div>
+                      <div className={`text-[11px] md:text-xs mt-0.5 hidden sm:block ${on ? 'text-stone-400' : 'text-white/60'}`}>{TAB_HINT[key]}</div>
                     </button>
                   );
                 })}
