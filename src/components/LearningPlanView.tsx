@@ -563,7 +563,7 @@ const TierGuide: React.FC = () => {
         <div>
           <div className="text-sm font-black text-stone-900">Сэдвийн явц</div>
           <div className="text-xs text-stone-500">
-            Хичээлээ үзэж бүх дасгалаа бодоод, сорил бүрд <b>{PASS_PERCENT}%-иас дээш</b> авбал сэдвийн явц нэмэгдэнэ.
+            Хичээлээ үзэж бүх дасгалаа бодоод, сорил бүрд <b>{PASS_PERCENT}%-иас дээш</b> авбал сэдвийн явц нэмэгдэж, дараа дараагийн сорил нээгдэх болно.
           </div>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-stretch gap-2">
