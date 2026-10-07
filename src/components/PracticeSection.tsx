@@ -53,7 +53,8 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
             </button>
           )}
 
-          {allowSolutions && (
+          {/* Not needed when solutions always show (teacher version, editor preview) */}
+          {allowSolutions && !teacherVersion && (
           <button
             type="button"
             onClick={() => setShowSolutionsOnScreen(!showSolutionsOnScreen)}
