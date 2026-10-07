@@ -847,7 +847,7 @@ export default function App() {
                 storageService.saveTopic(updated);
                 refreshTopics();
               }}
-              onOpenAdmin={canEdit ? () => setAdminModalOpen(true) : undefined}
+              onOpenAdmin={currentUser?.role === 'admin' && !previewAsUser ? () => setAdminModalOpen(true) : undefined}
               onPreviewAsUser={() => {
                 setGeneralView(false);
                 setPreviewAsUser('unpaid');
