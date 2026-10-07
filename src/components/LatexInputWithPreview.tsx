@@ -96,6 +96,7 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
     { label: '≥', snippet: '\\ge ', desc: 'Их буюу тэнцүү' },
     { label: '≠', snippet: '\\neq ', desc: 'Тэнцүү биш' },
     { label: 'π', snippet: '\\pi ', desc: 'Пи тоо' },
+    { label: '→', snippet: ' \\;\\rightarrow\\; ', desc: 'Сум' },
   ];
 
   return (
