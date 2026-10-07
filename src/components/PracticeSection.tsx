@@ -1,6 +1,5 @@
 import React from 'react';
 import { SolutionSteps, solutionLines } from './SolutionSteps';
-import { CheckOption } from './CheckOption';
 import { PracticeProblem } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { PencilLine, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
@@ -17,9 +16,6 @@ interface PracticeSectionProps {
   onEditPractice?: (problem: PracticeProblem) => void;
   onDeletePractice?: (problemId: string) => void;
   onAddPractice?: () => void;
-  // Paid students tick the exercises they solved
-  solvedIds?: string[];
-  onToggleSolved?: (practiceId: string) => void;
 }
 
 export const PracticeSection: React.FC<PracticeSectionProps> = ({
@@ -31,8 +27,6 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
   onEditPractice,
   onDeletePractice,
   onAddPractice,
-  solvedIds,
-  onToggleSolved,
 }) => {
   const [showSolutionsOnScreen, setShowSolutionsOnScreen] = React.useState<boolean>(false);
 
@@ -110,14 +104,6 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                     <MathRenderer content={item.question} />
                   </div>
 
-                  {onToggleSolved && (
-                    <CheckOption
-                      className="no-print shrink-0 mt-1"
-                      checked={!!solvedIds?.includes(item.id)}
-                      onChange={() => onToggleSolved(item.id)}
-                      label="Бодсон"
-                    />
-                  )}
                   {isEditable && (
                     <div className="no-print flex items-center space-x-1 shrink-0">
                       {onEditPractice && (

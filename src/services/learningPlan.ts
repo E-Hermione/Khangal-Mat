@@ -22,7 +22,7 @@ import { getQuestionOptions, hasMadeUpOptions, isOptionCorrect, testForGrade } f
  * on the middle one opens the advanced one.
  * A topic's progress: the lesson itself (theory and examples understood, every exercise solved) is
  * 35%; passing the basic, middle and advanced tests adds 20%, 20% and 25%. At 100% the topic is done.
- * - users/{uid}/lessonProgress/{topicId}: what the student ticked in the lesson.
+ * - users/{uid}/lessonProgress/{topicId}: whether the student marked the lesson as done.
  */
 
 export const PASS_PERCENT = 85;
@@ -144,17 +144,13 @@ function testMaxPoints(topicId: string, tier: 1 | 2 | 3): number {
 export const LESSON_SHARE = 35;
 export const TIER_SHARE = [20, 20, 25];
 
-// What the student ticked in a lesson
+// The student pressed "done" on the lesson (theory and examples understood, every exercise solved)
 export interface LessonProgress {
-  understood?: boolean;
-  solved?: string[];
+  done?: boolean;
 }
 
-/** The lesson part is done: theory and examples understood, every exercise solved. */
-export function lessonDone(topicId: string, lesson?: LessonProgress): boolean {
-  if (!lesson?.understood) return false;
-  const ids = (storageService.getTopics().find((t) => t.id === topicId)?.practice || []).map((p) => p.id);
-  return ids.every((id) => lesson.solved?.includes(id));
+export function lessonDone(lesson?: LessonProgress): boolean {
+  return !!lesson?.done;
 }
 
 /** One attempt's latest score in percent. */
@@ -184,7 +180,7 @@ export function tiersPassed(topicId: string, attempts: AttemptMap): number {
 
 export function topicProgress(topicId: string, attempts: AttemptMap, lesson?: LessonProgress): number {
   const tests = TIER_SHARE.slice(0, tiersPassed(topicId, attempts)).reduce((a, b) => a + b, 0);
-  return (lessonDone(topicId, lesson) ? LESSON_SHARE : 0) + tests;
+  return (lessonDone(lesson) ? LESSON_SHARE : 0) + tests;
 }
 
 /** Tests the student may take: the basic one, and each next one after passing the previous. */
@@ -535,7 +531,7 @@ export const learningPlan = {
   lesson(topicId: string): LessonProgress {
     return state.lessons[topicId] || {};
   },
-  /** The student ticks that they understood the theory and examples, or solved an exercise. */
+  /** The student marks the lesson as done (or undoes it). */
   saveLesson(topicId: string, update: LessonProgress) {
     if (!state.uid) return;
     const next = { ...this.lesson(topicId), ...update };
@@ -544,12 +540,6 @@ export const learningPlan = {
     setDoc(doc(getDb(), 'users', state.uid, 'lessonProgress', topicId), next).catch((err) =>
       console.error('Lesson progress failed to save', err)
     );
-  },
-  toggleSolved(topicId: string, practiceId: string) {
-    const solved = this.lesson(topicId).solved || [];
-    this.saveLesson(topicId, {
-      solved: solved.includes(practiceId) ? solved.filter((x) => x !== practiceId) : [...solved, practiceId],
-    });
   },
   unlockedTiers(topicId: string): (1 | 2 | 3)[] {
     return unlockedTiers(topicId, state.attempts);

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { CheckOption } from './CheckOption';
 import { GradeNumber, TopicPackage, PrintOptions, TheoryRule, WorkedExample, PracticeProblem } from '../types';
 import { TheorySection } from './TheorySection';
 import { WorkedExamplesSection } from './WorkedExamplesSection';
@@ -99,7 +98,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   }, [topic.id]);
 
   const planOpen = planGate === 'open';
-  // Students with a plan tick what they did in the lesson: the lesson part is 35% of the topic
+  // Students with a plan mark the lesson as done: the lesson part is 35% of the topic
   const tracking = !isAdmin && planOpen && !!learningPlan.state.uid && learningPlan.inPlan(topic.id);
   const lesson = learningPlan.lesson(topic.id);
   // An open topic shows all its parts; the hidden/locked cases are handled below
@@ -341,8 +340,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                   }
                   isEditable={isAdmin && isEditMode}
                   onAddPractice={handleOpenAddPractice}
-                  solvedIds={tracking ? lesson.solved || [] : undefined}
-                  onToggleSolved={tracking ? (id) => learningPlan.toggleSolved(topic.id, id) : undefined}
                   onEditPractice={handleOpenEditPractice}
                   onDeletePractice={handleDeletePractice}
                 />
@@ -510,26 +507,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
             )
           );
         })()}
-        {tracking && (() => {
-          const ids = (topic.practice || []).map((p) => p.id);
-          const solved = ids.filter((id) => lesson.solved?.includes(id)).length;
-          const done = lessonDone(topic.id, lesson);
-          return (
-            <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 rounded-xl bg-white border border-stone-200 text-xs no-print" data-testid="lesson-progress">
-              <CheckOption
-                checked={!!lesson.understood}
-                onChange={(on) => learningPlan.saveLesson(topic.id, { understood: on })}
-                label="Онол, жишээг ойлгосон"
-              />
-              <span className="font-bold text-stone-700">
-                Бодсон дасгал: {solved}/{ids.length}
-              </span>
-              <span className={`ml-auto font-black ${done ? 'text-emerald-700' : 'text-stone-400'}`}>
-                {done ? `Хичээл үзсэн ✓ (+${LESSON_SHARE}%)` : `Хичээлээ дуусгавал +${LESSON_SHARE}%`}
-              </span>
-            </div>
-          );
-        })()}
         <article className="print-container bg-white rounded-[28px] shadow-[0_20px_40px_-12px_rgba(17,24,39,0.18)] px-5 md:px-10 pt-6 pb-8 print:shadow-none print:rounded-none print:p-0">
           {/* Admin with nothing selected */}
           {isAdmin && !anyAdminSectionSelected && (
@@ -566,7 +543,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
               {(() => {
                 const passed = tracking ? learningPlan.state.attempts && tiersPassed(topic.id, learningPlan.state.attempts) : 0;
                 const steps = [
-                  { name: 'Хичээл үзэх', text: 'Онол, жишээг ойлгож, бүх дасгалыг бодох', share: LESSON_SHARE, done: tracking && lessonDone(topic.id, lesson) },
+                  { name: 'Хичээл үзэх', text: 'Онол, жишээг ойлгож, бүх дасгалыг бодох', share: LESSON_SHARE, done: tracking && lessonDone(lesson) },
                   { name: 'Анхан сорил', text: `${PASS_PERCENT}%-иас дээш авах`, share: TIER_SHARE[0], done: passed >= 1 },
                   { name: 'Дунд сорил', text: `${PASS_PERCENT}%-иас дээш авах`, share: TIER_SHARE[1], done: passed >= 2 },
                   { name: 'Ахисан сорил', text: `${PASS_PERCENT}%-иас дээш авах`, share: TIER_SHARE[2], done: passed >= 3 },
@@ -607,9 +584,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                                 onClick={() =>
                                   learningPlan.saveLesson(
                                     topic.id,
-                                    st.done
-                                      ? { understood: false, solved: [] }
-                                      : { understood: true, solved: (topic.practice || []).map((p) => p.id) }
+                                    { done: !st.done }
                                   )
                                 }
                                 className={`mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-black cursor-pointer ${
