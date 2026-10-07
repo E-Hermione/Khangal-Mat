@@ -113,16 +113,17 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
                 const boxes = ex.solutionSteps || [];
                 return (
                   <>
-                  <div className="flex flex-wrap items-stretch gap-2 md:pl-8 text-[15px] text-stone-700 print:text-black leading-relaxed">
+                  {/* Two steps per row, an arrow between them; further steps continue on the next rows */}
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 md:pl-8 text-[15px] text-stone-700 print:text-black leading-relaxed">
                     {boxes.map((step, sIdx) => (
                       <React.Fragment key={sIdx}>
-                        {sIdx > 0 && (
+                        {sIdx % 2 === 1 && (
                           <span className="self-center w-7 h-7 rounded-full border border-stone-200 bg-white flex items-center justify-center text-amber-700 shrink-0">
                             <ArrowRight className="w-3.5 h-3.5" />
                           </span>
                         )}
-                        <div className="flex-1 min-w-[180px] rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 flex items-center">
-                          <div>
+                        <div className="min-w-0 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 flex items-center">
+                          <div className="min-w-0 break-words">
                             <MathRenderer content={step} className="inline" />
                           </div>
                         </div>
