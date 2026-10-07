@@ -87,7 +87,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
 
       {/* Topics */}
       <p className="text-sm font-bold text-stone-800">
-        Дараах сэдвүүд таны үзэж, сэргээх ёстой сэдвүүд. Сэдвүүдээ яг дарааллаар нь үзнэ. Амжилт хүсье.
+        Дараах сэдвүүд таны үзэж, сэргээх ёстой сэдвүүд. Сэдвүүдээ яг дарааллаар нь үзнэ үү. Амжилт хүсье.
       </p>
       {total === 0 ? (
         <div className="bg-white rounded-xl border border-stone-200 p-8 text-center text-sm text-stone-600">
