@@ -401,19 +401,22 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                             setTopic({ ...topic, theory: updated });
                           }}
                         />
-                        <label className="flex items-center gap-1 text-xs font-bold text-stone-700 whitespace-nowrap cursor-pointer" title="Дээрх онолын дэд хэсэг: 1.1, 1.2 гэж дугаарлана">
-                          <input
-                            type="checkbox"
-                            checked={!!rule.sub}
-                            disabled={idx === 0}
-                            onChange={(e) => {
-                              const updated = [...topic.theory];
-                              updated[idx] = { ...updated[idx], sub: e.target.checked || undefined };
-                              setTopic({ ...topic, theory: updated });
-                            }}
-                          />
-                          Дэд хэсэг
-                        </label>
+                        {/* Main topic (1, 2, …) or sub-topic of the main one above it (1.1, 1.2, …) */}
+                        {([false, true] as const).map((sub) => (
+                          <label key={String(sub)} className="flex items-center gap-1 text-xs font-bold text-stone-700 whitespace-nowrap cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={!!rule.sub === sub}
+                              disabled={sub && idx === 0}
+                              onChange={() => {
+                                const updated = [...topic.theory];
+                                updated[idx] = { ...updated[idx], sub: sub || undefined };
+                                setTopic({ ...topic, theory: updated });
+                              }}
+                            />
+                            {sub ? 'Дэд сэдэв' : 'Ерөнхий сэдэв'}
+                          </label>
+                        ))}
                       </div>
                       <button
                         type="button"

@@ -171,10 +171,15 @@ function TheoryEditor({
           <GradeSelect value={rule.prerequisiteGrade} onChange={(g) => setRule({ ...rule, prerequisiteGrade: g })} />
         </div>
 
-        <label className="flex items-center gap-2 text-xs font-bold text-stone-700 cursor-pointer">
-          <input type="checkbox" checked={!!rule.sub} onChange={(e) => setRule({ ...rule, sub: e.target.checked || undefined })} />
-          Дээрх онолын дэд хэсэг (1.1, 1.2 гэж дугаарлана)
-        </label>
+        {/* Main topic (1, 2, …) or sub-topic of the main one above it (1.1, 1.2, …) */}
+        <div className="flex items-center gap-4">
+          {([false, true] as const).map((sub) => (
+            <label key={String(sub)} className="flex items-center gap-2 text-xs font-bold text-stone-700 cursor-pointer">
+              <input type="checkbox" checked={!!rule.sub === sub} onChange={() => setRule({ ...rule, sub: sub || undefined })} />
+              {sub ? 'Дэд сэдэв' : 'Ерөнхий сэдэв'}
+            </label>
+          ))}
+        </div>
 
         <TheoryBlocksEditor rule={rule} onChange={setRule} />
       </div>

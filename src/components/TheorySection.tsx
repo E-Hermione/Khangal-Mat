@@ -22,7 +22,7 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
   onDeleteRule,
   onAddRule,
 }) => {
-  // 1, 2, … and 1.1, 1.2, … for sub-parts (shown a little to the right)
+  // 1, 2, … for main topics and 1.1, 1.2, … for their sub-topics, in order
   const numbers = theoryNumbers(theory || []);
   return (
     <section className="mb-12 print:mb-6" id="section-theory">
@@ -70,7 +70,7 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
           {theory.map((rule, idx) => (
             <div
               key={rule.id || idx}
-              className={`avoid-break py-7 first:pt-0 last:pb-0 relative group print:py-0 ${rule.sub ? 'pl-5 md:pl-8' : ''}`}
+              className="avoid-break py-7 first:pt-0 last:pb-0 relative group print:py-0"
             >
               <div>
                 {/* Header Box */}
