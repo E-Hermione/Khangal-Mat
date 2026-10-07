@@ -414,18 +414,6 @@ function PracticeEditor({
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-stone-700 block mb-1">Хүндрэлийн түвшин:</label>
-            <select
-              value={practice.difficulty}
-              onChange={(e) => setPractice({ ...practice, difficulty: e.target.value as DifficultyLevel })}
-              className="w-full text-xs p-2 bg-white border border-stone-300 rounded-lg font-bold"
-            >
-              <option value="easy">Хялбар түвшин</option>
-              <option value="medium">Дунд түвшин</option>
-              <option value="hard">Ахисан түвшин</option>
-            </select>
-          </div>
-          <div>
             <label className="text-xs font-bold text-stone-700 block mb-1">Зай (Мөрний тоо):</label>
             <input
               type="number"

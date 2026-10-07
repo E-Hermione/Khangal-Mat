@@ -636,7 +636,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
               <div className="sticky -top-4 md:-top-6 z-10 bg-white py-2 border-b border-stone-200 space-y-2">
     <div className="flex items-center justify-between">
                   <span className="text-xs text-stone-500 font-medium">
-                    Бие даах дасгал (Хялбар, Дунд, Ахисан түвшин)
+                    Бие даах дасгал
                   </span>
                   <button
                     type="button"
@@ -667,19 +667,6 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                             setTopic({ ...topic, practice: updated });
                           }}
                         />
-                        <select
-                          value={item.difficulty}
-                          onChange={(e) => {
-                            const updated = [...topic.practice];
-                            updated[idx].difficulty = e.target.value as any;
-                            setTopic({ ...topic, practice: updated });
-                          }}
-                          className="text-xs p-1 rounded border border-stone-300 font-bold bg-white"
-                        >
-                          <option value="easy">Хялбар</option>
-                          <option value="medium">Дунд</option>
-                          <option value="hard">Ахисан</option>
-                        </select>
                         <button
                           type="button"
                           onClick={() => removePracticeProblem(idx)}
