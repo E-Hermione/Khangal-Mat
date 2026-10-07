@@ -171,6 +171,11 @@ function TheoryEditor({
           <GradeSelect value={rule.prerequisiteGrade} onChange={(g) => setRule({ ...rule, prerequisiteGrade: g })} />
         </div>
 
+        <label className="flex items-center gap-2 text-xs font-bold text-stone-700 cursor-pointer">
+          <input type="checkbox" checked={!!rule.sub} onChange={(e) => setRule({ ...rule, sub: e.target.checked || undefined })} />
+          Дээрх онолын дэд хэсэг (1.1, 1.2 гэж дугаарлана)
+        </label>
+
         <TheoryBlocksEditor rule={rule} onChange={setRule} />
       </div>
 
