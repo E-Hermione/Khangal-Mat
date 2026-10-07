@@ -1,5 +1,5 @@
 import React from 'react';
-import { theoryBlocks, theoryNumbers } from '../utils/theoryBlocks';
+import { theoryBlocks } from '../utils/theoryBlocks';
 import { TheoryRule } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { BookOpen, Plus, Edit2, Trash2 } from 'lucide-react';
@@ -22,8 +22,6 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
   onDeleteRule,
   onAddRule,
 }) => {
-  // 1, 2, … and 1.1, 1.2, … for sub-parts (shown a little to the right)
-  const numbers = theoryNumbers(theory || []);
   return (
     <section className="mb-12 print:mb-6" id="section-theory">
       <LessonSectionHeader
@@ -70,13 +68,13 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
           {theory.map((rule, idx) => (
             <div
               key={rule.id || idx}
-              className={`avoid-break py-7 first:pt-0 last:pb-0 relative group print:py-0 ${rule.sub ? 'pl-5 md:pl-8' : ''}`}
+              className="avoid-break py-7 first:pt-0 last:pb-0 relative group print:py-0"
             >
               <div>
                 {/* Header Box */}
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <h3 className="font-bold text-[17px] leading-snug text-[#3D0C02]">
-                    <span className="text-[#3D0C02]">{numbers[idx]}.</span> {rule.title}
+                    <span className="text-[#3D0C02]">{idx + 1}.</span> {rule.title}
                   </h3>
 
                   {/* Edit/Delete controls for editable mode */}

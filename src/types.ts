@@ -19,8 +19,6 @@ export interface TheoryRule {
   badge?: string;
   // Content as blocks in reading order; when set it replaces ruleText, formula and note
   blocks?: TheoryBlock[];
-  // A sub-part of the item above it: numbered 1.1, 1.2, …
-  sub?: boolean;
 }
 
 export interface WorkedExample {
