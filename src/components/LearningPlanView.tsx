@@ -117,7 +117,6 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
                 <div className="flex-1 min-w-[180px]">
                   <div className="font-bold text-stone-900 flex items-center gap-2">
                     <span className="min-w-0">{meta.title}</span>
-                    <ProgressRing percent={progress} />
                     {done && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-black">
                         Үзсэн
@@ -148,6 +147,10 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
                       );
                     })}
                   </div>
+                </div>
+                {/* The topic's progress, between the title and the buttons */}
+                <div className="flex-1 flex justify-center">
+                  <ProgressRing percent={progress} size={44} />
                 </div>
                 {paid ? (
                   <div className="flex gap-1.5">
