@@ -501,7 +501,6 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
               setList(next);
               setExampleIdx(j);
             };
-            const plain = (t: string) => t.replace(/\$+/g, '').replace(/\\[a-zA-Z]+/g, ' ').replace(/[{}]/g, '').trim();
             return (
             <div className="space-y-4">
               {/* Stays on screen while scrolling */}
@@ -532,9 +531,8 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                           type="button"
                           onClick={() => setExampleIdx(idx)}
                           className={`flex-1 min-w-0 text-left px-2 py-1.5 text-xs cursor-pointer truncate ${on ? 'font-bold' : ''}`}
-                          title={plain(ex.problem)}
                         >
-                          <span className="font-bold">{idx + 1}.</span> {plain(ex.problem) || 'Жишээ'}
+                          Жишээ №{idx + 1}
                         </button>
                         <button type="button" onClick={() => move(idx, -1)} disabled={idx === 0} title="Дээш зөөх" className="p-0.5 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
                           <ArrowUp className="w-3 h-3" />
