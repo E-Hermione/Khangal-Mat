@@ -353,7 +353,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   return (
     <div className="w-full">
       {/* Screen Breadcrumb & Title Bar */}
-      <div className="no-print mb-5">
+      <div className="no-print mb-8">
         <div className="text-xs text-stone-500 mb-2">
           {/* Grade › category › parent topic (for a subtopic) › this lesson */}
           <nav className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5 font-medium">
