@@ -8,7 +8,8 @@ import { usePrintSelection } from '../services/printSelection';
 import { ItemEditorModal, ItemEditorType } from './ItemEditorModal';
 import { visibilityService, TopicAccessMode } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
-import { allTopicMetas, learningPlan, lessonDone, lessonSequence, LESSON_SHARE, useLearningPlanVersion } from '../services/learningPlan';
+import { allTopicMetas, learningPlan, lessonDone, lessonSequence, LESSON_SHARE, PASS_PERCENT, TIER_SHARE, tiersPassed, useLearningPlanVersion } from '../services/learningPlan';
+import { ProgressRing } from './ProgressRing';
 import { loadPracticeGrants, usePracticeSolutions } from '../services/practiceSolutions';
 import { PracticeGrantsDialog } from './PracticeGrantsDialog';
 import { getFirebaseAuth } from '../services/firebase';
@@ -20,7 +21,6 @@ import {
   Lock,
   BookOpen,
   Pencil,
-  Award,
   Play,
   ArrowRight,
   Unlock,
@@ -562,18 +562,40 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           {/* Link to 3-tier Exams Hub for this topic (Neat banner) */}
           {onOpenExamsHub && isExamsAllowed && (
             <div className="mt-10 p-5 bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 text-white rounded-2xl border border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm no-print">
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
-                  <Award className="w-4 h-4" />
-                  <span>Шалгалтын төв • {viewerGrade}-р анги</span>
-                </div>
-                <h3 className="text-sm md:text-base font-black text-white">
-                  «{topic.title}» - Анхан, Үндсэн, Ахисан 3 шалгалт
-                </h3>
-                <p className="text-xs text-stone-400 max-w-xl leading-relaxed">
-                  Энэ сэдвээр 3 түвшний шалгалтыг цаг тоолууртай ажиллаж, оноо дүнгээ харах, алдаагаа шалгах болон бодолттой нь танилцах боломжтой.
-                </p>
-              </div>
+              {/* The topic's progress: the lesson, then the three tests */}
+              {(() => {
+                const passed = tracking ? learningPlan.state.attempts && tiersPassed(topic.id, learningPlan.state.attempts) : 0;
+                const steps = [
+                  { name: 'Хичээл', share: LESSON_SHARE, done: tracking && lessonDone(topic.id, lesson) },
+                  { name: 'Анхан', share: TIER_SHARE[0], done: passed >= 1 },
+                  { name: 'Дунд', share: TIER_SHARE[1], done: passed >= 2 },
+                  { name: 'Ахисан', share: TIER_SHARE[2], done: passed >= 3 },
+                ];
+                return (
+                  <div className="flex items-center gap-4 min-w-0">
+                    {tracking && <ProgressRing percent={learningPlan.progress(topic.id)} size={48} />}
+                    <div className="space-y-2 min-w-0">
+                      <div className="text-sm font-black text-white">
+                        Сэдвийн гүйцэтгэл{tracking ? `: ${learningPlan.progress(topic.id)}%` : ''}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {steps.map((st) => (
+                          <span
+                            key={st.name}
+                            className={`px-2 py-1 rounded-lg text-[11px] font-bold ${
+                              st.done ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-stone-300'
+                            }`}
+                          >
+                            {st.done ? '✓ ' : ''}
+                            {st.name} {st.share}%
+                          </span>
+                        ))}
+                      </div>
+                      <div className="text-[11px] text-stone-400">Сорил бүрд {PASS_PERCENT}%-иас дээш авбал тооцогдоно.</div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <button
                 type="button"
