@@ -16,7 +16,6 @@ import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect, que
 import { visibilityService } from '../services/visibilityService';
 import { catalogTopics, isGroupTopic, learningPlan } from '../services/learningPlan';
 import type { ExamFilter } from './SidebarPanels';
-import { ProgressRing } from './ProgressRing';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { subscribeAttempts, saveAttempt as saveAttemptCloud, AttemptMap, ExamAttempt } from '../services/examAttempts';
 
