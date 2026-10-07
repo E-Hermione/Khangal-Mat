@@ -88,6 +88,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Topic test ranking: user ID + best percent, visible to every member
+    match /leaderboards/{examId}/entries/{uid} {
+      allow read: if isAdmin() || isMember();
+      allow write: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['userId', 'pct', 'at'])
+        && request.resource.data.pct is number
+        && request.resource.data.pct >= 0 && request.resource.data.pct <= 100;
+    }
+
     match /users/{uid} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
 

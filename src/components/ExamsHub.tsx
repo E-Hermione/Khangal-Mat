@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { GradeNumber, TopicPackage, TestPackage } from '../types';
 import { GradeTestTakers } from './GradeTestTakers';
+import { loadLeaderboard, saveLeaderboardEntry, LeaderboardEntry } from '../services/leaderboard';
 import { MathRenderer } from './MathRenderer';
 import {
   Award,
@@ -154,6 +155,11 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
       console.error(e);
     }
     if (uid) saveAttemptCloud(uid, examId, data).catch((err) => console.error('Exam result not saved online', err));
+    // The test's ranking, open to every student (by user ID)
+    if (uid && userId && !isAdmin && data.maxPoints) {
+      const pct = Math.round(((data.bestScore ?? data.score ?? 0) / data.maxPoints) * 100);
+      saveLeaderboardEntry(examId, uid, userId, pct).catch((err) => console.error('Ranking not saved', err));
+    }
   };
 
   // Build complete list of all topics for the selected grade:
@@ -519,6 +525,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
         <ViewScoreModal
           item={viewScoreExam}
           attempt={attempts[viewScoreExam.exam.id]}
+          uid={uid}
           onClose={() => setViewScoreExam(null)}
           onRetake={() => {
             const e = viewScoreExam.exam;
@@ -854,14 +861,23 @@ function ViewScoreModal({
   onClose,
   onRetake,
   onViewSolutions,
+  uid,
 }: {
   item: { exam: ExamRowItem; score: number; maxScore: number };
   attempt?: { answers: Record<string, string>; finishedAt?: number };
   onClose: () => void;
   onRetake: () => void;
   onViewSolutions: () => void;
+  uid?: string;
 }) {
   const percentage = Math.round((item.score / item.maxScore) * 100);
+  // Everyone's best result on this test, by user ID
+  const [ranking, setRanking] = useState<LeaderboardEntry[] | null>(null);
+  React.useEffect(() => {
+    loadLeaderboard(item.exam.id)
+      .then(setRanking)
+      .catch(() => setRanking([]));
+  }, [item.exam.id]);
   const isPassed = percentage >= 60;
 
   return (
@@ -890,6 +906,28 @@ function ViewScoreModal({
             Амжилт: {percentage}% ({isPassed ? 'Тэнцсэн' : 'Дахин давтах шаардлагатай'})
           </div>
         </div>
+
+        {/* Ranking of everyone who took this test */}
+        {ranking && ranking.length > 0 && (
+          <div className="text-left">
+            <div className="text-xs font-black text-stone-900 mb-1.5">Чансаа ({ranking.length} сурагч)</div>
+            <div className="max-h-48 overflow-y-auto rounded-xl border border-stone-200 divide-y divide-stone-100">
+              {ranking.map((r, i) => (
+                <div
+                  key={r.uid}
+                  className={`flex items-center gap-3 px-3 py-1.5 text-xs ${r.uid === uid ? 'bg-amber-50 font-black' : ''}`}
+                >
+                  <span className="w-6 text-stone-400 font-bold">{i + 1}.</span>
+                  <span className="flex-1 font-mono text-stone-800">
+                    {r.userId}
+                    {r.uid === uid && <span className="ml-1.5 text-amber-700 font-sans">(та)</span>}
+                  </span>
+                  <span className={`font-bold ${r.pct >= 85 ? 'text-emerald-700' : 'text-stone-700'}`}>{r.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col gap-2 pt-2">
           <button
