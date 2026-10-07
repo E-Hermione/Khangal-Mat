@@ -10,6 +10,8 @@ interface WorkedExamplesSectionProps {
   onEditExample?: (example: WorkedExample) => void;
   onDeleteExample?: (exampleId: string) => void;
   onAddExample?: () => void;
+  // Two examples side by side on wide screens
+  twoColumns?: boolean;
 }
 
 export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
@@ -18,6 +20,7 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
   onEditExample,
   onDeleteExample,
   onAddExample,
+  twoColumns = false,
 }) => {
   return (
     <section className="mb-12 print:mb-6" id="section-examples">
@@ -54,11 +57,19 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
           )}
         </div>
       ) : (
-        <div className="divide-y divide-stone-200 print:divide-y-0 print:space-y-4">
+        <div
+          className={
+            twoColumns
+              ? 'grid md:grid-cols-2 gap-x-10 print:grid-cols-2 print:gap-x-6'
+              : 'divide-y divide-stone-200 print:divide-y-0 print:space-y-4'
+          }
+        >
           {examples.map((ex, idx) => (
             <div
               key={ex.id || ex.number || idx}
-              className="avoid-break py-7 first:pt-0 last:pb-0 relative group print:py-0"
+              className={`avoid-break relative group print:py-0 ${
+                twoColumns ? 'py-6 border-b border-stone-200 print:border-0' : 'py-7 first:pt-0 last:pb-0'
+              }`}
             >
               {/* Title & Example Number */}
               <div className="flex items-start justify-between gap-2 mb-3">

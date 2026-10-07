@@ -306,6 +306,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                 <div className={lessonTab === 'examples' ? '' : 'hidden print:block'}>
                 <WorkedExamplesSection
                   examples={t.examples}
+                  twoColumns={!!t.examplesTwoColumns}
                   isEditable={isAdmin && isEditMode}
                   onAddExample={handleOpenAddExample}
                   onEditExample={handleOpenEditExample}

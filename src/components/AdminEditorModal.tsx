@@ -484,9 +484,11 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           {activeTab === 'examples' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-stone-200">
-                <span className="text-xs text-stone-500 font-medium">
-                  Жишээ бодлогын нөхцөл, алхамчилсан бодолт, хариуг удирдах.
-                </span>
+                <CheckOption
+                  checked={!!topic.examplesTwoColumns}
+                  onChange={(on) => setTopic({ ...topic, examplesTwoColumns: on || undefined })}
+                  label="Жишээг 2 эгнээгээр харуулах"
+                />
                 <button
                   type="button"
                   onClick={addWorkedExample}

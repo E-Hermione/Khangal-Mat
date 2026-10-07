@@ -73,6 +73,8 @@ export interface TestPackage {
 
 export interface TopicPackage {
   id: string;
+  // Show the worked examples in two columns (chosen per topic by the admin)
+  examplesTwoColumns?: boolean;
   grade: GradeNumber;
   visibleGrades?: GradeNumber[]; // Support displaying in multiple grades (6, 7, 8, etc.)
   // A subtopic sits under this topic (the parent then groups its subtopics in the topic list)
