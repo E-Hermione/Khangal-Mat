@@ -130,7 +130,7 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
                     ))}
                   </div>
                   {ex.answer && (
-                    <div className="mt-3 md:pl-8 text-[15px] text-stone-800 print:text-black">
+                    <div className="mt-3 pl-[17px] md:pl-[49px] text-[15px] text-stone-800 print:text-black">
                       <span className="font-bold text-stone-950">Хариу:</span>{' '}
                       <MathRenderer content={ex.answer} className="inline" />
                     </div>
