@@ -558,7 +558,7 @@ const HowItWorks: React.FC<{ paid: boolean; placementDone: boolean }> = ({ paid,
 const TierGuide: React.FC = () => {
   // Cumulative progress after each step
   const tiers = [
-    { name: 'Хичээл', pct: LESSON_SHARE, text: 'онол, жишээ, бүх дасгал' },
+    { name: 'Хичээл', pct: LESSON_SHARE, text: 'Онол, жишээ, бүх дасгал' },
     { name: 'Анхан', pct: LESSON_SHARE + TIER_SHARE[0], text: `${PASS_PERCENT}%+ авбал` },
     { name: 'Дунд', pct: LESSON_SHARE + TIER_SHARE[0] + TIER_SHARE[1], text: `${PASS_PERCENT}%+ авбал` },
     { name: 'Ахисан', pct: 100, text: `${PASS_PERCENT}%+ авбал` },
