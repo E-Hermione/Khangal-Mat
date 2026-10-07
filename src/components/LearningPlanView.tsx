@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Award, BookOpen, Check, CheckCircle2, ChevronRight, ClipboardCheck, Clock, Copy, CreditCard, Info, Lock, Route, X } from 'lucide-react';
 import { AuthUser } from '../types';
 import {
-  currentResults,
   learningPlan,
   PASS_PERCENT,
   LESSON_SHARE,
@@ -77,18 +76,10 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
           <Route className="w-6 h-6 text-amber-600" />
           Миний сургалтын төлөвлөгөө
         </h1>
-        <p className="text-sm text-stone-600 mt-1">
-          Түвшин тогтоох сорил:{' '}
-          {currentResults(results, learningPlan.state.grade).map((r, i) => (
-            <span key={r.grade}>
-              {i > 0 && ', '}
-              {r.grade}-р анги{' '}
-              <b>
-                {r.correct}/{r.total}
-              </b>
-            </span>
-          ))}{' '}
-          зөв. Алдсан бодлогуудаас нь харахад танд доорх сэдвүүдийг үзэхийг зөвлөж байна.
+        <p className="text-sm text-stone-600 mt-1 leading-relaxed">
+          Таны төлөвлөгөөг төлөвлөж дууслаа. Сэдэв бүрийн гүйцэтгэлээ хэрхэн тооцуулах мэдээлэлтэйгээ танилцаж, зөвхөн
+          танд зориулж боловсруулсан төлөвлөгөөтэйгөө танилцана уу. Дараах сэдвүүд таны үзэж, сэргээх ёстой сэдвүүд.
+          Сэдвүүдээ яг дарааллаар нь үзнэ. Амжилт хүсье.
         </p>
       </div>
 
@@ -185,6 +176,13 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
           })}
         </div>
       )}
+
+      {/* A saying to close the plan */}
+      <div className="rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 px-6 py-5 text-center">
+        <p className="text-lg md:text-xl font-black text-amber-900 tracking-tight">
+          Оролдлого сайт оройд, оролдлого муут ёроолд.
+        </p>
+      </div>
 
     </div>
   );
