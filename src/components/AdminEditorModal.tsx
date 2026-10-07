@@ -18,6 +18,8 @@ import {
   CheckCircle2,
   ShieldCheck,
   Upload,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { backdropClose } from '../utils/backdrop';
 
@@ -377,19 +379,37 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                 <nav className="w-40 md:w-48 shrink-0 sticky top-12 space-y-0.5 max-h-[60vh] overflow-y-auto">
                   {(() => {
                     const numbers = theoryNumbers(topic.theory || []);
-                    return (topic.theory || []).map((rule, idx) => (
-                      <button
-                        key={rule.id || idx}
-                        type="button"
-                        onClick={() => setTheoryIdx(idx)}
-                        className={`w-full text-left px-2 py-1.5 rounded-lg text-xs cursor-pointer truncate ${rule.sub ? 'pl-5' : ''} ${
-                          idx === Math.min(theoryIdx, topic.theory.length - 1) ? 'bg-stone-900 text-white font-bold' : 'text-stone-700 hover:bg-stone-100'
-                        }`}
-                        title={rule.title}
-                      >
-                        <span className="font-bold">{numbers[idx]}.</span> {rule.title}
-                      </button>
-                    ));
+                    const list = topic.theory || [];
+                    const move = (idx: number, step: -1 | 1) => {
+                      const j = idx + step;
+                      if (j < 0 || j >= list.length) return;
+                      const updated = [...list];
+                      [updated[idx], updated[j]] = [updated[j], updated[idx]];
+                      setTopic({ ...topic, theory: updated });
+                      setTheoryIdx(j);
+                    };
+                    return list.map((rule, idx) => {
+                      const on = idx === Math.min(theoryIdx, list.length - 1);
+                      return (
+                        <div key={rule.id || idx} className={`flex items-center rounded-lg ${on ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}>
+                          <button
+                            type="button"
+                            onClick={() => setTheoryIdx(idx)}
+                            className={`flex-1 min-w-0 text-left px-2 py-1.5 text-xs cursor-pointer truncate ${rule.sub ? 'pl-5' : ''} ${on ? 'font-bold' : ''}`}
+                            title={rule.title}
+                          >
+                            <span className="font-bold">{numbers[idx]}.</span> {rule.title}
+                          </button>
+                          {/* Move this item up or down */}
+                          <button type="button" onClick={() => move(idx, -1)} disabled={idx === 0} title="Дээш зөөх" className="p-0.5 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
+                            <ArrowUp className="w-3 h-3" />
+                          </button>
+                          <button type="button" onClick={() => move(idx, 1)} disabled={idx === list.length - 1} title="Доош зөөх" className="p-0.5 pr-1 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
+                            <ArrowDown className="w-3 h-3" />
+                          </button>
+                        </div>
+                      );
+                    });
                   })()}
                 </nav>
               <div className="flex-1 min-w-0 space-y-4">
