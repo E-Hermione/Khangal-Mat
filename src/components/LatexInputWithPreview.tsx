@@ -178,12 +178,14 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
 
   return (
     <div className={`space-y-1.5 ${className}`}>
-      <div className="flex items-center justify-between">
-        <label className="text-xs font-bold text-stone-800 flex items-center space-x-1.5">
-          <span>{label}</span>
-        </label>
-        {helpText && <span className="text-[11px] text-stone-500">{helpText}</span>}
-      </div>
+      {(label || helpText) && (
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-bold text-stone-800 flex items-center space-x-1.5">
+            <span>{label}</span>
+          </label>
+          {helpText && <span className="text-[11px] text-stone-500">{helpText}</span>}
+        </div>
+      )}
 
       {/* LaTeX buttons, unless the editor shows one shared toolbar */}
       {!hideToolbar && <LatexToolbar onInsert={insertSnippet} centred={multiline} />}

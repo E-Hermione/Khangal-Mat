@@ -586,14 +586,13 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
 
                       {/* One field per step, in order */}
                       <div className="space-y-3">
-                        <div className="text-xs font-bold text-stone-800">Бодолтын алхмууд:</div>
                         {steps.map((step, i) => (
                           <div key={i} className="flex items-start gap-2">
-                            <span className="mt-7 w-6 h-6 rounded-full bg-stone-900 text-white text-[11px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
+                            <span className="mt-2 w-6 h-6 rounded-full bg-stone-900 text-white text-[11px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
                             <LatexInputWithPreview
                               hideToolbar
                               className="flex-1 min-w-0"
-                              label={`Алхам ${i + 1}`}
+                              label=""
                               value={step}
                               onChange={(val) => setSteps(steps.map((x, j) => (j === i ? val : x)))}
                               multiline
@@ -603,7 +602,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                             <button
                               type="button"
                               onClick={() => setSteps(steps.filter((_, j) => j !== i))}
-                              className="mt-7 p-1.5 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"
+                              className="mt-1 p-1.5 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"
                               title="Алхмыг устгах"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -725,22 +724,21 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                             update(sel, { solution: next.length ? next.map((x) => x || ' ').join('\n') : undefined });
                           return (
                             <div className="space-y-3">
-                              <div className="text-xs font-bold text-stone-800">Бодолтын алхмууд:</div>
-                              {steps.map((step, i) => (
+                                    {steps.map((step, i) => (
                                 <div key={i} className="flex items-start gap-2">
-                                  <span className="mt-7 w-6 h-6 rounded-full bg-stone-900 text-white text-[11px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
+                                  <span className="mt-2 w-6 h-6 rounded-full bg-stone-900 text-white text-[11px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
                                   <LatexInputWithPreview
                                     hideToolbar
                                     hidePreview
                                     className="flex-1 min-w-0"
-                                    label={`Алхам ${i + 1}`}
+                                    label=""
                                     value={step}
                                     onChange={(val) => setSteps(steps.map((x, j) => (j === i ? val.replace(/\n/g, ' ') : x)))}
                                   />
                                   <button
                                     type="button"
                                     onClick={() => setSteps(steps.filter((_, j) => j !== i))}
-                                    className="mt-6 p-1.5 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"
+                                    className="mt-1 p-1.5 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"
                                     title="Алхмыг устгах"
                                   >
                                     <Trash2 className="w-4 h-4" />
