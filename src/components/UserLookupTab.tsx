@@ -18,6 +18,8 @@ import {
   resetPlacementResults,
   topicMeta,
   topicProgress,
+  loadUserLessons,
+  LessonProgress,
 } from '../services/learningPlan';
 
 interface UserLookupTabProps {
@@ -129,6 +131,7 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
   const [selectedUid, setSelectedUid] = useState<string | null>(initialUid || null);
   const [accounts, setAccounts] = useState<ApprovedAccount[]>(() => accessRequestService.getApprovedAccounts());
 
+  const [lessons, setLessons] = useState<Record<string, LessonProgress>>({});
   const [attempts, setAttempts] = useState<AttemptMap>({});
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -163,6 +166,10 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
     setLoadError(null);
     setAttempts({});
     setPlacement(undefined);
+    setLessons({});
+    loadUserLessons(selectedUid)
+      .then((l) => !cancelled && setLessons(l))
+      .catch(() => null);
     loadPlacementResults(selectedUid)
       .then((r) => !cancelled && setPlacement(r))
       .catch(() => !cancelled && setPlacement([]));
@@ -348,7 +355,7 @@ export const UserLookupTab: React.FC<UserLookupTabProps> = ({ onEditPermissions,
                   <div className="space-y-1">
                     {combinedPlan(currentResults(placement, user?.grades?.[0] as GradeNumber | undefined)).map((p) => (
                       <div key={p.topicId} className="flex items-center gap-2 text-xs">
-                        <ProgressRing percent={topicProgress(p.topicId, attempts)} size={18} />
+                        <ProgressRing percent={topicProgress(p.topicId, attempts, lessons[p.topicId])} size={18} />
                         <span className="font-bold text-stone-900">{topicMeta(p.topicId).title}</span>
                         <span className="text-stone-500">
                           ({topicMeta(p.topicId).grade}-р анги • {p.grade}-р ангийн сорилд алдсан: {p.missed.join(', ')})

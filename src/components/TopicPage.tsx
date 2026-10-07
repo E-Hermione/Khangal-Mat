@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { CheckOption } from './CheckOption';
 import { GradeNumber, TopicPackage, PrintOptions, TheoryRule, WorkedExample, PracticeProblem } from '../types';
 import { TheorySection } from './TheorySection';
 import { WorkedExamplesSection } from './WorkedExamplesSection';
@@ -7,7 +8,7 @@ import { usePrintSelection } from '../services/printSelection';
 import { ItemEditorModal, ItemEditorType } from './ItemEditorModal';
 import { visibilityService, TopicAccessMode } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
-import { allTopicMetas, learningPlan, lessonSequence, useLearningPlanVersion } from '../services/learningPlan';
+import { allTopicMetas, learningPlan, lessonDone, lessonSequence, LESSON_SHARE, useLearningPlanVersion } from '../services/learningPlan';
 import { loadPracticeGrants, usePracticeSolutions } from '../services/practiceSolutions';
 import { PracticeGrantsDialog } from './PracticeGrantsDialog';
 import { getFirebaseAuth } from '../services/firebase';
@@ -98,6 +99,9 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   }, [topic.id]);
 
   const planOpen = planGate === 'open';
+  // Students with a plan tick what they did in the lesson: the lesson part is 35% of the topic
+  const tracking = !isAdmin && planOpen && !!learningPlan.state.uid && learningPlan.inPlan(topic.id);
+  const lesson = learningPlan.lesson(topic.id);
   // An open topic shows all its parts; the hidden/locked cases are handled below
   const allOpen = isAdmin || planOpen || userPermissionsService.hasAccess(currentUser?.userId, isAdmin);
   const isTheoryAllowed = allOpen;
@@ -337,6 +341,8 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                   }
                   isEditable={isAdmin && isEditMode}
                   onAddPractice={handleOpenAddPractice}
+                  solvedIds={tracking ? lesson.solved || [] : undefined}
+                  onToggleSolved={tracking ? (id) => learningPlan.toggleSolved(topic.id, id) : undefined}
                   onEditPractice={handleOpenEditPractice}
                   onDeletePractice={handleDeletePractice}
                 />
@@ -502,6 +508,26 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                 })}
               </div>
             )
+          );
+        })()}
+        {tracking && (() => {
+          const ids = (topic.practice || []).map((p) => p.id);
+          const solved = ids.filter((id) => lesson.solved?.includes(id)).length;
+          const done = lessonDone(topic.id, lesson);
+          return (
+            <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 rounded-xl bg-white border border-stone-200 text-xs no-print" data-testid="lesson-progress">
+              <CheckOption
+                checked={!!lesson.understood}
+                onChange={(on) => learningPlan.saveLesson(topic.id, { understood: on })}
+                label="Онол, жишээг ойлгосон"
+              />
+              <span className="font-bold text-stone-700">
+                Бодсон дасгал: {solved}/{ids.length}
+              </span>
+              <span className={`ml-auto font-black ${done ? 'text-emerald-700' : 'text-stone-400'}`}>
+                {done ? `Хичээл үзсэн ✓ (+${LESSON_SHARE}%)` : `Хичээлээ дуусгавал +${LESSON_SHARE}%`}
+              </span>
+            </div>
           );
         })()}
         <article className="print-container bg-white rounded-[28px] shadow-[0_20px_40px_-12px_rgba(17,24,39,0.18)] px-5 md:px-10 pt-6 pb-8 print:shadow-none print:rounded-none print:p-0">

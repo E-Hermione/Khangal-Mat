@@ -1,5 +1,6 @@
 import React from 'react';
 import { SolutionSteps, solutionLines } from './SolutionSteps';
+import { CheckOption } from './CheckOption';
 import { PracticeProblem } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { PencilLine, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
@@ -16,6 +17,9 @@ interface PracticeSectionProps {
   onEditPractice?: (problem: PracticeProblem) => void;
   onDeletePractice?: (problemId: string) => void;
   onAddPractice?: () => void;
+  // Paid students tick the exercises they solved
+  solvedIds?: string[];
+  onToggleSolved?: (practiceId: string) => void;
 }
 
 export const PracticeSection: React.FC<PracticeSectionProps> = ({
@@ -27,6 +31,8 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
   onEditPractice,
   onDeletePractice,
   onAddPractice,
+  solvedIds,
+  onToggleSolved,
 }) => {
   const [showSolutionsOnScreen, setShowSolutionsOnScreen] = React.useState<boolean>(false);
 
@@ -87,14 +93,14 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
           )}
         </div>
       ) : (
-        <div className="divide-y divide-stone-200 print:divide-y-0 print:space-y-3">
+        <div className="space-y-6 print:space-y-3">
           {practice.map((item, idx) => {
             const showSol = allowSolutions && (teacherVersion || showSolutionsOnScreen);
 
             return (
               <div
                 key={item.id || item.number || idx}
-                className="avoid-break py-6 first:pt-0 last:pb-0 relative group print:py-0"
+                className="avoid-break relative group"
               >
                 {/* Question header */}
                 {/* The number, then the problem itself */}
@@ -104,6 +110,14 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                     <MathRenderer content={item.question} />
                   </div>
 
+                  {onToggleSolved && (
+                    <CheckOption
+                      className="no-print shrink-0 mt-1"
+                      checked={!!solvedIds?.includes(item.id)}
+                      onChange={() => onToggleSolved(item.id)}
+                      label="Бодсон"
+                    />
+                  )}
                   {isEditable && (
                     <div className="no-print flex items-center space-x-1 shrink-0">
                       {onEditPractice && (

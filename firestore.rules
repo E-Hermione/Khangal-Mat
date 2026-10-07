@@ -148,6 +148,12 @@ service cloud.firestore {
         allow read, write: if signedIn() && request.auth.uid == uid;
         allow read: if isAdmin();
       }
+
+      // What the student ticked in a lesson (understood, exercises solved): the owner writes
+      match /lessonProgress/{topicId} {
+        allow read, write: if signedIn() && request.auth.uid == uid;
+        allow read: if isAdmin();
+      }
     }
 
     // Announcements: members see the ones sent to everyone; group ones arrive in users/{uid}/inbox

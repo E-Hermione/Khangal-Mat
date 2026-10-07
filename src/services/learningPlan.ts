@@ -19,8 +19,10 @@ import { getQuestionOptions, hasMadeUpOptions, isOptionCorrect, testForGrade } f
  *   the questions they got wrong. Together these topics are their plan. Those topics are their plan; they open once the student has paid (an access period
  *   set on their permissions).
  * A topic's tests unlock in turn: scoring 85% or more on the basic test opens the middle one, and
- * on the middle one opens the advanced one. Passing them fills the topic to 35%, 70% and 100%;
- * at 100% the topic is done.
+ * on the middle one opens the advanced one.
+ * A topic's progress: the lesson itself (theory and examples understood, every exercise solved) is
+ * 35%; passing the basic, middle and advanced tests adds 20%, 20% and 25%. At 100% the topic is done.
+ * - users/{uid}/lessonProgress/{topicId}: what the student ticked in the lesson.
  */
 
 export const PASS_PERCENT = 85;
@@ -138,8 +140,22 @@ function testMaxPoints(topicId: string, tier: 1 | 2 | 3): number {
   return tier === 1 ? 10 : tier === 2 ? 15 : 20;
 }
 
-// How full a topic is after passing its basic, middle and advanced tests
-export const TIER_PROGRESS = [0, 35, 70, 100];
+// Share of a topic's progress: the lesson, then the basic, middle and advanced tests (sum 100)
+export const LESSON_SHARE = 35;
+export const TIER_SHARE = [20, 20, 25];
+
+// What the student ticked in a lesson
+export interface LessonProgress {
+  understood?: boolean;
+  solved?: string[];
+}
+
+/** The lesson part is done: theory and examples understood, every exercise solved. */
+export function lessonDone(topicId: string, lesson?: LessonProgress): boolean {
+  if (!lesson?.understood) return false;
+  const ids = (storageService.getTopics().find((t) => t.id === topicId)?.practice || []).map((p) => p.id);
+  return ids.every((id) => lesson.solved?.includes(id));
+}
 
 /** One attempt's latest score in percent. */
 export function attemptPercent(examId: string, attempt: { score?: number; maxPoints?: number }): number {
@@ -166,8 +182,9 @@ export function tiersPassed(topicId: string, attempts: AttemptMap): number {
   return passed;
 }
 
-export function topicProgress(topicId: string, attempts: AttemptMap): number {
-  return TIER_PROGRESS[tiersPassed(topicId, attempts)];
+export function topicProgress(topicId: string, attempts: AttemptMap, lesson?: LessonProgress): number {
+  const tests = TIER_SHARE.slice(0, tiersPassed(topicId, attempts)).reduce((a, b) => a + b, 0);
+  return (lessonDone(topicId, lesson) ? LESSON_SHARE : 0) + tests;
 }
 
 /** Tests the student may take: the basic one, and each next one after passing the previous. */
@@ -175,8 +192,14 @@ export function unlockedTiers(topicId: string, attempts: AttemptMap): (1 | 2 | 3
   return ([1, 2, 3] as const).slice(0, Math.min(3, tiersPassed(topicId, attempts) + 1));
 }
 
-export function isTopicDone(topicId: string, attempts: AttemptMap): boolean {
-  return tiersPassed(topicId, attempts) === 3;
+/** Admin: what one student ticked in each lesson. */
+export async function loadUserLessons(uid: string): Promise<Record<string, LessonProgress>> {
+  const snap = await getDocs(collection(getDb(), 'users', uid, 'lessonProgress'));
+  return Object.fromEntries(snap.docs.map((d) => [d.id, d.data() as LessonProgress]));
+}
+
+export function isTopicDone(topicId: string, attempts: AttemptMap, lesson?: LessonProgress): boolean {
+  return topicProgress(topicId, attempts, lesson) >= 100;
 }
 
 /* ---------------------------- placement test ---------------------------- */
@@ -373,11 +396,13 @@ interface PlanState {
   // undefined while loading
   results: PlacementResult[] | undefined;
   attempts: AttemptMap;
+  // topicId -> what the student ticked in that lesson
+  lessons: Record<string, LessonProgress>;
   // Admin's "view as user": pretend the account has paid (true) or not (false)
   paidOverride: boolean | null;
 }
 
-const state: PlanState = { uid: null, userId: null, grade: null, results: undefined, attempts: {}, paidOverride: null };
+const state: PlanState = { uid: null, userId: null, grade: null, results: undefined, attempts: {}, lessons: {}, paidOverride: null };
 let unsubs: (() => void)[] = [];
 
 function notify() {
@@ -387,7 +412,7 @@ function notify() {
 /** Starts for a signed-in student: their grade's placement test, their result and test scores. */
 export function startLearningPlan(uid: string, userId: string, grade: GradeNumber | null, paidOverride: boolean | null = null) {
   stopLearningPlan();
-  Object.assign(state, { uid, userId, grade, results: undefined, attempts: {}, paidOverride });
+  Object.assign(state, { uid, userId, grade, results: undefined, attempts: {}, lessons: {}, paidOverride });
   const db = getDb();
   const onError = (what: string) => (err: unknown) => {
     console.error(`${what} failed to load`, err);
@@ -412,13 +437,23 @@ export function startLearningPlan(uid: string, userId: string, grade: GradeNumbe
       notify();
     })
   );
+  unsubs.push(
+    onSnapshot(
+      collection(db, 'users', uid, 'lessonProgress'),
+      (snap) => {
+        state.lessons = Object.fromEntries(snap.docs.map((d) => [d.id, d.data() as LessonProgress]));
+        notify();
+      },
+      onError('Lesson progress')
+    )
+  );
   notify();
 }
 
 export function stopLearningPlan() {
   unsubs.forEach((u) => u());
   unsubs = [];
-  Object.assign(state, { uid: null, userId: null, grade: null, results: undefined, attempts: {}, paidOverride: null });
+  Object.assign(state, { uid: null, userId: null, grade: null, results: undefined, attempts: {}, lessons: {}, paidOverride: null });
   notify();
 }
 
@@ -492,10 +527,29 @@ export const learningPlan = {
     return this.isPaid() ? 'open' : 'unpaid';
   },
   isDone(topicId: string): boolean {
-    return isTopicDone(topicId, state.attempts);
+    return isTopicDone(topicId, state.attempts, state.lessons[topicId]);
   },
   progress(topicId: string): number {
-    return topicProgress(topicId, state.attempts);
+    return topicProgress(topicId, state.attempts, state.lessons[topicId]);
+  },
+  lesson(topicId: string): LessonProgress {
+    return state.lessons[topicId] || {};
+  },
+  /** The student ticks that they understood the theory and examples, or solved an exercise. */
+  saveLesson(topicId: string, update: LessonProgress) {
+    if (!state.uid) return;
+    const next = { ...this.lesson(topicId), ...update };
+    state.lessons = { ...state.lessons, [topicId]: next };
+    notify();
+    setDoc(doc(getDb(), 'users', state.uid, 'lessonProgress', topicId), next).catch((err) =>
+      console.error('Lesson progress failed to save', err)
+    );
+  },
+  toggleSolved(topicId: string, practiceId: string) {
+    const solved = this.lesson(topicId).solved || [];
+    this.saveLesson(topicId, {
+      solved: solved.includes(practiceId) ? solved.filter((x) => x !== practiceId) : [...solved, practiceId],
+    });
   },
   unlockedTiers(topicId: string): (1 | 2 | 3)[] {
     return unlockedTiers(topicId, state.attempts);
