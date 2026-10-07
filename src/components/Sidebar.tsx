@@ -279,6 +279,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       if (next) onSelectTopic(next.id);
     }
   };
+  // Subtopics: in the order the admin arranged them, else by their saved order
+  const bySubtopicOrder = (a: { id: string; order?: number }, b: { id: string; order?: number }) => {
+    const order = cloud.getAppSettings().topicOrder || [];
+    const ra = order.indexOf(a.id);
+    const rb = order.indexOf(b.id);
+    if (ra >= 0 && rb >= 0) return ra - rb;
+    return (a.order ?? 0) - (b.order ?? 0);
+  };
   // Admin: move a topic up or down among the topics next to it
   const moveTopic = (siblings: string[], id: string, step: -1 | 1) => {
     const i = siblings.indexOf(id);
@@ -790,7 +798,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           const renderTopic = (topic: (typeof group.topics)[number], sub: boolean) => {
                             const kids = group.topics
                               .filter((t) => t.parentId === topic.id)
-                              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+                              .sort(bySubtopicOrder);
                           const isSelected = topic.id === selectedTopicId;
                           const accessMode = visibilityService.getTopicAccessMode(topic.id);
                           // Students with a plan: locked unless it is a paid plan topic; ticked once done
@@ -896,7 +904,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               {topLevel.map((topic) => {
                                 const kids = group.topics
                                   .filter((t) => t.parentId === topic.id)
-                                  .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+                                  .sort(bySubtopicOrder);
                                 return (
                                   <div key={topic.id} className="space-y-0.5">
                                     <div className="flex items-center gap-0.5 group/row">
@@ -908,7 +916,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                       kids.map((k) => (
                                         <div key={k.id} className="flex items-center gap-0.5">
                                           <div className="flex-1 min-w-0">{renderTopic(k, true)}</div>
-                                          {canAddTopics && renderRowTools(k.id, false, group.category)}
+                                          {canAddTopics && renderRowTools(k.id, false, group.category, kids.map((x) => x.id))}
                                         </div>
                                       ))}
                                     {adding && adding.parentId === topic.id && renderAddForm('Дэд сэдвийн нэр')}
