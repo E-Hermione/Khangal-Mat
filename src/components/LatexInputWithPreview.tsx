@@ -14,6 +14,8 @@ interface LatexInputWithPreviewProps {
   previewBlock?: boolean;
   className?: string;
   helpText?: string;
+  // No preview under the field (the editor shows one preview of the whole item instead)
+  hidePreview?: boolean;
 }
 
 // Toolbar marker: wrap the selection in $…$
@@ -29,6 +31,7 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
   previewBlock = false,
   className = '',
   helpText,
+  hidePreview = false,
 }) => {
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
 
@@ -183,6 +186,7 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
       )}
 
       {/* Real-time Live LaTeX Preview Box */}
+      {!hidePreview && (
       <div className="rounded-lg border border-amber-200/80 bg-amber-50/40 p-2.5 transition-all">
         <div className="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-1">
           <Eye className="w-3.5 h-3.5" />
@@ -198,6 +202,7 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
           )}
         </div>
       </div>
+      )}
     </div>
   );
 };

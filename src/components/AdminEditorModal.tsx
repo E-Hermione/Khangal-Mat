@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCtrlS } from '../utils/useCtrlS';
+import { WorkedExamplesSection } from './WorkedExamplesSection';
 import { CheckOption } from './CheckOption';
 import { theoryNumbers } from '../utils/theoryBlocks';
 import { TheoryBlocksEditor } from './TheoryBlocksEditor';
@@ -566,14 +567,14 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                         </div>
                       </div>
 
-                      <LatexInputWithPreview label="Бодлого:" value={ex.problem} onChange={(val) => update(sel, { problem: val })} multiline rows={2} />
+                      <LatexInputWithPreview label="Бодлого:" value={ex.problem} onChange={(val) => update(sel, { problem: val })} multiline rows={2} hidePreview />
 
                       {/* One field per step, in order */}
                       <div className="space-y-3">
                         <div className="text-xs font-bold text-stone-800">Бодолтын алхмууд:</div>
                         {steps.map((step, i) => (
                           <div key={i} className="flex items-start gap-2">
-                            <span className="mt-8 w-6 h-6 rounded-full bg-stone-900 text-white text-[11px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
+                            <span className="mt-[3.25rem] w-6 h-6 rounded-full bg-stone-900 text-white text-[11px] font-black flex items-center justify-center shrink-0">{i + 1}</span>
                             <LatexInputWithPreview
                               className="flex-1 min-w-0"
                               label={`Алхам ${i + 1}`}
@@ -581,6 +582,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                               onChange={(val) => setSteps(steps.map((x, j) => (j === i ? val : x)))}
                               multiline
                               rows={2}
+                              hidePreview
                             />
                             <button
                               type="button"
@@ -601,7 +603,13 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                         </button>
                       </div>
 
-                      <LatexInputWithPreview label="Хариу:" value={ex.answer} onChange={(val) => update(sel, { answer: val })} />
+                      <LatexInputWithPreview label="Хариу:" value={ex.answer} onChange={(val) => update(sel, { answer: val })} hidePreview />
+
+                      {/* The whole example as it looks on the lesson page */}
+                      <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-2">Сайт дээр харагдах байдал</div>
+                        <WorkedExamplesSection examples={[{ ...ex, number: sel + 1 }]} />
+                      </div>
                     </div>
                   );
                 })()}
