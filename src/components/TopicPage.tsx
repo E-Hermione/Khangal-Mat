@@ -488,10 +488,14 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       aria-selected={on}
                       onClick={() => setLessonTab(key)}
                       className={`flex-1 py-3 px-2 rounded-lg text-sm md:text-base font-extrabold transition-colors cursor-pointer ${
-                        on ? 'text-amber-600 shadow-[inset_0_-3px_0_#1c1917]' : 'text-stone-400 hover:text-stone-600'
+                        on ? 'text-amber-600' : 'text-stone-400 hover:text-stone-600'
                       }`}
                     >
-                      {label}
+                      <span className="relative inline-block">
+                        {label}
+                        {/* Under the selected word only, half a centimetre past each end */}
+                        {on && <span className="absolute -bottom-1.5 left-[-0.5cm] right-[-0.5cm] h-[3px] rounded-full bg-stone-900" />}
+                      </span>
                     </button>
                   );
                 })}
