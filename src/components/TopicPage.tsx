@@ -7,7 +7,7 @@ import { usePrintSelection } from '../services/printSelection';
 import { ItemEditorModal, ItemEditorType } from './ItemEditorModal';
 import { visibilityService, TopicAccessMode } from '../services/visibilityService';
 import { userPermissionsService } from '../services/userPermissionsService';
-import { learningPlan, useLearningPlanVersion } from '../services/learningPlan';
+import { allTopicMetas, learningPlan, useLearningPlanVersion } from '../services/learningPlan';
 import { loadPracticeGrants, usePracticeSolutions } from '../services/practiceSolutions';
 import { PracticeGrantsDialog } from './PracticeGrantsDialog';
 import { getFirebaseAuth } from '../services/firebase';
@@ -347,17 +347,29 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   );
 
   // The lesson itself shows (not a locked or hidden notice), so its tabs show in the header
+  // Short line under each lesson tab
+  const TAB_HINT = { theory: 'Дүрэм, тодорхойлолт', examples: 'Бодсон жишээ', practice: 'Бие даан бодох' } as const;
+  const parentTitle = topic.parentId ? allTopicMetas().find((t) => t.id === topic.parentId)?.title : undefined;
   const showLesson = !(planGate && planGate !== 'open') && (isAdmin || planOpen || (accessMode !== 'hidden' && accessMode !== 'locked'));
 
   return (
     <div className="w-full">
       {/* Screen Breadcrumb & Title Bar */}
       <div className="no-print mb-5">
-        <div className="text-xs text-stone-400 mb-2">
-          <nav className="flex items-center space-x-1.5 font-medium">
-            <span className="font-bold text-stone-500">{topic.grade}-р анги</span>
-            <ChevronRight className="w-3.5 h-3.5 text-stone-300" />
+        <div className="text-xs text-stone-500 mb-2">
+          {/* Grade › category › parent topic (for a subtopic) › this lesson */}
+          <nav className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5 font-medium">
+            <span className="font-bold text-stone-800">{topic.grade}-р анги</span>
+            <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
             <span>{topic.category}</span>
+            {parentTitle && (
+              <>
+                <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
+                <span>{parentTitle}</span>
+              </>
+            )}
+            <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
+            <span className="text-amber-700 font-bold">{topic.title}</span>
           </nav>
         </div>
 
@@ -465,7 +477,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           return (
             tabs.length > 0 && (
               <div
-                className="flex gap-1 p-1 mb-6 rounded-xl bg-stone-200/70 no-print"
+                className="flex gap-1 p-1 mb-6 rounded-xl bg-stone-100 no-print"
                 role="tablist"
                 data-testid="lesson-tabs"
               >
@@ -478,16 +490,14 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       role="tab"
                       aria-selected={on}
                       onClick={() => setLessonTab(key)}
-                      className={`flex-1 py-2.5 rounded-lg text-sm transition-all cursor-pointer ${
+                      className={`flex-1 py-2 px-2 rounded-lg transition-all cursor-pointer ${
                         on
-                          ? 'bg-white text-stone-950 font-black shadow-md ring-1 ring-stone-900/5'
-                          : 'text-stone-500 font-bold hover:text-stone-800 hover:bg-white/50'
+                          ? 'bg-white shadow-[inset_0_-3px_0_#f59e0b,0_1px_4px_rgba(0,0,0,0.1)]'
+                          : 'hover:bg-white/50'
                       }`}
                     >
-                      <span className="relative inline-block">
-                        {label}
-                        {on && <span className="absolute -bottom-1.5 left-0 right-0 h-[3px] rounded-full bg-amber-500" />}
-                      </span>
+                      <div className={`text-sm md:text-base font-extrabold ${on ? 'text-stone-950' : 'text-stone-500'}`}>{label}</div>
+                      <div className="text-[11px] md:text-xs text-stone-400 mt-0.5 hidden sm:block">{TAB_HINT[key]}</div>
                     </button>
                   );
                 })}
