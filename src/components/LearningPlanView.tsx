@@ -78,14 +78,16 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
         </h1>
         <p className="text-sm text-stone-600 mt-1 leading-relaxed">
           Таны төлөвлөгөөг төлөвлөж дууслаа. Сэдэв бүрийн гүйцэтгэлээ хэрхэн тооцуулах мэдээлэлтэйгээ танилцаж, зөвхөн
-          танд зориулж боловсруулсан төлөвлөгөөтэйгөө танилцана уу. Дараах сэдвүүд таны үзэж, сэргээх ёстой сэдвүүд.
-          Сэдвүүдээ яг дарааллаар нь үзнэ. Амжилт хүсье.
+          танд зориулж боловсруулсан төлөвлөгөөтэйгөө танилцана уу.
         </p>
       </div>
 
       <TierGuide />
 
       {/* Topics */}
+      <p className="text-sm font-bold text-stone-800">
+        Дараах сэдвүүд таны үзэж, сэргээх ёстой сэдвүүд. Сэдвүүдээ яг дарааллаар нь үзнэ. Амжилт хүсье.
+      </p>
       {total === 0 ? (
         <div className="bg-white rounded-xl border border-stone-200 p-8 text-center text-sm text-stone-600">
           Та бүх бодлогыг зөв бодсон байна. Багштайгаа зөвлөлдөж дараагийн сэдвээ сонгоорой.
