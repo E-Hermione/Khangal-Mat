@@ -2,6 +2,12 @@ export type GradeNumber = 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 
+// One piece of a theory item, in reading order: text, a centred formula, or a small note
+export interface TheoryBlock {
+  type: 'text' | 'formula' | 'note';
+  value: string;
+}
+
 export interface TheoryRule {
   id: string;
   title: string;
@@ -11,6 +17,8 @@ export interface TheoryRule {
   formula?: string;
   note?: string;
   badge?: string;
+  // Content as blocks in reading order; when set it replaces ruleText, formula and note
+  blocks?: TheoryBlock[];
 }
 
 export interface WorkedExample {

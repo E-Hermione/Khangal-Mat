@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { TheoryBlocksEditor } from './TheoryBlocksEditor';
 import { TheoryRule, WorkedExample, PracticeProblem, TestQuestion, DifficultyLevel } from '../types';
 import { LatexInputWithPreview } from './LatexInputWithPreview';
 import { X, Save, Trash2, Plus, HelpCircle } from 'lucide-react';
@@ -170,30 +171,7 @@ function TheoryEditor({
           <GradeSelect value={rule.prerequisiteGrade} onChange={(g) => setRule({ ...rule, prerequisiteGrade: g })} />
         </div>
 
-        <LatexInputWithPreview
-          label="Онолын тодорхойлолт, тайлбар бичвэр:"
-          value={rule.ruleText}
-          onChange={(val) => setRule({ ...rule, ruleText: val })}
-          multiline
-          rows={3}
-          placeholder="Онолын тодорхойлолтоо бичнэ үү. Томьёог $...$ хаалтанд бичиж болно."
-        />
-
-        <LatexInputWithPreview
-          label="Үндсэн LaTeX томьёо (Formula):"
-          value={rule.formula || ''}
-          onChange={(val) => setRule({ ...rule, formula: val })}
-          placeholder="Жишээ: x_1 + x_2 = -\\frac{b}{a}, \\quad x_1 x_2 = \\frac{c}{a}"
-          previewBlock
-          helpText="Формула блок болгон төвд том харагдана"
-        />
-
-        <LatexInputWithPreview
-          label="Нэмэлт тайлбар, санамж (Note):"
-          value={rule.note || ''}
-          onChange={(val) => setRule({ ...rule, note: val })}
-          placeholder="Жишээ: Хэрэв D < 0 бол бодит шийдгүй."
-        />
+        <TheoryBlocksEditor rule={rule} onChange={setRule} />
       </div>
 
       <div className="shrink-0 p-4 border-t border-stone-200 bg-stone-50 flex items-center justify-between">

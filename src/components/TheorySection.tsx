@@ -1,4 +1,5 @@
 import React from 'react';
+import { theoryBlocks } from '../utils/theoryBlocks';
 import { TheoryRule } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { BookOpen, Plus, Edit2, Trash2 } from 'lucide-react';
@@ -107,25 +108,23 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
                   )}
                 </div>
 
-                {/* Rule Text */}
-                <div className="text-[15px] text-stone-700 print:text-black leading-relaxed">
-                  <MathRenderer content={rule.ruleText} />
-                </div>
-
-                {/* Mathematical Formula Box if exists */}
-                {rule.formula && (
-                  <div className="my-3 text-center overflow-x-auto">
-                    <MathRenderer content={`$$${rule.formula}$$`} block />
-                  </div>
+                {/* Content in reading order: text, centred formulas, notes */}
+                {theoryBlocks(rule).map((block, bIdx) =>
+                  block.type === 'formula' ? (
+                    <div key={bIdx} className="my-3 text-center overflow-x-auto">
+                      <MathRenderer content={`$$${block.value}$$`} block />
+                    </div>
+                  ) : block.type === 'note' ? (
+                    <div key={bIdx} className="mt-2 text-[13px] text-stone-500 leading-relaxed print:text-stone-800">
+                      <MathRenderer content={block.value} className="inline" />
+                    </div>
+                  ) : (
+                    <div key={bIdx} className="mt-1 text-[15px] text-stone-700 print:text-black leading-relaxed">
+                      <MathRenderer content={block.value} />
+                    </div>
+                  )
                 )}
               </div>
-
-              {/* Explanatory Note */}
-              {rule.note && (
-                <div className="text-[13px] text-stone-500 leading-relaxed print:text-stone-800">
-                  <MathRenderer content={rule.note} className="inline" />
-                </div>
-              )}
             </div>
           ))}
         </div>

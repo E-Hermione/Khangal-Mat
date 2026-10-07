@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { TheoryBlocksEditor } from './TheoryBlocksEditor';
 import { TopicPackage, GradeNumber, TheoryRule, WorkedExample, PracticeProblem, TestQuestion } from '../types';
 import { storageService } from '../services/storageService';
 import { MathRenderer } from './MathRenderer';
@@ -411,39 +412,13 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                       </button>
                     </div>
 
-                    <LatexInputWithPreview
-                      label="Дүрмийн тодорхойлолт текст:"
-                      value={rule.ruleText}
-                      onChange={(val) => {
+                    <TheoryBlocksEditor
+                      rule={rule}
+                      onChange={(next) => {
                         const updated = [...topic.theory];
-                        updated[idx].ruleText = val;
+                        updated[idx] = next;
                         setTopic({ ...topic, theory: updated });
                       }}
-                      multiline
-                      rows={2}
-                    />
-
-                    <LatexInputWithPreview
-                      label="Үндсэн томьёо (LaTeX):"
-                      value={rule.formula || ''}
-                      onChange={(val) => {
-                        const updated = [...topic.theory];
-                        updated[idx].formula = val;
-                        setTopic({ ...topic, theory: updated });
-                      }}
-                      placeholder="Жишээ: a \\vdots 2"
-                      previewBlock
-                    />
-
-                    <LatexInputWithPreview
-                      label="Тайлбар / Санамж:"
-                      value={rule.note || ''}
-                      onChange={(val) => {
-                        const updated = [...topic.theory];
-                        updated[idx].note = val;
-                        setTopic({ ...topic, theory: updated });
-                      }}
-                      placeholder="Тайлбар..."
                     />
                   </div>
                 ))}
