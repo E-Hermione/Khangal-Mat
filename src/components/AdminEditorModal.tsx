@@ -771,6 +771,10 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           {/* 4. TESTS TAB */}
           {activeTab === 'tests' && (
             <div className="space-y-6">
+              {/* One LaTeX toolbar for every field below: writes into the field clicked last */}
+              <div className="sticky -top-4 md:-top-6 z-10 bg-white py-2 border-b border-stone-200">
+                <LatexToolbar />
+              </div>
               {([1, 2, 3] as const).map((tNum) => {
                 const testKey = tNum === 1 ? 'test1' : tNum === 2 ? 'test2' : 'test3';
                 const test = topic[testKey];
@@ -838,7 +842,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                             const letters = ['A', 'B', 'C', 'D'];
                             return (
                               <>
-                                <LatexInputWithPreview label="Асуулт:" value={q.question} onChange={(val) => setQ({ question: val })} multiline rows={2} hidePreview />
+                                <LatexInputWithPreview label="Асуулт:" value={q.question} onChange={(val) => setQ({ question: val })} multiline rows={2} hidePreview hideToolbar />
 
                                 {/* Answer options; the correct one is picked with its letter */}
                                 <div className="grid sm:grid-cols-2 gap-2">
@@ -867,7 +871,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                                 </div>
                                 <div className="text-[11px] text-stone-500">Зөв хариуны үсэг дээр дарж сонгоно. Сонгосон: <b className="text-emerald-700">{q.answer || '—'}</b></div>
 
-                                <LatexInputWithPreview label="Бодолт:" value={q.solution || ''} onChange={(val) => setQ({ solution: val || undefined })} multiline rows={2} hidePreview />
+                                <LatexInputWithPreview label="Бодолт:" value={q.solution || ''} onChange={(val) => setQ({ solution: val || undefined })} multiline rows={2} hidePreview hideToolbar />
 
                                 {/* The question as students see it, with the answer and solution */}
                                 <div className="rounded-lg border border-amber-200 bg-amber-50/40 p-3 space-y-2 text-sm">
