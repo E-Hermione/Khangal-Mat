@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { collectionGroup, getDocs } from 'firebase/firestore';
-import { ChevronRight, ClipboardCheck, CreditCard, UserCheck, Users } from 'lucide-react';
+import { ChevronRight, ClipboardCheck, CreditCard, Lock, UserCheck, Users } from 'lucide-react';
 import { learningPlan, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
 import { subscribeAllPaymentRequests } from '../services/payments';
 import { cloud } from '../services/cloud';
@@ -77,6 +77,14 @@ const MemberHome: React.FC<{ uid?: string; userId?: string; onOpenPlan: () => vo
           <div className="flex items-start gap-2 text-xs text-stone-400">
             <ClipboardCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             {hasPlan ? 'Төлбөр төлсний дараа нээгдэнэ.' : 'Түвшин тогтоох сорилын дараа нээгдэнэ.'}
+          </div>
+          {/* Locked until paid; opens by itself once access is paid */}
+          <div
+            className="w-full py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-500 text-xs font-bold flex items-center justify-center gap-1.5 cursor-not-allowed select-none"
+            data-testid="plan-locked"
+          >
+            <Lock className="w-3.5 h-3.5" />
+            Хувийн төлөвлөгөө харах
           </div>
         </Panel>
       )}
