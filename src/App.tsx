@@ -800,7 +800,7 @@ export default function App() {
           {previewAsUser === 'expired' && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800 font-medium">
               Таны хичээл үзэх эрхийн хугацаа {new Date(Date.now() - 86400000).toLocaleDateString()}-нд дууссан байна.
-              Сунгуулахын тулд админд хандана уу.
+              Та эрхээ сунгаад цааш үргэлжлүүлнэ үү.
             </div>
           )}
           {previewAsUser === 'student' && (
@@ -814,7 +814,7 @@ export default function App() {
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800 font-medium" data-testid="access-expired">
               Таны хичээл үзэх эрхийн хугацаа{' '}
               {new Date(userPermissionsService.getUserPermissions(currentUser.userId!).expiresAt!).toLocaleDateString()}-нд
-              дууссан байна. Сунгуулахын тулд админд хандана уу.
+              дууссан байна. Та эрхээ сунгаад цааш үргэлжлүүлнэ үү.
             </div>
           )}
           {/* Access ends within a week: remind the student on the home page (not in the admin's views) */}
