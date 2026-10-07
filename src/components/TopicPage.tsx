@@ -566,33 +566,44 @@ export const TopicPage: React.FC<TopicPageProps> = ({
               {(() => {
                 const passed = tracking ? learningPlan.state.attempts && tiersPassed(topic.id, learningPlan.state.attempts) : 0;
                 const steps = [
-                  { name: 'Хичээл', share: LESSON_SHARE, done: tracking && lessonDone(topic.id, lesson) },
-                  { name: 'Анхан', share: TIER_SHARE[0], done: passed >= 1 },
-                  { name: 'Дунд', share: TIER_SHARE[1], done: passed >= 2 },
-                  { name: 'Ахисан', share: TIER_SHARE[2], done: passed >= 3 },
+                  { name: 'Хичээл үзэх', text: 'Онол, жишээг ойлгож, бүх дасгалыг бодох', share: LESSON_SHARE, done: tracking && lessonDone(topic.id, lesson) },
+                  { name: 'Анхан сорил', text: `${PASS_PERCENT}%-иас дээш авах`, share: TIER_SHARE[0], done: passed >= 1 },
+                  { name: 'Дунд сорил', text: `${PASS_PERCENT}%-иас дээш авах`, share: TIER_SHARE[1], done: passed >= 2 },
+                  { name: 'Ахисан сорил', text: `${PASS_PERCENT}%-иас дээш авах`, share: TIER_SHARE[2], done: passed >= 3 },
                 ];
                 return (
-                  <div className="flex items-center gap-4 min-w-0">
-                    {tracking && <ProgressRing percent={learningPlan.progress(topic.id)} size={48} />}
-                    <div className="space-y-2 min-w-0">
-                      <div className="text-sm font-black text-white">
-                        Сэдвийн гүйцэтгэл{tracking ? `: ${learningPlan.progress(topic.id)}%` : ''}
+                  <div className="flex-1 min-w-0 space-y-3">
+                    <div className="flex items-center gap-3">
+                      {tracking && <ProgressRing percent={learningPlan.progress(topic.id)} size={40} />}
+                      <div>
+                        <div className="text-sm md:text-base font-black text-white">
+                          Сэдвийн гүйцэтгэл{tracking ? `: ${learningPlan.progress(topic.id)}%` : ''}
+                        </div>
+                        <div className="text-xs text-stone-400">Доорх 4 алхмыг дараалан хийвэл сэдвээ 100% гүйцэтгэнэ.</div>
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {steps.map((st) => (
+                    </div>
+                    <ol className="grid sm:grid-cols-2 gap-2">
+                      {steps.map((st, i) => (
+                        <li
+                          key={st.name}
+                          className={`flex items-start gap-2.5 rounded-xl px-3 py-2 ${st.done ? 'bg-emerald-500/15' : 'bg-white/5'}`}
+                        >
                           <span
-                            key={st.name}
-                            className={`px-2 py-1 rounded-lg text-[11px] font-bold ${
-                              st.done ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-stone-300'
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${
+                              st.done ? 'bg-emerald-500 text-white' : 'bg-white/10 text-stone-300'
                             }`}
                           >
-                            {st.done ? '✓ ' : ''}
-                            {st.name} {st.share}%
+                            {st.done ? '✓' : i + 1}
                           </span>
-                        ))}
-                      </div>
-                      <div className="text-[11px] text-stone-400">Сорил бүрд {PASS_PERCENT}%-иас дээш авбал тооцогдоно.</div>
-                    </div>
+                          <div className="min-w-0">
+                            <div className={`text-xs font-black ${st.done ? 'text-emerald-300' : 'text-white'}`}>
+                              {st.name} <span className="text-amber-400">+{st.share}%</span>
+                            </div>
+                            <div className="text-[11px] text-stone-400 leading-snug">{st.text}</div>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
                   </div>
                 );
               })()}
