@@ -77,7 +77,7 @@ const MemberHome: React.FC<{ uid?: string; userId?: string; onOpenPlan: () => vo
         <Panel className="space-y-2">
           <div className="flex items-start gap-2 text-xs text-stone-400">
             <ClipboardCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            Түвшин тогтоох сорил өгөхөд танд зориулсан сургалтын төлөвлөгөө гарна.
+            Түвшин тогтоох сорилын дараа нээгдэнэ.
           </div>
           <button
             type="button"
