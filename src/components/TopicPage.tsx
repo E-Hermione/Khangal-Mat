@@ -487,11 +487,13 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       role="tab"
                       aria-selected={on}
                       onClick={() => setLessonTab(key)}
-                      className={`flex-1 py-3 px-2 rounded-lg border-2 text-sm md:text-base font-extrabold transition-colors cursor-pointer ${
-                        on ? 'border-stone-300 text-amber-600' : 'border-stone-300 text-stone-400 hover:text-stone-600'
+                      className={`flex-1 py-2.5 px-2 text-sm md:text-base font-extrabold transition-colors cursor-pointer ${
+                        on ? 'text-amber-600' : 'text-stone-400 hover:text-stone-600'
                       }`}
                     >
                       {label}
+                      {/* A dot under the selected tab */}
+                      <span className={`block mx-auto mt-1 w-1.5 h-1.5 rounded-full ${on ? 'bg-stone-600' : 'bg-transparent'}`} />
                     </button>
                   );
                 })}
