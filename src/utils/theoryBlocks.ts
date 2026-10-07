@@ -21,3 +21,13 @@ export function withBlocks(rule: TheoryRule, blocks: TheoryBlock[]): TheoryRule 
   };
 }
 
+/** Numbers of theory items: 1, 2, … and 1.1, 1.2, … for sub-parts of the item above. */
+export function theoryNumbers(theory: TheoryRule[]): string[] {
+  let main = 0;
+  let sub = 0;
+  return theory.map((rule) => {
+    if (rule.sub && main > 0) return `${main}.${++sub}`;
+    sub = 0;
+    return String(++main);
+  });
+}
