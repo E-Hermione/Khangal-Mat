@@ -67,6 +67,8 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   const [exampleIdx, setExampleIdx] = useState(0);
   // Practice tab: the one exercise being edited
   const [practiceIdx, setPracticeIdx] = useState(0);
+  // Tests tab: the test being edited
+  const [testTab, setTestTab] = useState<1 | 2 | 3>(1);
 
   // Sync state when activeTopic changes
   // The topic as last saved: closing asks for confirmation only when there are unsaved changes
@@ -775,7 +777,27 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
               <div className="sticky -top-4 md:-top-6 z-10 bg-white py-2 border-b border-stone-200">
                 <LatexToolbar />
               </div>
-              {([1, 2, 3] as const).map((tNum) => {
+              <div className="flex gap-4 items-start">
+              {/* Pick the test to edit */}
+              <nav className="w-40 md:w-48 shrink-0 sticky top-16 space-y-0.5">
+                {([1, 2, 3] as const).map((n) => {
+                  const t = topic[n === 1 ? 'test1' : n === 2 ? 'test2' : 'test3'];
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setTestTab(n)}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs cursor-pointer ${
+                        n === testTab ? 'bg-stone-900 text-white font-bold' : 'text-stone-700 hover:bg-stone-100'
+                      }`}
+                    >
+                      {t?.title || n} сорил
+                    </button>
+                  );
+                })}
+              </nav>
+              <div className="flex-1 min-w-0">
+              {([testTab] as const).map((tNum) => {
                 const testKey = tNum === 1 ? 'test1' : tNum === 2 ? 'test2' : 'test3';
                 const test = topic[testKey];
                 return (
@@ -904,6 +926,8 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                   </div>
                 );
               })}
+              </div>
+              </div>
             </div>
           )}
 
