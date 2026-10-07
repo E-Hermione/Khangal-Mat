@@ -832,27 +832,72 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                             </div>
                           </div>
 
-                          <LatexInputWithPreview
-                            label="Асуулт:"
-                            value={q.question}
-                            onChange={(val) => {
-                              const newQuestions = [...test.questions];
-                              newQuestions[qIdx].question = val;
+                          {(() => {
+                            const setQ = (patch: Partial<TestQuestion>) => {
+                              const newQuestions = test.questions.map((x, j) => (j === qIdx ? { ...x, ...patch } : x));
                               setTopic({ ...topic, [testKey]: { ...test, questions: newQuestions } });
-                            }}
-                            multiline
-                            rows={2}
-                          />
+                            };
+                            const opts = q.options && q.options.length ? q.options : ['', '', '', ''];
+                            const letters = ['A', 'B', 'C', 'D'];
+                            return (
+                              <>
+                                <LatexInputWithPreview label="Асуулт:" value={q.question} onChange={(val) => setQ({ question: val })} multiline rows={2} hidePreview />
 
-                          <LatexInputWithPreview
-                            label="Зөв хариу:"
-                            value={q.answer}
-                            onChange={(val) => {
-                              const newQuestions = [...test.questions];
-                              newQuestions[qIdx].answer = val;
-                              setTopic({ ...topic, [testKey]: { ...test, questions: newQuestions } });
-                            }}
-                          />
+                                {/* Answer options; the correct one is picked with its letter */}
+                                <div className="grid sm:grid-cols-2 gap-2">
+                                  {letters.map((L, i) => (
+                                    <div key={L} className="flex items-start gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => setQ({ answer: L })}
+                                        title="Зөв хариу болгох"
+                                        className={`mt-1 w-7 h-7 rounded-full text-xs font-black shrink-0 cursor-pointer border ${
+                                          q.answer === L ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-stone-300 text-stone-600 hover:border-emerald-500'
+                                        }`}
+                                      >
+                                        {L}
+                                      </button>
+                                      <LatexInputWithPreview
+                                        className="flex-1 min-w-0"
+                                        label=""
+                                        value={opts[i] || ''}
+                                        onChange={(val) => setQ({ options: opts.map((o, j) => (j === i ? val : o)) })}
+                                        hidePreview
+                                        hideToolbar
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="text-[11px] text-stone-500">Зөв хариуны үсэг дээр дарж сонгоно. Сонгосон: <b className="text-emerald-700">{q.answer || '—'}</b></div>
+
+                                <LatexInputWithPreview label="Бодолт:" value={q.solution || ''} onChange={(val) => setQ({ solution: val || undefined })} multiline rows={2} hidePreview />
+
+                                {/* The question as students see it, with the answer and solution */}
+                                <div className="rounded-lg border border-amber-200 bg-amber-50/40 p-3 space-y-2 text-sm">
+                                  <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Харагдах байдал</div>
+                                  <div className="flex gap-2 text-stone-900">
+                                    <span className="font-bold shrink-0">{q.number}.</span>
+                                    <MathRenderer content={q.question} />
+                                  </div>
+                                  <div className="grid sm:grid-cols-2 gap-1.5">
+                                    {letters.map((L, i) =>
+                                      opts[i] ? (
+                                        <div key={L} className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border ${q.answer === L ? 'border-emerald-500 bg-emerald-50' : 'border-stone-200 bg-white'}`}>
+                                          <span className="font-black text-xs text-stone-600">{L})</span>
+                                          <MathRenderer content={opts[i]} className="inline" />
+                                        </div>
+                                      ) : null
+                                    )}
+                                  </div>
+                                  {q.solution && (
+                                    <div className="text-stone-700">
+                                      <span className="font-bold text-stone-900">Бодолт:</span> <MathRenderer content={q.solution} className="inline" />
+                                    </div>
+                                  )}
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                       ))}
                     </div>
