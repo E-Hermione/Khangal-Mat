@@ -466,6 +466,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   type="button"
                   onClick={() => {
                     onSelectView(key);
+                    // Phones: the menu closes once the screen changes; lessons are picked from the menu first
+                    if (key !== 'topics') onCloseMobile();
                   }}
                   className={`h-[60px] px-1 pt-2.5 rounded-xl flex flex-col items-center justify-start gap-1 transition-all cursor-pointer ${
                     active
@@ -579,6 +581,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             type="button"
             onClick={() => {
               onSelectView?.(activeView === 'mistakes' ? 'exams' : 'mistakes');
+              onCloseMobile();
             }}
             className={`w-full px-3 py-2 rounded-lg border text-xs font-bold flex items-center justify-between cursor-pointer ${
               activeView === 'mistakes'
@@ -607,6 +610,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       type="button"
                       onClick={() => {
                         onOpenPlan();
+                        onCloseMobile();
                       }}
                       className="mt-2 w-full py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold cursor-pointer"
                     >
@@ -626,6 +630,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => {
                       onSelectGrade(meta.grade);
                       onSelectTopic(p.topicId);
+                      onCloseMobile();
                     }}
                     className={`w-full text-left pl-3 pr-2.5 py-2 rounded-lg text-xs transition-all flex items-center justify-between gap-2 cursor-pointer ${
                       isSelected
@@ -658,6 +663,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => {
                     if (activeView !== 'exams') onSelectView?.('exams');
                     setTimeout(() => document.getElementById(`exam-row-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+                    onCloseMobile();
                   }}
                   className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-stone-300 hover:bg-stone-800/60 hover:text-white cursor-pointer truncate"
                 >
@@ -825,6 +831,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   return;
                                 }
                                 onSelectTopic(topic.id);
+                                onCloseMobile();
                               }}
                               className={`w-full text-left ${sub ? 'pl-8' : 'pl-4'} pr-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center justify-between group cursor-pointer ${
                                 isSelected
