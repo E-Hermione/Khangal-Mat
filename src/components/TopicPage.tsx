@@ -477,7 +477,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           return (
             tabs.length > 0 && (
               <div
-                className="flex gap-1 p-1 mb-6 rounded-xl bg-stone-100 no-print"
+                className="flex gap-1.5 p-1.5 mb-6 rounded-xl bg-stone-200 no-print"
                 role="tablist"
                 data-testid="lesson-tabs"
               >
@@ -493,7 +493,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       className={`flex-1 py-2 px-2 rounded-lg transition-all cursor-pointer ${
                         on
                           ? 'bg-white shadow-[inset_0_-3px_0_#f59e0b,0_1px_4px_rgba(0,0,0,0.1)]'
-                          : 'hover:bg-white/50'
+                          : 'hover:bg-stone-100'
                       }`}
                     >
                       <div className={`text-sm md:text-base font-extrabold ${on ? 'text-stone-950' : 'text-stone-500'}`}>{label}</div>

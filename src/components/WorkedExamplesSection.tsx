@@ -62,8 +62,8 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
             >
               {/* Title & Example Number */}
               <div className="flex items-start justify-between gap-2 mb-1.5">
-                <h3 className="font-bold text-[17px] leading-snug text-[#3D0C02]">
-                  <span className="text-[#3D0C02]">{ex.number}.</span> {ex.title || 'Жишээ'}
+                <h3 className="font-bold text-[17px] leading-snug text-stone-950">
+                  <span>{ex.number}.</span> {ex.title || 'Жишээ'}
                 </h3>
 
                 {/* Edit & Delete actions */}
@@ -118,8 +118,8 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
 
               {/* Final Answer */}
               <div className="flex flex-wrap items-baseline gap-2 text-[15px]">
-                <span className="font-bold text-stone-900 print:text-black">Хариу:</span>
-                <span className="font-semibold text-stone-900 print:text-black">
+                <span className="font-bold text-emerald-700">Хариу:</span>
+                <span className="font-semibold text-emerald-700">
                   <MathRenderer content={ex.answer} className="inline" />
                 </span>
               </div>

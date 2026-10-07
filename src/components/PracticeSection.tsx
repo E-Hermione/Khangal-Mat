@@ -114,7 +114,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                 {/* Question header */}
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <div className="flex items-baseline gap-2">
-                    <span className="font-bold text-[17px] text-[#3D0C02]">{item.number}.</span>
+                    <span className="font-bold text-[17px] text-stone-950">{item.number}.</span>
                     <span className="text-xs text-stone-400 print:text-stone-700">
                       {diff.label}
                     </span>
