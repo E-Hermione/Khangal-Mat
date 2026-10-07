@@ -347,8 +347,6 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   );
 
   // The lesson itself shows (not a locked or hidden notice), so its tabs show in the header
-  // Short line under each lesson tab
-  const TAB_HINT = { theory: 'Дүрэм, тодорхойлолт', examples: 'Бодсон жишээ', practice: 'Бие даан бодох' } as const;
   const parentTitle = topic.parentId ? allTopicMetas().find((t) => t.id === topic.parentId)?.title : undefined;
   const showLesson = !(planGate && planGate !== 'open') && (isAdmin || planOpen || (accessMode !== 'hidden' && accessMode !== 'locked'));
 
@@ -467,16 +465,16 @@ export const TopicPage: React.FC<TopicPageProps> = ({
         {showLesson && (() => {
           const tabs = (
             [
-              ['theory', 'Онол', mainTopic.theory.length, (isAdmin && selection.theory) || (!isAdmin && isTheoryAllowed)],
+              ['theory', 'Дүрэм, тодорхойлолт', mainTopic.theory.length, (isAdmin && selection.theory) || (!isAdmin && isTheoryAllowed)],
               ['examples', 'Жишээ', mainTopic.examples.length, (isAdmin && selection.examples) || (!isAdmin && isExamplesAllowed)],
-              ['practice', 'Дасгал', mainTopic.practice.length, (isAdmin && selection.practice) || (!isAdmin && isPracticeAllowed)],
+              ['practice', 'Бие даан бодох дасгал', mainTopic.practice.length, (isAdmin && selection.practice) || (!isAdmin && isPracticeAllowed)],
             ] as const
           ).filter(([, , , shown]) => shown);
           if (tabs.length > 0 && !tabs.some(([key]) => key === lessonTab)) setTimeout(() => setLessonTab(tabs[0][0]));
           return (
             tabs.length > 0 && (
               <div
-                className="flex gap-1.5 py-1.5 px-4 md:px-6 lg:px-8 -mx-4 md:-mx-6 lg:-mx-8 mb-4 bg-[#3D0C02] no-print"
+                className="flex px-4 md:px-6 lg:px-8 -mx-4 md:-mx-6 lg:-mx-8 mb-4 bg-stone-200 no-print"
                 role="tablist"
                 data-testid="lesson-tabs"
               >
@@ -489,14 +487,11 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       role="tab"
                       aria-selected={on}
                       onClick={() => setLessonTab(key)}
-                      className={`flex-1 py-2 px-2 rounded-lg transition-all cursor-pointer ${
-                        on
-                          ? 'bg-white shadow-[inset_0_-3px_0_#f59e0b,0_1px_4px_rgba(0,0,0,0.1)]'
-                          : 'hover:bg-white/10'
+                      className={`flex-1 py-3 px-2 text-sm md:text-base font-extrabold transition-colors cursor-pointer ${
+                        on ? 'text-[#3D0C02]' : 'text-stone-400 hover:text-stone-600'
                       }`}
                     >
-                      <div className={`text-sm md:text-base font-extrabold ${on ? 'text-stone-950' : 'text-white'}`}>{label}</div>
-                      <div className={`text-[11px] md:text-xs mt-0.5 hidden sm:block ${on ? 'text-stone-400' : 'text-white/60'}`}>{TAB_HINT[key]}</div>
+                      {label}
                     </button>
                   );
                 })}
