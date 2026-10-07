@@ -1,7 +1,7 @@
 import React from 'react';
 import { WorkedExample } from '../types';
 import { MathRenderer } from './MathRenderer';
-import { Lightbulb, Plus, Edit2, Trash2 } from 'lucide-react';
+import { ArrowRight, Lightbulb, Plus, Edit2, Trash2 } from 'lucide-react';
 import { LessonSectionHeader } from './LessonSectionHeader';
 
 interface WorkedExamplesSectionProps {
@@ -60,16 +60,14 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
         <div
           className={
             twoColumns
-              ? 'grid md:grid-cols-2 gap-x-10 print:grid-cols-2 print:gap-x-6'
-              : 'divide-y divide-stone-200 print:divide-y-0 print:space-y-4'
+              ? 'grid md:grid-cols-2 gap-5 print:grid-cols-2 print:gap-4'
+              : 'space-y-5 print:space-y-4'
           }
         >
           {examples.map((ex, idx) => (
             <div
               key={ex.id || ex.number || idx}
-              className={`avoid-break relative group print:py-0 ${
-                twoColumns ? 'py-6 border-b border-stone-200 print:border-0' : 'py-7 first:pt-0 last:pb-0'
-              }`}
+              className="avoid-break relative group rounded-2xl border border-stone-200 bg-white p-5 md:p-6 print:p-3"
             >
               {/* Title & Example Number */}
               <div className="flex items-start justify-between gap-2 mb-3">
@@ -110,27 +108,39 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
                 )}
               </div>
 
-              {/* Step-by-step Solution */}
-              <div className="mb-3">
-                <ol className="space-y-2 text-[15px] text-stone-700 print:text-black">
-                  {ex.solutionSteps.map((step, sIdx) => (
-                    <li key={sIdx} className="flex gap-3 leading-relaxed">
-                      <span className="w-4 text-stone-400 font-semibold shrink-0 print:text-black">{sIdx + 1}</span>
-                      <div className="min-w-0">
-                        <MathRenderer content={step} className="inline" />
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-
-              {/* Final Answer */}
-              <div className="flex flex-wrap items-baseline gap-2 text-[15px]">
-                <span className="font-bold text-emerald-700">Хариу:</span>
-                <span className="font-semibold text-emerald-700">
-                  <MathRenderer content={ex.answer} className="inline" />
-                </span>
-              </div>
+              {/* Solution steps as boxes joined by arrows; the last box ends with the answer */}
+              {(() => {
+                const steps = ex.solutionSteps || [];
+                const answer = (
+                  <>
+                    {steps.length > 0 && ' '}Иймд хариу{' '}
+                    <span className="font-semibold text-amber-700 print:text-black">
+                      <MathRenderer content={ex.answer} className="inline" />
+                    </span>{' '}
+                    байна.
+                  </>
+                );
+                const boxes = steps.length ? steps : [''];
+                return (
+                  <div className="flex flex-wrap items-stretch gap-2 md:pl-8 text-[15px] text-stone-700 print:text-black leading-relaxed">
+                    {boxes.map((step, sIdx) => (
+                      <React.Fragment key={sIdx}>
+                        {sIdx > 0 && (
+                          <span className="self-center w-7 h-7 rounded-full border border-stone-200 bg-white flex items-center justify-center text-amber-700 shrink-0">
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </span>
+                        )}
+                        <div className="flex-1 min-w-[180px] rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 flex items-center">
+                          <div>
+                            {step && <MathRenderer content={step} className="inline" />}
+                            {sIdx === boxes.length - 1 && ex.answer && answer}
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           ))}
         </div>
