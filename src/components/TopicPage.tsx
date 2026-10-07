@@ -362,7 +362,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
         <div className="text-xs text-stone-500 mb-2">
           {/* Grade › category › parent topic (for a subtopic) › this lesson */}
           <nav className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5 font-medium">
-            <span className="font-bold text-stone-800">{topic.grade}-р анги</span>
+            <span className="font-bold text-stone-800">{viewerGrade}-р анги</span>
             <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
             <span>{topic.category}</span>
             {parentTitle && (
@@ -544,7 +544,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
               <div className="space-y-1">
                 <div className="flex items-center space-x-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
                   <Award className="w-4 h-4" />
-                  <span>Шалгалтын төв • {topic.grade}-р анги</span>
+                  <span>Шалгалтын төв • {viewerGrade}-р анги</span>
                 </div>
                 <h3 className="text-sm md:text-base font-black text-white">
                   «{topic.title}» - Анхан, Үндсэн, Ахисан 3 шалгалт
