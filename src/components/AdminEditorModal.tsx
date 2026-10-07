@@ -518,8 +518,8 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
               <div className="sticky -top-4 md:-top-6 z-10 bg-white py-2 border-b border-stone-200 space-y-2">
     <div className="flex items-center justify-between">
                   <CheckOption
-                    checked={!!topic.examplesTwoColumns}
-                    onChange={(on) => setTopic({ ...topic, examplesTwoColumns: on || undefined })}
+                    checked={topic.examplesTwoColumns !== false}
+                    onChange={(on) => setTopic({ ...topic, examplesTwoColumns: on ? undefined : false })}
                     label="Жишээг 2 эгнээгээр харуулах"
                   />
                   <button

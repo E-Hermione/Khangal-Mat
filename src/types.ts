@@ -73,7 +73,7 @@ export interface TestPackage {
 
 export interface TopicPackage {
   id: string;
-  // Show the worked examples in two columns (chosen per topic by the admin)
+  // Worked examples in two columns unless the admin turns it off (false)
   examplesTwoColumns?: boolean;
   grade: GradeNumber;
   visibleGrades?: GradeNumber[]; // Support displaying in multiple grades (6, 7, 8, etc.)
