@@ -466,7 +466,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   type="button"
                   onClick={() => {
                     onSelectView(key);
-                    onCloseMobile();
+                    // Lessons: the menu stays open on phones so a lesson is picked from it (that closes it)
+                    if (key !== 'topics') onCloseMobile();
                   }}
                   className={`h-[60px] px-1 pt-2.5 rounded-xl flex flex-col items-center justify-start gap-1 transition-all cursor-pointer ${
                     active
