@@ -108,20 +108,11 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
                 )}
               </div>
 
-              {/* Solution steps as boxes joined by arrows; the last box ends with the answer */}
+              {/* Solution steps as boxes joined by arrows, the answer below them */}
               {(() => {
-                const steps = ex.solutionSteps || [];
-                const answer = (
-                  <>
-                    {steps.length > 0 && ' '}Иймд хариу{' '}
-                    <span className="font-semibold text-amber-700 print:text-black">
-                      <MathRenderer content={ex.answer} className="inline" />
-                    </span>{' '}
-                    байна.
-                  </>
-                );
-                const boxes = steps.length ? steps : [''];
+                const boxes = ex.solutionSteps || [];
                 return (
+                  <>
                   <div className="flex flex-wrap items-stretch gap-2 md:pl-8 text-[15px] text-stone-700 print:text-black leading-relaxed">
                     {boxes.map((step, sIdx) => (
                       <React.Fragment key={sIdx}>
@@ -132,13 +123,19 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
                         )}
                         <div className="flex-1 min-w-[180px] rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 flex items-center">
                           <div>
-                            {step && <MathRenderer content={step} className="inline" />}
-                            {sIdx === boxes.length - 1 && ex.answer && answer}
+                            <MathRenderer content={step} className="inline" />
                           </div>
                         </div>
                       </React.Fragment>
                     ))}
                   </div>
+                  {ex.answer && (
+                    <div className="mt-3 md:pl-8 text-[15px] text-stone-800 print:text-black">
+                      <span className="font-bold text-stone-950">Хариу:</span>{' '}
+                      <MathRenderer content={ex.answer} className="inline" />
+                    </div>
+                  )}
+                  </>
                 );
               })()}
             </div>
