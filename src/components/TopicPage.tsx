@@ -381,11 +381,12 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           </h1>
 
           {isAdmin && onOpenAdmin && (
-            <div className="flex items-center gap-1.5 shrink-0">
+            // Stays at the bottom right of the screen while scrolling
+            <div className="fixed bottom-5 right-5 z-30 no-print">
             <button
               type="button"
               onClick={onOpenAdmin}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:text-stone-950 bg-white hover:bg-stone-50 border border-stone-200 rounded-lg transition-all cursor-pointer shadow-2xs shrink-0"
+              className="inline-flex items-center space-x-1.5 px-4 py-2.5 text-sm font-semibold text-stone-700 hover:text-stone-950 bg-white hover:bg-stone-50 border border-stone-200 rounded-xl transition-all cursor-pointer shadow-lg shrink-0"
               title="Сэдвийн агуулга, онол, дасгал, шалгалтыг засах"
             >
               <Pencil className="w-3.5 h-3.5 text-stone-500" />
