@@ -474,7 +474,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           return (
             tabs.length > 0 && (
               <div
-                className="flex p-1.5 mb-4 rounded-2xl bg-stone-200 no-print"
+                className="flex gap-1.5 p-1.5 mb-4 rounded-2xl bg-stone-200 no-print"
                 role="tablist"
                 data-testid="lesson-tabs"
               >
@@ -487,8 +487,8 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       role="tab"
                       aria-selected={on}
                       onClick={() => setLessonTab(key)}
-                      className={`flex-1 py-3 px-2 text-sm md:text-base font-extrabold transition-colors cursor-pointer ${
-                        on ? 'text-[#3D0C02]' : 'text-stone-400 hover:text-stone-600'
+                      className={`flex-1 py-3 px-2 rounded-lg border-2 text-sm md:text-base font-extrabold transition-colors cursor-pointer ${
+                        on ? 'border-stone-800 text-[#3D0C02]' : 'border-stone-300 text-stone-400 hover:text-stone-600'
                       }`}
                     >
                       {label}
