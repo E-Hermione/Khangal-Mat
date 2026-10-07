@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { theoryNumbers } from '../utils/theoryBlocks';
 import { TheoryBlocksEditor } from './TheoryBlocksEditor';
 import { TopicPackage, GradeNumber, TheoryRule, WorkedExample, PracticeProblem, TestQuestion } from '../types';
 import { storageService } from '../services/storageService';
@@ -57,6 +58,8 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   const [topic, setTopic] = useState<TopicPackage>({ ...activeTopic });
   const [activeTab, setActiveTab] = useState<'info' | 'theory' | 'examples' | 'practice' | 'tests' | 'visibility'>('theory');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  // Theory tab: the one theory item being edited
+  const [theoryIdx, setTheoryIdx] = useState(0);
 
   // Sync state when activeTopic changes
   React.useEffect(() => {
@@ -116,12 +119,14 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       badge: 'Дүрэм',
     };
     setTopic({ ...topic, theory: [...(topic.theory || []), newRule] });
+    setTheoryIdx(topic.theory?.length || 0);
   };
 
   const removeTheoryRule = (index: number) => {
     const updated = [...(topic.theory || [])];
     updated.splice(index, 1);
     setTopic({ ...topic, theory: updated });
+    setTheoryIdx(Math.max(0, Math.min(index, updated.length - 1)));
   };
 
   const addWorkedExample = () => {
@@ -352,9 +357,10 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           {/* 1. THEORY TAB */}
           {activeTab === 'theory' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-stone-200">
+              {/* Stays on screen while scrolling */}
+              <div className="sticky -top-4 md:-top-6 z-10 bg-white flex items-center justify-between py-2 border-b border-stone-200">
                 <span className="text-xs text-stone-500 font-medium">
-                  LaTeX математик кодыг бичихэд бодит үр дүнг шууд урьдчилан харуулна.
+                  Зүүн талаас засах онолоо сонгоно уу.
                 </span>
                 <button
                   type="button"
@@ -366,8 +372,28 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-4">
-                {topic.theory.map((rule, idx) => (
+              <div className="flex gap-4 items-start">
+                {/* 1, 1.1, 1.2, 2, …: pick the one to edit */}
+                <nav className="w-40 md:w-48 shrink-0 sticky top-12 space-y-0.5 max-h-[60vh] overflow-y-auto">
+                  {(() => {
+                    const numbers = theoryNumbers(topic.theory || []);
+                    return (topic.theory || []).map((rule, idx) => (
+                      <button
+                        key={rule.id || idx}
+                        type="button"
+                        onClick={() => setTheoryIdx(idx)}
+                        className={`w-full text-left px-2 py-1.5 rounded-lg text-xs cursor-pointer truncate ${rule.sub ? 'pl-5' : ''} ${
+                          idx === Math.min(theoryIdx, topic.theory.length - 1) ? 'bg-stone-900 text-white font-bold' : 'text-stone-700 hover:bg-stone-100'
+                        }`}
+                        title={rule.title}
+                      >
+                        <span className="font-bold">{numbers[idx]}.</span> {rule.title}
+                      </button>
+                    ));
+                  })()}
+                </nav>
+              <div className="flex-1 min-w-0 space-y-4">
+                {topic.theory.map((rule, idx) => idx !== Math.min(theoryIdx, topic.theory.length - 1) ? null : (
                   <div key={rule.id || idx} className="p-4 border border-stone-200 rounded-xl bg-stone-50/60 space-y-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 grid grid-cols-3 gap-2">
@@ -438,6 +464,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                     />
                   </div>
                 ))}
+              </div>
               </div>
             </div>
           )}
