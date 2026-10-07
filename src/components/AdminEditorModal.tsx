@@ -16,7 +16,6 @@ import {
   PencilLine,
   Award,
   CheckCircle2,
-  ShieldCheck,
   Upload,
   ArrowUp,
   ArrowDown,
@@ -58,7 +57,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   onLogout,
 }) => {
   const [topic, setTopic] = useState<TopicPackage>({ ...activeTopic });
-  const [activeTab, setActiveTab] = useState<'info' | 'theory' | 'examples' | 'practice' | 'tests' | 'visibility'>('theory');
+  const [activeTab, setActiveTab] = useState<'info' | 'theory' | 'examples' | 'practice' | 'tests'>('theory');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   // Theory tab: the one theory item being edited
   const [theoryIdx, setTheoryIdx] = useState(0);
@@ -328,18 +327,6 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           >
             <Award className="w-3.5 h-3.5" />
             <span>Сорил 1, 2, 3</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('visibility')}
-            className={`shrink-0 whitespace-nowrap py-3 px-3.5 border-b-2 transition-colors flex items-center space-x-1.5 cursor-pointer ${
-              activeTab === 'visibility'
-                ? 'border-amber-600 text-amber-900 bg-white'
-                : 'border-transparent text-stone-600 hover:text-stone-900'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
-            <span>Хэрэглэгчийн харагдах эрх</span>
           </button>
           <button
             type="button"
@@ -757,25 +744,6 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
             </div>
           )}
 
-          {/* 5. VISIBILITY TAB (Moved from main screen into Admin Management) */}
-          {activeTab === 'visibility' && (
-            <div className="space-y-4 max-w-3xl">
-              <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-                <h3 className="font-bold text-sm text-stone-900 mb-1">
-                  Хэрэглэгчдэд харагдах эрхийн удирдлага
-                </h3>
-                <p className="text-xs text-stone-600 leading-relaxed">
-                  Хүсэлтээр орсон энгийн хэрэглэгчдэд «{topic.title}» хичээлээс ямар хэсгүүд харагдахыг доорх сонголтуудаар тохируулна. Энэ тохиргоо үндсэн дэлгэцэнд давхардахгүй, зөвхөн энэ удирдлагын хэсэгт байрлана.
-                </p>
-              </div>
-
-              <UserVisibilityPanel
-                topicId={topic.id}
-                topicTitle={topic.title}
-                onPreviewAsUser={onClose}
-              />
-            </div>
-          )}
 
           {/* 6. INFO TAB */}
           {activeTab === 'info' && (
