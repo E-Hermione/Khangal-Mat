@@ -115,7 +115,7 @@ export const LearningPlanView: React.FC<LearningPlanViewProps> = ({ onOpenTopic,
                   {done ? <Check className="w-4 h-4" /> : i + 1}
                 </span>
                 <div className="flex-1 min-w-[180px]">
-                  <div className="font-bold text-stone-900 flex items-center gap-2">
+                  <div className="font-semibold text-stone-900 flex items-center gap-2">
                     <span className="min-w-0">{meta.title}</span>
                     {done && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-black">
