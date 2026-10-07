@@ -48,6 +48,11 @@ import {
   UserCheck,
   UserX,
   Presentation,
+  UserPlus,
+  CalendarX,
+  UserSearch,
+  LogIn,
+  Smartphone,
 } from 'lucide-react';
 
 export default function App() {
@@ -55,7 +60,11 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(isFirebaseConfigured);
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
-  const [previewAsUser, setPreviewAsUser] = useState<false | 'paid' | 'unpaid'>(false);
+  // The admin sees the site as: a paid / unpaid / new / expired student, a chosen student (read only) or a guest
+  const [previewAsUser, setPreviewAsUser] = useState<false | 'paid' | 'unpaid' | 'new' | 'expired' | 'student' | 'guest'>(false);
+  const [previewStudentId, setPreviewStudentId] = useState('');
+  // Phone width: the site in a narrow frame
+  const [phoneView, setPhoneView] = useState(false);
   // General view: the admin's rights without the editing buttons (signing in as "Ерөнхий" locks it on)
   const [generalView, setGeneralView] = useState<boolean>(() => isGeneralLogin());
   const generalLocked = generalView && isGeneralLogin();
@@ -208,6 +217,12 @@ export default function App() {
   }, [openSession]);
 
   const hasPlan = learningPlan.hasPlan();
+  // The student the admin views as (by user ID), and whose data the student pages show
+  const previewStudent =
+    currentUser?.role === 'admin' && previewAsUser === 'student' && previewStudentId.trim()
+      ? cloud.getUsers().find((u) => u.userId?.toUpperCase() === previewStudentId.trim().toUpperCase()) || null
+      : null;
+  const viewUid = previewAsUser === 'student' ? previewStudent?.uid : getFirebaseAuth().currentUser?.uid;
   // The admin's "view as user" mode shows the student pages, using the admin's own (test) data
   const isAdminPreview = currentUser?.role === 'admin' && previewAsUser;
   // Grade of the "paid" preview; the admin changes it next to the view switcher (kept on this device)
@@ -230,10 +245,20 @@ export default function App() {
   useEffect(() => {
     if (currentUser?.role !== 'admin') return;
     const uid = getFirebaseAuth().currentUser?.uid;
-    if (previewAsUser && uid) {
-      // Previewed as a student: paid in the grade the admin set (10th by default), unpaid in 9th
+    if (previewAsUser === 'student') {
+      // A chosen student's own data, read only (the security rules refuse the admin's writes there)
+      if (!previewStudent) {
+        stopLearningPlan();
+        return;
+      }
+      const g = (previewStudent.grades?.[0] ?? null) as GradeNumber | null;
+      startLearningPlan(previewStudent.uid, previewStudent.userId, g, null);
+      if (g) setSelectedGrade(g);
+      setActiveView('home');
+    } else if (previewAsUser && previewAsUser !== 'guest' && uid) {
+      // Previewed as a student: paid in the grade the admin set (10th by default), others in 9th
       const previewGrade: GradeNumber = previewAsUser === 'paid' ? paidPreviewGrade : 9;
-      startLearningPlan(uid, currentUser.userId || 'ADMIN-01', previewGrade, previewAsUser === 'paid');
+      startLearningPlan(uid, currentUser.userId || 'ADMIN-01', previewGrade, previewAsUser === 'paid', previewAsUser === 'new');
       setSelectedGrade(previewGrade);
       const first = catalogTopics(previewGrade)[0];
       if (first) setSelectedTopicId(first.id);
@@ -242,7 +267,7 @@ export default function App() {
       stopLearningPlan();
       setActiveView((v) => (v === 'plan' || v === 'placement' || v === 'mistakes' ? 'home' : v));
     }
-  }, [previewAsUser, paidPreviewGrade, currentUser?.role]);
+  }, [previewAsUser, paidPreviewGrade, currentUser?.role, previewStudent?.uid]);
   // The home page also shows under "Хичээл үзэх" until a lesson is picked
   const homeShown = activeView === 'home' || (activeView === 'topics' && !lessonChosen);
   const isStudent = (currentUser?.role !== 'admin' || isAdminPreview) && !!learningPlan.state.uid;
@@ -487,6 +512,23 @@ export default function App() {
     );
   }
 
+  if (currentUser.role === 'admin' && previewAsUser === 'guest') {
+    // Guest view: the sign-in page as a visitor sees it
+    return (
+      <>
+        <LoginView notice={null} onRegistered={reloadSession} />
+        <button
+          type="button"
+          onClick={() => setPreviewAsUser(false)}
+          className="fixed top-3 right-3 z-50 px-3 py-1.5 rounded-lg bg-stone-900 text-amber-400 text-xs font-bold shadow-lg cursor-pointer"
+          data-testid="guest-exit"
+        >
+          Зочны харагдац • Буцах
+        </button>
+      </>
+    );
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col font-sans text-stone-900 bg-stone-900 print:bg-white"
@@ -547,6 +589,10 @@ export default function App() {
                   ['general', 'Ерөнхий', 'Ерөнхий харагдац: админы эрхтэй, засах товчгүй', Presentation],
                   ['unpaid', 'Төлөөгүй', 'Төлбөр төлөөгүй хэрэглэгчээр харах', UserX],
                   ['paid', 'Төлсөн', 'Төлбөр төлсөн хэрэглэгчээр харах', UserCheck],
+                  ['new', 'Шинэ', 'Шинэ бүртгүүлсэн сурагчаар харах (түвшин тогтоох сорил өгөөгүй)', UserPlus],
+                  ['expired', 'Дууссан', 'Эрхийн хугацаа дууссан сурагчаар харах', CalendarX],
+                  ['student', 'Сурагч', 'Тодорхой сурагчаар харах (ID-гаар, зөвхөн харах)', UserSearch],
+                  ['guest', 'Зочин', 'Нэвтрээгүй зочноор харах', LogIn],
                 ] as const).map(([mode, , title, Icon]) => {
                   const active =
                     mode === 'admin'
@@ -560,7 +606,7 @@ export default function App() {
                       type="button"
                       onClick={() => {
                         setGeneralView(mode === 'general');
-                        setPreviewAsUser(mode === 'paid' || mode === 'unpaid' ? mode : false);
+                        setPreviewAsUser(mode === 'admin' || mode === 'general' ? false : mode);
                       }}
                       className={`p-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
                         active
@@ -579,6 +625,35 @@ export default function App() {
                     </button>
                   );
                 })}
+                {previewAsUser === 'student' && (
+                  <>
+                    <input
+                      value={previewStudentId}
+                      onChange={(e) => setPreviewStudentId(e.target.value)}
+                      list="preview-student-ids"
+                      placeholder="Сурагчийн ID"
+                      className="ml-0.5 mr-0.5 w-28 py-1 px-1.5 rounded-md border border-stone-600 bg-stone-900 text-[11px] font-bold text-stone-200 placeholder:text-stone-500"
+                      data-testid="preview-student-id"
+                    />
+                    <datalist id="preview-student-ids">
+                      {cloud.getUsers().map((u) => (
+                        <option key={u.uid} value={u.userId}>
+                          {u.fullName}
+                        </option>
+                      ))}
+                    </datalist>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPhoneView(true)}
+                  className="p-1.5 rounded-md text-stone-400 hover:text-white cursor-pointer"
+                  title="Утасны харагдац"
+                  aria-label="Утасны харагдац"
+                  data-testid="preview-phone"
+                >
+                  <Smartphone className="w-4 h-4" />
+                </button>
                 {previewAsUser === 'paid' && (
                   <select
                     value={paidPreviewGrade}
@@ -721,6 +796,19 @@ export default function App() {
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 md:p-6 lg:p-8 min-w-0">
+          {previewAsUser === 'expired' && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800 font-medium">
+              Таны хичээл үзэх эрхийн хугацаа {new Date(Date.now() - 86400000).toLocaleDateString()}-нд дууссан байна.
+              Сунгуулахын тулд админд хандана уу.
+            </div>
+          )}
+          {previewAsUser === 'student' && (
+            <div className="mb-4 p-3 bg-sky-50 border border-sky-200 rounded-xl text-sm text-sky-900 font-medium" data-testid="student-view-note">
+              {previewStudent
+                ? `${previewStudent.userId} (${previewStudent.fullName || ''}, ${previewStudent.grades?.[0] ? previewStudent.grades[0] + '-р анги' : 'анги бүртгэлгүй'}) сурагчийн харагдац. Зөвхөн харах: өөрчлөлт хадгалагдахгүй.`
+                : 'Дээрх талбарт сурагчийн ID-г оруулна уу.'}
+            </div>
+          )}
           {currentUser.role !== 'admin' && !hasPlan && userPermissionsService.isExpired(currentUser.userId) && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800 font-medium" data-testid="access-expired">
               Таны хичээл үзэх эрхийн хугацаа{' '}
@@ -760,7 +848,7 @@ export default function App() {
           {isStudent && learningPlan.isLoading() ? (
             <div className="text-center py-20 text-sm text-stone-500">Ачаалж байна...</div>
           ) : isStudent && activeView === 'placement' && learningPlan.canTakePlacement(placementGrade) ? (
-            <PlacementTestView key={placementGrade} uid={getFirebaseAuth().currentUser!.uid} grade={placementGrade} />
+            <PlacementTestView key={placementGrade} uid={viewUid!} grade={placementGrade} />
           ) : currentUser.role === 'admin' && generalView && !previewAsUser && homeShown ? (
             // General view: no student steps or cards on the home page
             <h1 className="max-w-5xl mx-auto text-2xl font-black text-stone-950" data-testid="general-home">
@@ -769,7 +857,7 @@ export default function App() {
           ) : (isStudent && (homeShown || activeView === 'placement')) ||
             (currentUser.role === 'admin' && !previewAsUser && homeShown) ? (
             <StudentHome
-              uid={getFirebaseAuth().currentUser?.uid}
+              uid={viewUid}
               currentUser={currentUser}
               editable={canEdit}
               onStartPlacement={(grade) => {
@@ -783,7 +871,7 @@ export default function App() {
             />
           ) : activeView === 'plan' && isStudent ? (
             <LearningPlanView
-              uid={getFirebaseAuth().currentUser!.uid}
+              uid={viewUid!}
               currentUser={currentUser}
               onOpenTopic={(topicId) => openPlanTopic(topicId, 'topics')}
               onOpenExam={(topicId) => openPlanTopic(topicId, 'exams')}
@@ -810,8 +898,8 @@ export default function App() {
               selectedGrade={selectedGrade}
               onSelectGrade={setSelectedGrade}
               isAdmin={currentUser?.role === 'admin' && !previewAsUser}
-              userId={currentUser?.userId}
-              uid={getFirebaseAuth().currentUser?.uid}
+              userId={previewAsUser === 'student' ? previewStudent?.userId : currentUser?.userId}
+              uid={viewUid}
               filter={canEdit ? 'all' : examFilter}
             />
           ) : currentTopic.id ? (
@@ -881,6 +969,27 @@ export default function App() {
         onToggleCopyProtection={handleToggleCopyProtection}
         isAdmin={currentUser?.role === 'admin'}
       />
+
+      {/* Phone view: the site at a phone's width (the admin switches views inside it too) */}
+      {phoneView && (
+        <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4" onClick={() => setPhoneView(false)}>
+          <div className="flex flex-col items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setPhoneView(false)}
+              className="self-end px-3 py-1 rounded-lg bg-stone-900 text-amber-400 text-xs font-bold cursor-pointer"
+            >
+              Хаах
+            </button>
+            <iframe
+              src={window.location.href}
+              title="Утасны харагдац"
+              className="bg-white rounded-[28px] border-[10px] border-stone-900 shadow-2xl"
+              style={{ width: 390 + 20, height: 'min(844px, calc(100vh - 80px))' }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

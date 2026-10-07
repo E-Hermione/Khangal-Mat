@@ -406,9 +406,20 @@ function notify() {
 }
 
 /** Starts for a signed-in student: their grade's placement test, their result and test scores. */
-export function startLearningPlan(uid: string, userId: string, grade: GradeNumber | null, paidOverride: boolean | null = null) {
+export function startLearningPlan(
+  uid: string,
+  userId: string,
+  grade: GradeNumber | null,
+  paidOverride: boolean | null = null,
+  // The admin's "new student" view: nothing taken yet, nothing loaded
+  fresh = false
+) {
   stopLearningPlan();
-  Object.assign(state, { uid, userId, grade, results: undefined, attempts: {}, lessons: {}, paidOverride });
+  Object.assign(state, { uid, userId, grade, results: fresh ? [] : undefined, attempts: {}, lessons: {}, paidOverride });
+  if (fresh) {
+    notify();
+    return;
+  }
   const db = getDb();
   const onError = (what: string) => (err: unknown) => {
     console.error(`${what} failed to load`, err);
