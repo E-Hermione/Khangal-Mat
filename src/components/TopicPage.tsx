@@ -463,8 +463,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
         </div>
       ) : (
         <>
-        <article className="print-container bg-white rounded-[28px] shadow-[0_20px_40px_-12px_rgba(17,24,39,0.18)] px-5 md:px-10 pt-6 pb-8 print:shadow-none print:rounded-none print:p-0">
-          {/* Tabs at the top of the lesson card: one part of the lesson at a time */}
+        {/* Tabs above the lesson card: one part of the lesson at a time */}
         {showLesson && (() => {
           const tabs = (
             [
@@ -477,7 +476,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           return (
             tabs.length > 0 && (
               <div
-                className="flex gap-1.5 p-1.5 mb-6 rounded-xl bg-stone-200 no-print"
+                className="flex gap-1.5 p-1.5 mb-4 rounded-2xl bg-stone-200 no-print"
                 role="tablist"
                 data-testid="lesson-tabs"
               >
@@ -505,6 +504,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
             )
           );
         })()}
+        <article className="print-container bg-white rounded-[28px] shadow-[0_20px_40px_-12px_rgba(17,24,39,0.18)] px-5 md:px-10 pt-6 pb-8 print:shadow-none print:rounded-none print:p-0">
           {/* Admin with nothing selected */}
           {isAdmin && !anyAdminSectionSelected && (
             <div className="py-16 text-center text-stone-400 border-2 border-dashed border-stone-200 rounded-xl my-4 no-print">
