@@ -96,12 +96,6 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
     { label: '≥', snippet: '\\ge ', desc: 'Их буюу тэнцүү' },
     { label: '≠', snippet: '\\neq ', desc: 'Тэнцүү биш' },
     { label: 'π', snippet: '\\pi ', desc: 'Пи тоо' },
-    { label: 'α', snippet: '\\alpha ', desc: 'Альфа' },
-    { label: 'β', snippet: '\\beta ', desc: 'Бета' },
-    { label: 'Δ', snippet: '\\Delta ', desc: 'Дельта / Дискриминант' },
-    { label: '∞', snippet: '\\infty ', desc: 'Хязгааргүй' },
-    { label: '$...$', snippet: '$x$', desc: 'Томьёоны хаалт' },
-    { label: '{...}', snippet: '\\begin{cases} x + y = 1 \\\\ x - y = 0 \\end{cases}', desc: 'Систем' },
   ];
 
   return (
