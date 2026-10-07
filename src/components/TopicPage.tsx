@@ -476,7 +476,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           return (
             tabs.length > 0 && (
               <div
-                className="flex gap-1.5 p-1.5 mb-4 rounded-2xl bg-[#3D0C02] no-print"
+                className="flex gap-1.5 py-1.5 px-4 md:px-6 lg:px-8 -mx-4 md:-mx-6 lg:-mx-8 mb-4 bg-[#3D0C02] no-print"
                 role="tablist"
                 data-testid="lesson-tabs"
               >
