@@ -285,6 +285,7 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
                   return (
                     <tr
                       key={topic.id}
+                      id={`exam-row-${topic.id}`}
                       className="hover:bg-amber-50/40 transition-colors group"
                     >
                       {/* # Number */}

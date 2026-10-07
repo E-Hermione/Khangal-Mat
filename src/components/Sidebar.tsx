@@ -27,7 +27,7 @@ import {
   Trash2,
   Pencil,
 } from 'lucide-react';
-import { catalogTopics, deleteTopics, learningPlan, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
+import { catalogTopics, deleteTopics, learningPlan, lessonSequence, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
 import { ProgressRing } from './ProgressRing';
 import { ExamFilter, HomePanel } from './SidebarPanels';
 import { getFirebaseAuth } from '../services/firebase';
@@ -574,8 +574,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
         )}
-        {/* Students: wrong answers on topic tests, to solve again */}
-        {showExamNav && !isAdmin && learningPlan.state.uid && (
+        {/* Students: wrong answers on topic tests, to solve again (in their plan only) */}
+        {showExamNav && planMode && !isAdmin && learningPlan.state.uid && (
           <button
             type="button"
             onClick={() => {
@@ -652,7 +652,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 );
               })}
             </div>
-          ) : showExamNav ? null : (
+          ) : showExamNav ? (
+            // All of the grade's topic tests, in topic list order; a click shows that row
+            <div className="space-y-0.5" data-testid="exam-topic-list">
+              {lessonSequence(selectedGrade).map((id, i) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    if (activeView !== 'exams') onSelectView?.('exams');
+                    setTimeout(() => document.getElementById(`exam-row-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+                    onCloseMobile();
+                  }}
+                  className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-stone-300 hover:bg-stone-800/60 hover:text-white cursor-pointer truncate"
+                >
+                  <span className="text-stone-500 font-bold mr-1.5">{i + 1}.</span>
+                  {topicMeta(id).title}
+                </button>
+              ))}
+            </div>
+          ) : (
           <>
 
           {canAddTopics &&
