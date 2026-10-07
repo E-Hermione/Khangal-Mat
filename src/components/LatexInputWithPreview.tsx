@@ -14,6 +14,9 @@ interface LatexInputWithPreviewProps {
   helpText?: string;
 }
 
+// Toolbar marker for a tab-wide space
+const TAB = '<tab>';
+
 export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
   label,
   value,
@@ -71,6 +74,11 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
 
     const start = input.selectionStart || 0;
     const end = input.selectionEnd || 0;
+    // A tab-wide space: inside a formula as is, in plain text wrapped as a formula
+    if (snippet === TAB) {
+      const insideMath = (value.substring(0, start).match(/\$/g) || []).length % 2 === 1;
+      snippet = insideMath ? '\\qquad ' : '$\\qquad$';
+    }
     const before = value.substring(0, start);
     const after = value.substring(end);
     const newValue = before + snippet + after;
@@ -96,6 +104,7 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
     { label: '≥', snippet: '\\ge ', desc: 'Их буюу тэнцүү' },
     { label: '≠', snippet: '\\neq ', desc: 'Тэнцүү биш' },
     { label: 'π', snippet: '\\pi ', desc: 'Пи тоо' },
+    { label: 'Таб', snippet: TAB, desc: 'Таб шиг зай авах' },
     { label: '→', snippet: ' \\;\\rightarrow\\; ', desc: 'Сум' },
   ];
 
