@@ -12,3 +12,10 @@
   хуваариасаа их», never «$\frac{9}{8}: 9>8$» or «зураасны доорх тоо». Each solution states its rule in bold.
   A sentence never ends in a formula followed by «:» («… $7{,}2 = 7{,}20$:»); it ends in words («… гэж бичээд хасна.»).
   A label before its content («Зууны орон: $0 + 5 = 5$») is fine.
+- Every topic has at least 10 worked examples (all different, solutions explained in detail), 15 practice
+  problems and 15 questions in each test. The general view's home page shows which topics fall short.
+- Mixed numbers are added and subtracted in one line («$3\frac{2}{7} + 1\frac{3}{7} = 4\frac{5}{7}$»), never with
+  the whole parts worked out on their own («$3 + 1 = 4$»). The same for column sums: only a carry or a borrow
+  is explained, not each digit.
+- Tests and practice use only what this topic's theory and examples teach, or earlier topics of the same
+  grade. Nothing from later topics or higher grades (no sequences with $a_n$ in grade 6).
