@@ -127,7 +127,7 @@ async function recordTopicSaveNow(before: TopicPackage, after: TopicPackage, mod
     return;
   }
   const any = await getDocs(query(versions(after.id), limit(1)));
-  if (any.empty) await addVersion(before, 'original', false);
+  if (any.empty && !isEmptyLesson(before)) await addVersion(before, 'original', false);
   await addVersion(after, 'import', true);
 }
 

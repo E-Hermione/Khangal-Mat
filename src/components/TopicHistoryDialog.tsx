@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Copy, Eye, History, RotateCcw, Trash2, X } from 'lucide-react';
 import { TopicPackage } from '../types';
-import { deleteTopicVersion, ensureCurrentVersion, loadTopicVersions, partHash, topicJson, TopicVersion } from '../services/topicHistory';
+import { deleteTopicVersion, ensureCurrentVersion, loadTopicVersions, partHash, SaveMode, topicJson, TopicVersion } from '../services/topicHistory';
 import { backdropClose } from '../utils/backdrop';
 
 const KIND_LABEL: Record<TopicVersion['kind'], string> = {
@@ -70,13 +70,23 @@ export const TopicHistoryDialog: React.FC<{
   onSwitchPart: (key: PartKey, value: unknown) => void;
   // The last version, the one in use, was deleted: the lesson is emptied on the site
   onLessonDeleted: () => void;
+  // JSON edited in the viewer goes on the site (true when it did)
+  onApplyJson: (data: unknown, part: 'all' | PartKey, mode: SaveMode) => boolean;
   onClose: () => void;
-}> = ({ topic, saved, onSwitch, onSwitchPart, onLessonDeleted, onClose }) => {
+}> = ({ topic, saved, onSwitch, onSwitchPart, onLessonDeleted, onApplyJson, onClose }) => {
   const [tab, setTab] = useState<Tab>('all');
   const [list, setList] = useState<TopicVersion[] | null>(null);
   const [error, setError] = useState(false);
   // The JSON being viewed in full
-  const [viewing, setViewing] = useState<{ title: string; text: string } | null>(null);
+  // The JSON being viewed (and edited); `part` and `current` say where an edit goes
+  const [viewing, setViewing] = useState<{ title: string; text: string; part: 'all' | PartKey; current: boolean } | null>(null);
+  const [draft, setDraft] = useState('');
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const view = (v: { title: string; text: string; part: 'all' | PartKey; current: boolean }) => {
+    setViewing(v);
+    setDraft(v.text);
+    setJsonError(null);
+  };
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     ensureCurrentVersion(saved)
@@ -135,7 +145,7 @@ export const TopicHistoryDialog: React.FC<{
                   </div>
                   <button
                     type="button"
-                    onClick={() => setViewing({ title: `${part.label} • ${when(pv.at)}`, text: JSON.stringify(pv.value, null, 2) })}
+                    onClick={() => view({ title: `${part.label} • ${when(pv.at)}`, text: JSON.stringify(pv.value, null, 2), part: tab, current: pv.hash === currentHash })}
                     className="p-1.5 rounded-md text-stone-500 hover:text-stone-900 hover:bg-stone-100 cursor-pointer"
                     title="JSON-ийг бүтнээр нь харах"
                     aria-label="Харах"
@@ -181,7 +191,7 @@ export const TopicHistoryDialog: React.FC<{
                 </div>
                 <button
                   type="button"
-                  onClick={() => setViewing({ title: `${when(v.updatedAt ?? v.savedAt)} • ${KIND_LABEL[v.kind]}`, text: topicJson(v.topic) })}
+                  onClick={() => view({ title: `${when(v.updatedAt ?? v.savedAt)} • ${KIND_LABEL[v.kind]}`, text: topicJson(v.topic), part: 'all', current: !!v.current })}
                   className="p-1.5 rounded-md text-stone-500 hover:text-stone-900 hover:bg-stone-100 cursor-pointer"
                   title="JSON-ийг бүтнээр нь харах"
                   aria-label="Харах"
@@ -242,7 +252,7 @@ export const TopicHistoryDialog: React.FC<{
               <button
                 type="button"
                 onClick={() => {
-                  navigator.clipboard?.writeText(viewing.text).then(() => {
+                  navigator.clipboard?.writeText(draft).then(() => {
                     setCopied(true);
                     setTimeout(() => setCopied(false), 1500);
                   });
@@ -252,13 +262,40 @@ export const TopicHistoryDialog: React.FC<{
                 <Copy className="w-3 h-3" />
                 {copied ? 'Хууллаа' : 'Хуулах'}
               </button>
+              <button
+                type="button"
+                disabled={draft === viewing.text}
+                onClick={() => {
+                  let data: unknown;
+                  try {
+                    data = JSON.parse(draft);
+                  } catch (e) {
+                    setJsonError(`JSON алдаатай: ${(e as Error).message}`);
+                    return;
+                  }
+                  // The version in use is edited in place; an older one goes on the site as a new version
+                  if (onApplyJson(data, viewing.part, viewing.current ? 'edit' : 'import')) setViewing(null);
+                }}
+                className="px-2.5 py-1 rounded-md bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-default text-stone-950 text-[11px] font-bold cursor-pointer"
+                data-testid="json-save"
+              >
+                Хадгалах
+              </button>
               <button type="button" onClick={() => setViewing(null)} className="p-1 text-stone-400 hover:text-white cursor-pointer" aria-label="Хаах">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <pre className="flex-1 overflow-auto p-4 text-[11px] leading-relaxed font-mono text-stone-800 bg-stone-50 whitespace-pre-wrap break-words select-text">
-              {viewing.text}
-            </pre>
+            {jsonError && <div className="px-4 py-1.5 text-[11px] font-bold text-red-700 bg-red-50 border-b border-red-100">{jsonError}</div>}
+            <textarea
+              value={draft}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                setJsonError(null);
+              }}
+              spellCheck={false}
+              className="flex-1 overflow-auto p-4 text-[11px] leading-relaxed font-mono text-stone-800 bg-stone-50 resize-none outline-none"
+              data-testid="json-editor"
+            />
           </div>
         </div>
       )}

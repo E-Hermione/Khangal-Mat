@@ -122,43 +122,50 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
     setImportMenu(false);
     fileInputRef.current?.click();
   };
+  // Puts lesson content (from a file, or JSON edited in the history) on the site at once. Only
+  // the chosen part, or every part present when `part` is 'all', is replaced.
+  const applyContent = (data: any, part: ImportPart, mode: SaveMode, source: string): boolean => {
+    const pre = (id: string) => (id.startsWith(`${topic.id}-`) ? id : `${topic.id}-${id}`);
+    const withIds = <T extends { id: string }>(list: T[] = []) => list.map((x) => ({ ...x, id: pre(x.id) }));
+    const test = (t: TopicPackage['test1'], n: 1 | 2 | 3) => ({ ...t, id: pre(t.id || `test${n}`), testNumber: n, questions: withIds(t.questions) });
+    const next = { ...topic };
+    const done: string[] = [];
+    for (const key of part === 'all' ? IMPORT_KEYS : [part]) {
+      // The part on its own: a list for theory/examples/practice, the test object for a test
+      const own = part !== 'all' && (key.startsWith('test') ? data && Array.isArray(data.questions) : Array.isArray(data)) ? data : undefined;
+      const value = own ?? data?.[key];
+      if (key.startsWith('test')) {
+        if (!value || !Array.isArray(value.questions)) continue;
+        const n = Number(key.slice(4)) as 1 | 2 | 3;
+        next[key as 'test1'] = test(value, n);
+      } else {
+        if (!Array.isArray(value)) continue;
+        next[key as 'theory'] = withIds(value);
+      }
+      done.push(IMPORT_LABELS[key]);
+    }
+    if (!done.length) {
+      showStatus(part === 'all' ? `${source}: оруулах хэсэг олдсонгүй.` : `${source}: «${IMPORT_LABELS[part]}» хэсэг алга.`);
+      return false;
+    }
+    if (!window.confirm(`Солигдох хэсэг: ${done.join(', ')}. Бусад хэсэг хэвээр үлдэнэ. Үргэлжлүүлэх үү?`)) return false;
+    if (part === 'all' && typeof data.description === 'string') next.description = data.description;
+    // Saved at once, so the site and the history get it without a separate «Хадгалах»
+    setTopic(next);
+    saveModeRef.current = mode;
+    persist(next);
+    showStatus(`${done.join(', ')}: ${source}-оос хадгаллаа.`);
+    return true;
+  };
   const importContent = async (file: File) => {
+    let data: unknown;
     try {
-      const data = JSON.parse(await file.text());
-      const pre = (id: string) => (id.startsWith(`${topic.id}-`) ? id : `${topic.id}-${id}`);
-      const withIds = <T extends { id: string }>(list: T[] = []) => list.map((x) => ({ ...x, id: pre(x.id) }));
-      const test = (t: TopicPackage['test1'], n: 1 | 2 | 3) => ({ ...t, id: pre(t.id || `test${n}`), testNumber: n, questions: withIds(t.questions) });
-      const part = importTarget.current;
-      const next = { ...topic };
-      const done: string[] = [];
-      for (const key of part === 'all' ? IMPORT_KEYS : [part]) {
-        // The part on its own: a list for theory/examples/practice, the test object for a test
-        const own = part !== 'all' && (key.startsWith('test') ? data && Array.isArray(data.questions) : Array.isArray(data)) ? data : undefined;
-        const value = own ?? data?.[key];
-        if (key.startsWith('test')) {
-          if (!value || !Array.isArray(value.questions)) continue;
-          const n = Number(key.slice(4)) as 1 | 2 | 3;
-          next[key as 'test1'] = test(value, n);
-        } else {
-          if (!Array.isArray(value)) continue;
-          next[key as 'theory'] = withIds(value);
-        }
-        done.push(IMPORT_LABELS[key]);
-      }
-      if (!done.length) {
-        showStatus(part === 'all' ? 'Файлаас оруулах хэсэг олдсонгүй.' : `Файлд «${IMPORT_LABELS[part]}» хэсэг алга.`);
-        return;
-      }
-      if (!window.confirm(`Солигдох хэсэг: ${done.join(', ')}. Бусад хэсэг хэвээр үлдэнэ. Үргэлжлүүлэх үү?`)) return;
-      if (part === 'all' && typeof data.description === 'string') next.description = data.description;
-      // Saved at once, so the site and the history get it without a separate «Хадгалах»
-      setTopic(next);
-      saveModeRef.current = 'import';
-      persist(next);
-      showStatus(`${done.join(', ')}: файлаас оруулж хадгаллаа.`);
+      data = JSON.parse(await file.text());
     } catch {
       showStatus('Файлыг уншиж чадсангүй.');
+      return;
     }
+    applyContent(data, importTarget.current, 'import', 'Файл');
   };
 
   // Saves to the site; the history notes it (a switch to a saved version only marks it in use)
@@ -1133,6 +1140,11 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           topic={topic}
           saved={JSON.parse(savedRef.current) as TopicPackage}
           onClose={() => setHistoryOpen(false)}
+          onApplyJson={(data, part, mode) => {
+            const ok = applyContent(data, part, mode, 'JSON');
+            if (ok) setHistoryOpen(false);
+            return ok;
+          }}
           onLessonDeleted={() => {
             // The whole lesson goes from the site; the topic stays in the list, empty
             const empty = (test: TopicPackage['test1']) => ({ ...test, questions: [] });
