@@ -39,6 +39,8 @@ export interface AppSettings {
   extraCategories: { grade: number; name: string }[];
   // Order of topics in the topic list, as the admin arranged them (topic ids)
   topicOrder?: string[];
+  // Lesson parts the admin checked and marked as done, per topic (topic id -> part keys)
+  contentChecks?: Record<string, string[]>;
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
