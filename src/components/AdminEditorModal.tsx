@@ -23,6 +23,7 @@ import {
   ArrowDown,
   History,
   ChevronDown,
+  Check,
 } from 'lucide-react';
 import { recordTopicSave, SaveMode, switchToVersion } from '../services/topicHistory';
 import { TopicHistoryDialog } from './TopicHistoryDialog';
@@ -78,6 +79,9 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   const [topic, setTopic] = useState<TopicPackage>({ ...activeTopic });
   const [activeTab, setActiveTab] = useState<'info' | 'theory' | 'examples' | 'practice' | 'tests'>('theory');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  // The save button itself turns green for a moment after a save
+  const [justSaved, setJustSaved] = useState(false);
+  const savedTimer = React.useRef<number | undefined>(undefined);
   // Theory tab: the one theory item being edited
   const [theoryIdx, setTheoryIdx] = useState(0);
   // Examples tab: the one example being edited
@@ -181,7 +185,9 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   };
   const handleSave = () => {
     persist(topic);
-    showStatus('Амжилттай хадгалагдлаа!');
+    setJustSaved(true);
+    window.clearTimeout(savedTimer.current);
+    savedTimer.current = window.setTimeout(() => setJustSaved(false), 2000);
   };
 
   // Add & remove helpers
@@ -371,10 +377,12 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
               type="button"
               onClick={handleSave}
               data-ctrl-s
-              className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center space-x-1.5 shadow-xs cursor-pointer"
+              className={`px-3.5 py-1.5 rounded-lg font-black text-xs flex items-center space-x-1.5 shadow-xs cursor-pointer transition-colors ${
+                justSaved ? 'bg-emerald-500 hover:bg-emerald-400 text-white' : 'bg-amber-500 hover:bg-amber-400 text-stone-950'
+              }`}
             >
-              <Save className="w-3.5 h-3.5" />
-              <span>Хадгалах</span>
+              {justSaved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+              <span>{justSaved ? 'Хадгалагдлаа' : 'Хадгалах'}</span>
             </button>
             <button
               type="button"
