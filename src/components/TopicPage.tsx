@@ -325,6 +325,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                   }
                   teacherVersion={isAdmin ? options.teacherVersion : false}
                   allowSolutions={isAdmin || !!grantedSolutions}
+                  twoColumns={t.practiceTwoColumns !== false}
                   headerExtra={
                     isAdmin && main && (
                       <button

@@ -812,17 +812,8 @@ function ViewSolutionModal({
                 <RevealAnswer answer={correctAnswerText(q, getQuestionOptions(q))} />
               </div>
 
-              {/* Solution Box */}
-              <div className="p-3.5 bg-white border border-rose-200 rounded-lg space-y-1.5 text-xs md:text-sm">
-                <div className="font-bold text-rose-900 text-xs uppercase tracking-wider">
-                  Алхамчилсан тайлбар бодолт:
-                </div>
-                {q.solution && (
-                  <div className="text-stone-700 text-xs pt-1 border-t border-dashed border-stone-200 leading-relaxed">
-                    <SolutionSteps steps={solutionLines(q.solution)} indent={false} />
-                  </div>
-                )}
-              </div>
+              {/* The solution, written like the worked examples */}
+              {q.solution && <SolutionSteps steps={solutionLines(q.solution)} indent={false} />}
             </div>
           ))}
         </div>
@@ -1078,12 +1069,7 @@ function ViewErrorCheckModal({
                     <RevealAnswer answer={correctAnswerText(q, opts)} />
                   </div>
                 )}
-                {q.solution && (
-                  <div className="p-3 bg-white/80 border border-stone-200 rounded-lg text-xs text-stone-700 leading-relaxed">
-                    <span className="font-bold text-stone-900 block mb-0.5">Бодолт ба тайлбар:</span>
-                    <SolutionSteps steps={solutionLines(q.solution)} indent={false} />
-                  </div>
-                )}
+                {q.solution && <SolutionSteps steps={solutionLines(q.solution)} indent={false} />}
               </div>
             );
           })}

@@ -733,9 +733,11 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
             <div className="space-y-4">
               <div className="sticky -top-4 md:-top-6 z-10 bg-white py-2 border-b border-stone-200 space-y-2">
     <div className="flex items-center justify-between">
-                  <span className="text-xs text-stone-500 font-medium">
-                    Бие даах дасгал
-                  </span>
+                  <CheckOption
+                    checked={topic.practiceTwoColumns !== false}
+                    onChange={(on) => setTopic({ ...topic, practiceTwoColumns: on ? undefined : false })}
+                    label="Бодолт нээгдсэн үед дасгалыг 2 эгнээгээр харуулах"
+                  />
                   <button
                     type="button"
                     onClick={addPracticeProblem}
@@ -1009,9 +1011,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                                     )}
                                   </div>
                                   {q.solution && (
-                                    <div className="text-stone-700">
-                                      <span className="font-bold text-stone-900">Бодолт:</span> <SolutionSteps steps={solutionLines(q.solution)} indent={false} />
-                                    </div>
+                                    <SolutionSteps steps={solutionLines(q.solution)} indent={false} />
                                   )}
                                 </div>
                               </>

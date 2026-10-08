@@ -71,6 +71,8 @@ export interface TopicPackage {
   id: string;
   // Worked examples in two columns unless the admin turns it off (false)
   examplesTwoColumns?: boolean;
+  // Practice with solutions open in two columns unless the admin turns it off (false)
+  practiceTwoColumns?: boolean;
   grade: GradeNumber;
   visibleGrades?: GradeNumber[]; // Support displaying in multiple grades (6, 7, 8, etc.)
   // A subtopic sits under this topic (the parent then groups its subtopics in the topic list)

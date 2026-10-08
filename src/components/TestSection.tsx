@@ -147,8 +147,7 @@ export const TestSection: React.FC<TestSectionProps> = ({
                     <MathRenderer content={q.answer} className="inline" />
                   </span>
                   {q.solution && (
-                    <div className="mt-1 text-stone-700 print:text-stone-900">
-                      <span className="font-semibold">Бодолт: </span>
+                    <div className="mt-1">
                       <SolutionSteps steps={solutionLines(q.solution)} indent={false} />
                     </div>
                   )}

@@ -13,6 +13,8 @@ interface PracticeSectionProps {
   allowSolutions?: boolean;
   // Extra controls in the section header (admin: who may see the solutions)
   headerExtra?: React.ReactNode;
+  // With the solutions open, the exercises sit in two columns of cards like the worked examples
+  twoColumns?: boolean;
   isEditable?: boolean;
   onEditPractice?: (problem: PracticeProblem) => void;
   onDeletePractice?: (problemId: string) => void;
@@ -24,6 +26,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
   teacherVersion = false,
   allowSolutions = false,
   headerExtra,
+  twoColumns = true,
   isEditable = false,
   onEditPractice,
   onDeletePractice,
@@ -88,14 +91,25 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
           )}
         </div>
       ) : (
-        <div className="space-y-6 print:space-y-3">
+        (() => {
+          const showSol = allowSolutions && (teacherVersion || showSolutionsOnScreen);
+          // Solutions open: cards like the worked examples (two columns unless turned off)
+          const cards = showSol;
+          return (
+        <div
+          className={
+            cards
+              ? twoColumns
+                ? 'grid md:grid-cols-2 gap-5 print:grid-cols-2 print:gap-4'
+                : 'space-y-5 print:space-y-4'
+              : 'space-y-6 print:space-y-3'
+          }
+        >
           {practice.map((item, idx) => {
-            const showSol = allowSolutions && (teacherVersion || showSolutionsOnScreen);
-
             return (
               <div
                 key={item.id || item.number || idx}
-                className="avoid-break relative group"
+                className={`avoid-break relative group ${cards ? 'rounded-2xl border border-stone-200 bg-white p-5 md:p-6 print:p-3' : ''}`}
               >
                 {/* Question header */}
                 {/* The number, then the problem itself */}
@@ -158,6 +172,8 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
             );
           })}
         </div>
+          );
+        })()
       )}
 
       {/* Bottom quick add */}
