@@ -20,6 +20,8 @@ export interface TopicVersion {
   topic: TopicPackage;
   // The version in use on the site
   current?: boolean;
+  // The parts a file brought in with this version (unset on older versions)
+  parts?: string[];
 }
 
 const KEEP = 30;
@@ -82,10 +84,12 @@ async function clearCurrent(topicId: string): Promise<void> {
   await Promise.all(cur.docs.map((d) => updateDoc(d.ref, { current: false })));
 }
 
-async function addVersion(topic: TopicPackage, kind: VersionKind, current: boolean): Promise<void> {
+export const LESSON_PARTS = ['theory', 'examples', 'practice', 'test1', 'test2', 'test3'] as const;
+
+async function addVersion(topic: TopicPackage, kind: VersionKind, current: boolean, parts: string[] = [...LESSON_PARTS]): Promise<void> {
   const t = clean(topic);
   if (current) await clearCurrent(topic.id);
-  await addDoc(versions(topic.id), { savedAt: Date.now(), kind, hash: contentHash(t), topic: t, current });
+  await addDoc(versions(topic.id), { savedAt: Date.now(), kind, hash: contentHash(t), topic: t, current, parts });
   const old = await getDocs(query(versions(topic.id), orderBy('savedAt', 'desc'), limit(KEEP + 10)));
   await Promise.all(old.docs.slice(KEEP).filter((d) => !d.data().current).map((d) => deleteDoc(d.ref)));
 }
@@ -128,7 +132,9 @@ async function recordTopicSaveNow(before: TopicPackage, after: TopicPackage, mod
   }
   const any = await getDocs(query(versions(after.id), limit(1)));
   if (any.empty && !isEmptyLesson(before)) await addVersion(before, 'original', false);
-  await addVersion(after, 'import', true);
+  // The parts this import brought in (each part's own history lists only these)
+  const parts = LESSON_PARTS.filter((k) => partHash(before[k]) !== partHash(after[k]));
+  await addVersion(after, 'import', true, parts);
 }
 
 /**

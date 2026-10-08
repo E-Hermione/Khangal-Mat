@@ -49,17 +49,35 @@ interface PartVersion {
   at: number;
 }
 
-/** The distinct contents a part has had, newest first, each under the date it first appeared. */
-function partVersions(list: TopicVersion[], key: PartKey): PartVersion[] {
-  const seen = new Map<string, PartVersion>();
-  for (const v of [...list].reverse()) {
+/**
+ * A part's own history: a row for each time a file brought it in (and the lesson's first
+ * version), newest first. Hand edits do not add rows: the newest row is the part as it is on the
+ * site now, under the time it last changed.
+ */
+function partVersions(list: TopicVersion[], key: PartKey, site: TopicPackage): PartVersion[] {
+  const rows: PartVersion[] = [];
+  const oldestFirst = [...list].reverse();
+  oldestFirst.forEach((v, i) => {
     const value = v.topic[key];
     // An empty part (nothing in it yet) is not a version of that part
-    if (value === undefined || partSize(key, value) === 0) continue;
-    const hash = partHash(value);
-    if (!seen.has(hash)) seen.set(hash, { hash, value, at: v.updatedAt ?? v.savedAt });
+    if (value === undefined || partSize(key, value) === 0) return;
+    const brought = v.parts
+      ? v.parts.includes(key)
+      : i === 0 || partHash(value) !== partHash(oldestFirst[i - 1].topic[key]); // older versions: when it changed
+    if (!brought && rows.length) return;
+    rows.push({ hash: partHash(value), value, at: v.updatedAt ?? v.savedAt });
+  });
+  if (rows.length) {
+    // The newest row holds what the site has now, dated by the version in use
+    const inUse = list.find((v) => v.current) ?? list[0];
+    const last = rows[rows.length - 1];
+    last.value = site[key];
+    last.hash = partHash(site[key]);
+    last.at = Math.max(last.at, inUse ? inUse.updatedAt ?? inUse.savedAt : 0);
   }
-  return [...seen.values()].reverse();
+  // Same content twice: shown once
+  const seen = new Set<string>();
+  return rows.reverse().filter((r) => !seen.has(r.hash) && seen.add(r.hash));
 }
 
 /** The topic's saved versions: view, switch to or delete any of them. */
@@ -135,8 +153,8 @@ export const TopicHistoryDialog: React.FC<{
           ) : tab !== 'all' ? (
             (() => {
               const part = PARTS.find((p) => p.key === tab)!;
-              const currentHash = partHash(topic[tab]);
-              return partVersions(list, tab).map((pv) => (
+              const currentHash = partHash(saved[tab]);
+              return partVersions(list, tab, saved).map((pv) => (
                 <div key={pv.hash} className="px-4 py-2.5 flex items-center gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-bold text-stone-900">{when(pv.at)}</div>
