@@ -20,6 +20,8 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     // If block is explicitly requested and content does not already have delimiters
     const hasLongDiv = content.includes('\\longdiv');
     if (block && !content.includes('$') && !hasLongDiv) {
+      const columns = columnSums(content);
+      if (columns) return columns;
       try {
         return katex.renderToString(content.trim(), {
           displayMode: true,
@@ -75,6 +77,8 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
 
     // 1. Replace $$...$$ block math
     let processed = processed0.replace(/\$\$([\s\S]+?)\$\$/g, (whole, math) => {
+      const columns = columnSums(math);
+      if (columns) return keep(`<div class="my-2 flex justify-center">${columns}</div>`);
       try {
         return keep(`<div class="my-2 overflow-x-auto print:overflow-visible flex justify-center">${render(math, true)}</div>`);
       } catch {
@@ -144,6 +148,36 @@ function longDivision(a: number, b: number): string {
     `<td class="ld-div">${num(b)}</td><td></td></tr>` +
     `<tr><td class="ld-num ld-under">${num(b * q)}</td><td class="ld-q">${num(q)}</td><td class="ld-label ld-q">ногд</td></tr>` +
     `<tr><td></td><td class="ld-num ld-r">${num(a % b)}</td><td class="ld-label ld-r" colspan="2">үлд</td></tr>` +
+    `</tbody></table></span>`
+  );
+}
+
+/**
+ * Addition and subtraction in columns, written as
+ *   \begin{array}{r} 3{,}60 \\ +\;\; 2{,}45 \\ \hline 6{,}05 \end{array}
+ * is drawn as at school: the sign to the left, halfway between the two numbers, and the line only
+ * as wide as the numbers. A formula made only of such sums (side by side) becomes their HTML;
+ * anything else returns null and is left to KaTeX.
+ */
+const COLUMN_SUM = /\\begin\{array\}\{r\}\s*([^\\]*?(?:\\(?!\\)[^\\]*?)*?)\s*\\\\\s*([+\-−])\s*(?:\\[;,: ]\s*)*([^\\]*?(?:\\(?!\\)[^\\]*?)*?)\s*\\\\\s*\\hline\s*([\s\S]*?)\s*\\end\{array\}/g;
+
+function columnSums(math: string): string | null {
+  const parts: string[] = [];
+  const rest = math.replace(COLUMN_SUM, (_, a, op, b, r) => {
+    parts.push(columnSum(a, op, b, r));
+    return '';
+  });
+  if (!parts.length || rest.replace(/\\qquad|\\quad|\s/g, '') !== '') return null;
+  return parts.join('<span class="column-gap"></span>');
+}
+
+function columnSum(a: string, op: string, b: string, r: string): string {
+  const tex = (x: string) => katex.renderToString(x.trim(), { throwOnError: false });
+  return (
+    `<span class="column-sum"><table><tbody>` +
+    `<tr><td class="cs-op" rowspan="2">${tex(op === '−' ? '-' : op)}</td><td class="cs-num">${tex(a)}</td></tr>` +
+    `<tr><td class="cs-num">${tex(b)}</td></tr>` +
+    `<tr><td></td><td class="cs-num cs-result">${tex(r)}</td></tr>` +
     `</tbody></table></span>`
   );
 }
