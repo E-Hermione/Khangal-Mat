@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Download, History, RotateCcw, X } from 'lucide-react';
+import { Copy, Download, Eye, History, RotateCcw, X } from 'lucide-react';
 import { TopicPackage } from '../types';
-import { downloadTopicJson, loadTopicVersions, TopicVersion } from '../services/topicHistory';
+import { downloadTopicJson, loadTopicVersions, topicJson, TopicVersion } from '../services/topicHistory';
 import { backdropClose } from '../utils/backdrop';
 
 const KIND_LABEL: Record<TopicVersion['kind'], string> = {
@@ -24,6 +24,9 @@ export const TopicHistoryDialog: React.FC<{
 }> = ({ topic, onRestore, onClose }) => {
   const [list, setList] = useState<TopicVersion[] | null>(null);
   const [error, setError] = useState(false);
+  // The JSON being viewed in full
+  const [viewing, setViewing] = useState<{ title: string; text: string } | null>(null);
+  const [copied, setCopied] = useState(false);
   useEffect(() => {
     loadTopicVersions(topic.id)
       .then(setList)
@@ -44,11 +47,19 @@ export const TopicHistoryDialog: React.FC<{
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="p-3 border-b border-stone-200">
+        <div className="p-3 border-b border-stone-200 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setViewing({ title: 'Засаж буй хувилбар', text: topicJson(topic) })}
+            className="px-3 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-800 flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Харах
+          </button>
           <button
             type="button"
             onClick={() => downloadTopicJson(topic, fileName('одоогийн'))}
-            className="w-full py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-800 flex items-center justify-center gap-1.5 cursor-pointer"
+            className="flex-1 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-800 flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             Засаж буй хувилбарыг файл болгож татах
@@ -74,6 +85,15 @@ export const TopicHistoryDialog: React.FC<{
                 </div>
                 <button
                   type="button"
+                  onClick={() => setViewing({ title: `${when(v.savedAt)} • ${KIND_LABEL[v.kind]}`, text: topicJson(v.topic) })}
+                  className="p-1.5 rounded-md text-stone-500 hover:text-stone-900 hover:bg-stone-100 cursor-pointer"
+                  title="JSON-ийг бүтнээр нь харах"
+                  aria-label="Харах"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
                   onClick={() => downloadTopicJson(v.topic, fileName(new Date(v.savedAt).toISOString().slice(0, 16).replace(':', '-')))}
                   className="p-1.5 rounded-md text-stone-500 hover:text-stone-900 hover:bg-stone-100 cursor-pointer"
                   title="Файл болгож татах"
@@ -97,6 +117,34 @@ export const TopicHistoryDialog: React.FC<{
           )}
         </div>
       </div>
+      {viewing && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 bg-stone-950/60" onClick={() => setViewing(null)}>
+          <div className="bg-white rounded-2xl w-full max-w-3xl h-[85vh] flex flex-col shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-2.5 bg-stone-900 text-white flex items-center gap-2">
+              <div className="font-bold text-xs flex-1 truncate">{viewing.title}</div>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(viewing.text).then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  });
+                }}
+                className="px-2.5 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-stone-950 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <Copy className="w-3 h-3" />
+                {copied ? 'Хууллаа' : 'Хуулах'}
+              </button>
+              <button type="button" onClick={() => setViewing(null)} className="p-1 text-stone-400 hover:text-white cursor-pointer" aria-label="Хаах">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <pre className="flex-1 overflow-auto p-4 text-[11px] leading-relaxed font-mono text-stone-800 bg-stone-50 whitespace-pre-wrap break-words select-text">
+              {viewing.text}
+            </pre>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
