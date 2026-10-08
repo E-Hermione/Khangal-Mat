@@ -142,8 +142,8 @@ function longDivision(a: number, b: number): string {
     `<span class="long-division" title="${a} : ${b} = ${q}, үлдэгдэл ${a % b}"><table><tbody>` +
     `<tr><td class="ld-minus" rowspan="2">${num('-')}</td><td class="ld-num">${num(a)}</td>` +
     `<td class="ld-div">${num(b)}</td><td></td></tr>` +
-    `<tr><td class="ld-num ld-under">${num(b * q)}</td><td>${num(q)}</td><td class="ld-label">ногд</td></tr>` +
-    `<tr><td></td><td class="ld-num">${num(a % b)}</td><td class="ld-label" colspan="2">үлд</td></tr>` +
+    `<tr><td class="ld-num ld-under">${num(b * q)}</td><td class="ld-q">${num(q)}</td><td class="ld-label ld-q">ногд</td></tr>` +
+    `<tr><td></td><td class="ld-num ld-r">${num(a % b)}</td><td class="ld-label ld-r" colspan="2">үлд</td></tr>` +
     `</tbody></table></span>`
   );
 }

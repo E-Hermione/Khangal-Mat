@@ -128,6 +128,13 @@
 .long-division .ld-under {
   border-bottom: 1px solid currentColor;
 }
+/* Quotient in green, remainder in red */
+.long-division .ld-q {
+  color: #15803d;
+}
+.long-division .ld-r {
+  color: #dc2626;
+}
 .long-division .ld-label {
   font-size: 0.85em;
   padding-left: 0.6em;
