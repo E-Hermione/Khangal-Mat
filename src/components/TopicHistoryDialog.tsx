@@ -14,8 +14,6 @@ const KIND_LABEL: Record<TopicVersion['kind'], string> = {
 const when = (t: number) =>
   new Date(t).toLocaleString('mn-MN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 
-const counts = (t: TopicPackage) =>
-  `Онол ${t.theory?.length || 0} • Жишээ ${t.examples?.length || 0} • Дасгал ${t.practice?.length || 0}`;
 
 // Each part has its own history too: the different contents it has had across the versions
 const PARTS = [
@@ -47,6 +45,14 @@ interface PartVersion {
   value: unknown;
   // When this content first appeared
   at: number;
+}
+
+/** What a version holds: the parts a file brought in, or else the parts that are not empty. */
+function summary(v: TopicVersion): string {
+  const shown = PARTS.filter((p) =>
+    v.kind === 'import' && v.parts ? v.parts.includes(p.key) : partSize(p.key, v.topic[p.key]) > 0
+  );
+  return shown.map((p) => `${PART_NAME[p.key]} ${partSize(p.key, v.topic[p.key])} ${p.unit}`).join(' • ');
 }
 
 /**
@@ -190,23 +196,13 @@ export const TopicHistoryDialog: React.FC<{
               ));
             })()
           ) : (
-            list.map((v, i) => (
+            list.map((v) => (
               <div key={v.id} className="px-4 py-2.5 flex items-center gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-stone-900">
                     {when(v.updatedAt ?? v.savedAt)} <span className="ml-1 font-semibold text-stone-500">{KIND_LABEL[v.kind]}</span>
                   </div>
-                  <div className="text-[11px] text-stone-500">
-                    {counts(v.topic)}
-                  </div>
-                  {list[i + 1] && (() => {
-                    // What this version changed compared with the one before it
-                    const older = list[i + 1].topic;
-                    const changed = PARTS.filter((p) => partHash(v.topic[p.key]) !== partHash(older[p.key])).map((p) => PART_NAME[p.key]);
-                    return changed.length ? (
-                      <div className="text-[11px] text-amber-700 font-semibold">Өөрчлөгдсөн: {changed.join(', ')}</div>
-                    ) : null;
-                  })()}
+                  <div className="text-[11px] text-stone-500">{summary(v)}</div>
                 </div>
                 <button
                   type="button"
