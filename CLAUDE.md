@@ -4,7 +4,8 @@
   admin import script with the part's .json file (needs `FIREBASE_SERVICE_ACCOUNT_B64` in the environment):
   `npx tsx scripts/import-lesson.ts <topicId> <theory|examples|practice|test1|test2|test3> <file.json> [--dry]`
   Run with `--dry` first. Never change a part the owner did not ask for.
-  Find the topic id first: `npx tsx scripts/find-topic.ts "<title>"`. The environment's setup script stays empty
+  Find the topic id first: `npx tsx scripts/find-topic.ts "<title>"`; a topic not on the site yet is added with
+  `npx tsx scripts/create-topic.ts --grade 6 --category "<chapter>" --title "<title>" [--parent <topicId>]`. The environment's setup script stays empty
   (run `npm install` yourself).
   To keep what the owner edited by hand: `--append` adds the file's items after what is on the site, and
   `--patch` (a list of `{ id, field, from, to }`) changes a field only while it still reads `from`.
