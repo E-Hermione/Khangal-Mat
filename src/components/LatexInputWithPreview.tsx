@@ -20,10 +20,11 @@ interface LatexInputWithPreviewProps {
   hideToolbar?: boolean;
 }
 
-// Toolbar markers: wrap the selection in $…$ or (…)
+// Toolbar markers: wrap the selection in $…$, (…) or **…** (bold)
 const WRAP = '<wrap>';
 const PAREN = '<paren>';
-const WRAPS: Record<string, [string, string]> = { [WRAP]: ['$', '$'], [PAREN]: ['(', ')'] };
+const BOLD = '<bold>';
+const WRAPS: Record<string, [string, string]> = { [WRAP]: ['$', '$'], [PAREN]: ['(', ')'], [BOLD]: ['**', '**'] };
 const CENTRED = '\n$$ x $$\n';
 
 const MATH_SNIPPETS = [
@@ -46,6 +47,7 @@ const MATH_SNIPPETS = [
   { label: '$', snippet: WRAP, desc: 'Сонгосон хэсгийг $...$ дотор оруулах' },
   { label: '\\', snippet: '\\', desc: 'Ташуу зураас (LaTeX командын эхлэл)' },
   { label: '( )', snippet: PAREN, desc: 'Сонгосон хэсгийг (...) дугуй хаалтад оруулах' },
+  { label: 'B', snippet: BOLD, desc: 'Сонгосон үгийг тод (bold) болгох: **үг**' },
   { label: '→', snippet: ' \\;\\rightarrow\\; ', desc: 'Сум' },
   { label: '↔', snippet: ' \\;\\leftrightarrow\\; ', desc: 'Хоёр тийш сум' },
 ];
@@ -163,7 +165,7 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
       change(value.substring(0, start) + pair[0] + selected + pair[1] + value.substring(end), false);
       setTimeout(() => {
         input.focus();
-        input.setSelectionRange(start + 1, start + 1 + selected.length);
+        input.setSelectionRange(start + pair[0].length, start + pair[0].length + selected.length);
       }, 10);
       return;
     }

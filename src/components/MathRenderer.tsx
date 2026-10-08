@@ -50,7 +50,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
           return escapeHtml(content);
         }
       }
-      return escapeHtml(content);
+      return bold(escapeHtml(content));
     }
 
     // Parse mixed text with math. Rendered formulas are swapped for placeholders so that turning
@@ -110,7 +110,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     });
 
     // Preserve newlines for plain paragraphs, then put the formulas back
-    return processed
+    return bold(processed)
       .replace(/\n/g, '<br />')
       .replace(/\u0000(\d+)\u0000/g, (_, i) => rendered[Number(i)]);
   }, [content, block]);
@@ -146,6 +146,11 @@ function longDivision(a: number, b: number): string {
     `<tr><td></td><td class="ld-num ld-r">${num(a % b)}</td><td class="ld-label ld-r" colspan="2">үлд</td></tr>` +
     `</tbody></table></span>`
   );
+}
+
+// **word** in the plain text is shown bold
+function bold(html: string): string {
+  return html.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
 }
 
 function escapeHtml(text: string): string {
