@@ -12,7 +12,7 @@ export async function seedCloudFromLegacyData(): Promise<void> {
   const legacy = readLegacyLocalTopics();
   if (cloud.getTopics().length === 0 && legacy) {
     await cloud.replaceTopics(legacy);
-  } else if (cloud.hasTopicsNeedingAnswerRewrite()) {
+  } else if (cloud.hasTopicsNeedingAnswerRewrite() || cloud.hasTopicsWithStepExamples()) {
     // Topics with inline answers or an older answer-key format: rewrite them (answers go to topicAnswers)
     await cloud.replaceTopics(cloud.getTopics());
   }

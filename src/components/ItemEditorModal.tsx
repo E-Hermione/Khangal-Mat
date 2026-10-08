@@ -246,18 +246,7 @@ function ExampleEditor({
   onClose: () => void;
 }) {
   const [example, setExample] = useState<WorkedExample>({ ...initial });
-  const [stepsText, setStepsText] = useState(initial.solutionSteps?.join('\n') || '');
-
-  const handleSave = () => {
-    const steps = stepsText
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    onSave({
-      ...example,
-      solutionSteps: steps.length > 0 ? steps : ['Шинжилгээ хийж бодолтыг гүйцэтгэнэ.'],
-    });
-  };
+  const handleSave = () => onSave(example);
 
   return (
     <>
@@ -312,13 +301,11 @@ function ExampleEditor({
         />
 
         <LatexInputWithPreview
-          label="Бодолтын алхмууд (Мөр тус бүрт 1 алхам бичнэ):"
-          value={stepsText}
-          onChange={(val) => setStepsText(val)}
+          label="Бодолт:"
+          value={example.solution || ''}
+          onChange={(val) => setExample({ ...example, solution: val || undefined })}
           multiline
-          rows={4}
-          placeholder="Алхам 1: Коэффициентүүдийг тодорхойлно: $a=2, b=-5, c=2$&#10;Алхам 2: $D = b^2 - 4ac = 25 - 16 = 9$&#10;Алхам 3: $x_{1,2} = \\frac{5 \\pm 3}{4}$"
-          helpText="Мөр шилжүүлэх бүрт алхам болно"
+          rows={6}
         />
 
         <LatexInputWithPreview

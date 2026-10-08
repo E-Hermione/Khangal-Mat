@@ -174,7 +174,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
         number: nextNum,
         title: `Жишээ ${nextNum}`,
         problem: 'Бодлогын нөхцөл энд бичнэ. Жишээ: $2x + 6 = 10$',
-        solutionSteps: ['Алхам 1: Тэгшитгэлийн хоёр талыг хялбарчилна.', 'Алхам 2: $2x = 4 \\implies x = 2$'],
+        solution: 'Тэгшитгэлийн хоёр талыг хялбарчилна.\n$2x = 4 \\implies x = 2$',
         answer: '$x = 2$',
       },
       isNew: true,

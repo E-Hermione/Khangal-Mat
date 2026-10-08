@@ -27,7 +27,8 @@ export interface WorkedExample {
   number: number;
   title?: string;
   problem: string;
-  solutionSteps: string[];
+  // The solution, one step per line
+  solution?: string;
   answer: string;
   prerequisiteGrade?: number;
 }

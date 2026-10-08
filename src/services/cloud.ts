@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { getDb } from './firebase';
 import { TopicPackage, UserPermissions, DefaultPermissionsConfig, UserProfile } from '../types';
+import { hasStepExamples, withExampleSolutions } from '../utils/exampleSolution';
 import { TopicAnswers, splitTopic, mergeAnswers, answersVisibleFor, needsAnswerRewrite } from './answers';
 import { getQuestionOptions } from '../utils/examGrading';
 
@@ -147,6 +148,8 @@ function dropTopic(b: WriteBatch, id: string) {
 const memberIndex = new Map<string, TopicIndexEntry>();
 const memberTests = new Map<string, TopicTests>();
 const memberContent = new Map<string, TopicPackage>();
+// Admin: whether any stored topic still has examples kept as separate steps
+let stepExamplesStored = false;
 const contentSubs = new Map<string, Unsubscribe>();
 let memberGrade: number | null = null;
 // Admin side: topics that already have their list entry
@@ -180,7 +183,7 @@ function syncMemberContent() {
         onSnapshot(
           doc(getDb(), 'topics', entry.id),
           (snap) => {
-            if (snap.exists()) memberContent.set(entry.id, snap.data() as TopicPackage);
+            if (snap.exists()) memberContent.set(entry.id, withExampleSolutions(snap.data() as TopicPackage));
             else memberContent.delete(entry.id);
             rebuildMemberTopics();
           },
@@ -280,7 +283,10 @@ export function startCloudSync({ isAdmin, userId, grade }: CloudSyncOptions): Pr
       onSnapshot(
         collection(db, 'topics'),
         (snap) => {
-          state.topics = snap.docs.map((d) => d.data() as TopicPackage);
+          const raw = snap.docs.map((d) => d.data() as TopicPackage);
+          // Examples stored with separate steps are joined into one solution (and rewritten once)
+          stepExamplesStored = raw.some(hasStepExamples);
+          state.topics = raw.map(withExampleSolutions);
           notify('topics-updated');
           onFirst();
         },
@@ -454,6 +460,10 @@ export const cloud = {
     return Promise.all(commits).then(() => undefined);
   },
   /** True if some stored topic carries inline answers or an outdated answer key. */
+  /** Admin: topics whose examples are still stored as separate steps. */
+  hasTopicsWithStepExamples(): boolean {
+    return stepExamplesStored;
+  },
   hasTopicsNeedingAnswerRewrite(): boolean {
     return state.topics.some(needsAnswerRewrite);
   },

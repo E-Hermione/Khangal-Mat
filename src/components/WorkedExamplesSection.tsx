@@ -1,7 +1,7 @@
 import React from 'react';
 import { WorkedExample } from '../types';
 import { MathRenderer } from './MathRenderer';
-import { SolutionSteps } from './SolutionSteps';
+import { SolutionSteps, solutionLines } from './SolutionSteps';
 import { RevealAnswer } from './RevealAnswer';
 import { Lightbulb, Plus, Edit2, Trash2 } from 'lucide-react';
 import { LessonSectionHeader } from './LessonSectionHeader';
@@ -111,7 +111,7 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
               </div>
 
               {/* The solution; the answer stays hidden behind «Зөв хариу» (printed as is) */}
-              <SolutionSteps steps={ex.solutionSteps || []} tail={ex.answer ? <RevealAnswer answer={ex.answer} /> : null} />
+              <SolutionSteps steps={solutionLines(ex.solution)} tail={ex.answer ? <RevealAnswer answer={ex.answer} /> : null} />
               {ex.answer && (
                 <>
                   <div className="hidden print:block mt-2 text-black">
