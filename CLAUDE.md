@@ -4,3 +4,5 @@
   admin import script with the part's .json file (needs `FIREBASE_SERVICE_ACCOUNT_B64` in the environment):
   `npx tsx scripts/import-lesson.ts <topicId> <theory|examples|practice|test1|test2|test3> <file.json> [--dry]`
   Run with `--dry` first. Never change a part the owner did not ask for.
+  Find the topic id first: `npx tsx scripts/find-topic.ts "<title>"`. The environment's setup script stays empty
+  (run `npm install` yourself).
