@@ -1,16 +1,21 @@
-import { addDoc, collection, deleteDoc, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, getDocs, limit, orderBy, query, updateDoc } from 'firebase/firestore';
 import { getDb } from './firebase';
 import { TopicPackage } from '../types';
 
 /**
- * Every saved version of a topic's lesson, so an overwritten edit can be brought back:
- * topicHistory/{topicId}/versions/{id} (admin only). The newest 30 are kept.
+ * A topic's lesson versions, so an overwritten edit can be brought back:
+ * topicHistory/{topicId}/versions/{id} (admin only). A version is one "file": the lesson as it
+ * first was, each file import and each restore. Edits saved by hand update the newest version
+ * in place (its last-changed time), so they never add rows. The newest 30 are kept.
  */
-export type VersionKind = 'save' | 'import' | 'original';
+export type VersionKind = 'save' | 'import' | 'original' | 'restore';
+export type SaveMode = 'edit' | 'import' | 'restore';
 
 export interface TopicVersion {
   id: string;
+  // When the version began, and when it was last changed by hand
   savedAt: number;
+  updatedAt?: number;
   kind: VersionKind;
   topic: TopicPackage;
 }
@@ -41,23 +46,30 @@ export async function loadTopicVersions(topicId: string): Promise<TopicVersion[]
   return list.reverse();
 }
 
-export async function saveTopicVersion(topic: TopicPackage, kind: VersionKind): Promise<void> {
-  // Firestore refuses undefined fields
-  const clean = JSON.parse(JSON.stringify(topic)) as TopicPackage;
-  const hash = contentHash(clean);
-  // The same content already kept: it stays under the date it was first saved
-  const same = await getDocs(query(versions(topic.id), where('hash', '==', hash), limit(1)));
-  if (!same.empty) return;
-  await addDoc(versions(topic.id), { savedAt: Date.now(), kind, hash, topic: clean });
+// Firestore refuses undefined fields
+const clean = (topic: TopicPackage) => JSON.parse(JSON.stringify(topic)) as TopicPackage;
+
+async function addVersion(topic: TopicPackage, kind: VersionKind): Promise<void> {
+  const t = clean(topic);
+  await addDoc(versions(topic.id), { savedAt: Date.now(), kind, hash: contentHash(t), topic: t });
   const old = await getDocs(query(versions(topic.id), orderBy('savedAt', 'desc'), limit(KEEP + 10)));
   await Promise.all(old.docs.slice(KEEP).map((d) => deleteDoc(d.ref)));
 }
 
-/** Saves a version; the first time a topic is saved, the version it had before goes in first. */
-export async function recordTopicSave(before: TopicPackage, after: TopicPackage, imported: boolean): Promise<void> {
-  const existing = await getDocs(query(versions(after.id), limit(1)));
-  if (existing.empty) await saveTopicVersion(before, 'original');
-  await saveTopicVersion(after, imported ? 'import' : 'save');
+/**
+ * After a save: a hand edit updates the newest version; an import or a restore starts a new one
+ * (the first time, the lesson as it was before goes in first, so nothing is lost).
+ */
+export async function recordTopicSave(before: TopicPackage, after: TopicPackage, mode: SaveMode): Promise<void> {
+  const newest = await getDocs(query(versions(after.id), orderBy('savedAt', 'desc'), limit(1)));
+  if (mode === 'edit') {
+    if (newest.empty) return addVersion(after, 'original');
+    const t = clean(after);
+    await updateDoc(newest.docs[0].ref, { topic: t, hash: contentHash(t), updatedAt: Date.now() });
+    return;
+  }
+  if (newest.empty) await addVersion(before, 'original');
+  await addVersion(after, mode);
 }
 
 /** The lesson parts of a topic as JSON in the «Файлаас оруулах» format. */

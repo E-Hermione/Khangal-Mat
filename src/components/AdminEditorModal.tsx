@@ -24,7 +24,7 @@ import {
   History,
   ChevronDown,
 } from 'lucide-react';
-import { recordTopicSave } from '../services/topicHistory';
+import { recordTopicSave, SaveMode } from '../services/topicHistory';
 import { TopicHistoryDialog } from './TopicHistoryDialog';
 import { backdropClose } from '../utils/backdrop';
 
@@ -92,7 +92,8 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   const savedRef = React.useRef(JSON.stringify(activeTopic));
   // Topic history: the dialog, and whether a file was imported since the last save
   const [historyOpen, setHistoryOpen] = useState(false);
-  const importedRef = React.useRef(false);
+  // How the editor's content came about since the last save: edited, imported or restored
+  const saveModeRef = React.useRef<SaveMode>('edit');
   // «Файлаас оруулах»: the part chosen in its menu
   const importTarget = React.useRef<ImportPart>('all');
   const [importMenu, setImportMenu] = useState(false);
@@ -151,7 +152,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       if (!window.confirm(`Солигдох хэсэг: ${done.join(', ')}. Бусад хэсэг хэвээр үлдэнэ. Үргэлжлүүлэх үү?`)) return;
       if (part === 'all' && typeof data.description === 'string') next.description = data.description;
       setTopic(next);
-      importedRef.current = true;
+      saveModeRef.current = 'import';
       showStatus(`${done.join(', ')}: файлаас орууллаа. Шалгаад «Хадгалах» дарна уу.`);
     } catch {
       showStatus('Файлыг уншиж чадсангүй.');
@@ -161,8 +162,8 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   const handleSave = () => {
     // Keep this version (and, the first time, the one before it) in the topic's history
     const before = JSON.parse(savedRef.current) as TopicPackage;
-    recordTopicSave(before, topic, importedRef.current).catch((err) => console.error('Topic history not saved', err));
-    importedRef.current = false;
+    recordTopicSave(before, topic, saveModeRef.current).catch((err) => console.error('Topic history not saved', err));
+    saveModeRef.current = 'edit';
     savedRef.current = JSON.stringify(topic);
     storageService.saveTopic(topic);
     onTopicUpdated(topic);
@@ -1128,6 +1129,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           onRestore={(t) => {
             // The restored version keeps this topic's identity and place in the list
             setTopic({ ...t, id: topic.id, title: topic.title, grade: topic.grade, category: topic.category, parentId: topic.parentId, order: topic.order });
+            saveModeRef.current = 'restore';
             setHistoryOpen(false);
             showStatus('Хувилбарыг ачааллаа. Шалгаад «Хадгалах» дарна уу.');
           }}

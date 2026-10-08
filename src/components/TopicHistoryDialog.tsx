@@ -7,7 +7,8 @@ import { backdropClose } from '../utils/backdrop';
 const KIND_LABEL: Record<TopicVersion['kind'], string> = {
   save: 'Хадгалсан',
   import: 'Файлаас оруулсан',
-  original: 'Түүх эхлэхээс өмнөх',
+  original: 'Анхны хувилбар',
+  restore: 'Сэргээсэн',
 };
 
 const when = (t: number) =>
@@ -72,7 +73,7 @@ export const TopicHistoryDialog: React.FC<{
             <div className="p-6 text-center text-xs text-stone-500">Ачаалж байна...</div>
           ) : list.length === 0 ? (
             <div className="p-6 text-center text-xs text-stone-500">
-              Түүх хоосон. Сэдвийг хадгалах бүрт хувилбар энд хадгалагдана.
+              Түүх хоосон. Сэдвийг хадгалахад энд хадгалагдана.
             </div>
           ) : (
             list.map((v) => (
@@ -81,7 +82,10 @@ export const TopicHistoryDialog: React.FC<{
                   <div className="text-xs font-bold text-stone-900">
                     {when(v.savedAt)} <span className="ml-1 font-semibold text-stone-500">{KIND_LABEL[v.kind]}</span>
                   </div>
-                  <div className="text-[11px] text-stone-500">{counts(v.topic)}</div>
+                  <div className="text-[11px] text-stone-500">
+                    {counts(v.topic)}
+                    {v.updatedAt && <span> • Сүүлд засварласан: {when(v.updatedAt)}</span>}
+                  </div>
                 </div>
                 <button
                   type="button"
