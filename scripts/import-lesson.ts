@@ -6,6 +6,7 @@
  *   FIREBASE_SERVICE_ACCOUNT='{...}' npx tsx scripts/import-lesson.ts <topicId> <part> <file.json> [--dry]
  *
  * part: theory | examples | practice | test1 | test2 | test3
+ * The key comes from FIREBASE_SERVICE_ACCOUNT_B64 (or FIREBASE_SERVICE_ACCOUNT).
  * Lesson content never goes in this repository: the file is passed in from outside.
  */
 import { readFileSync } from 'node:fs';
@@ -27,11 +28,18 @@ if (!topicId || !PARTS.includes(part) || !file) {
   process.exit(1);
 }
 
+// The key: FIREBASE_SERVICE_ACCOUNT_B64 (the .json file in base64, safe in any environment
+// setting) or FIREBASE_SERVICE_ACCOUNT (the .json text itself)
+function serviceAccount() {
+  const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
+  return JSON.parse(b64 ? Buffer.from(b64.trim(), 'base64').toString('utf8') : process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
+}
+
 // Against the local emulator (FIRESTORE_EMULATOR_HOST set) no key is needed
 initializeApp(
   process.env.FIRESTORE_EMULATOR_HOST
     ? { projectId: process.env.GCLOUD_PROJECT || 'demo-matmate' }
-    : { credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}')) }
+    : { credential: cert(serviceAccount()) }
 );
 const db = getFirestore();
 const clean = <T>(x: T): T => JSON.parse(JSON.stringify(x));
