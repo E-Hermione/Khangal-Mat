@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, getDocs, limit, orderBy, query } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
 import { getDb } from './firebase';
 import { TopicPackage } from '../types';
 
@@ -18,15 +18,37 @@ export interface TopicVersion {
 const KEEP = 30;
 const versions = (topicId: string) => collection(getDb(), 'topicHistory', topicId, 'versions');
 
+/** A short fingerprint of a version's lesson content, to tell identical versions apart. */
+function contentHash(topic: TopicPackage): string {
+  const text = topicJson(topic);
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
+  return `${text.length}-${(h >>> 0).toString(36)}`;
+}
+
+/** Newest first; a content saved several times shows once, with the date it was first saved. */
 export async function loadTopicVersions(topicId: string): Promise<TopicVersion[]> {
-  const snap = await getDocs(query(versions(topicId), orderBy('savedAt', 'desc')));
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<TopicVersion, 'id'>) }));
+  const snap = await getDocs(query(versions(topicId), orderBy('savedAt', 'asc')));
+  const seen = new Set<string>();
+  const list: TopicVersion[] = [];
+  for (const d of snap.docs) {
+    const v = { id: d.id, ...(d.data() as Omit<TopicVersion, 'id'>) };
+    const hash = contentHash(v.topic);
+    if (seen.has(hash)) continue;
+    seen.add(hash);
+    list.push(v);
+  }
+  return list.reverse();
 }
 
 export async function saveTopicVersion(topic: TopicPackage, kind: VersionKind): Promise<void> {
   // Firestore refuses undefined fields
   const clean = JSON.parse(JSON.stringify(topic)) as TopicPackage;
-  await addDoc(versions(topic.id), { savedAt: Date.now(), kind, topic: clean });
+  const hash = contentHash(clean);
+  // The same content already kept: it stays under the date it was first saved
+  const same = await getDocs(query(versions(topic.id), where('hash', '==', hash), limit(1)));
+  if (!same.empty) return;
+  await addDoc(versions(topic.id), { savedAt: Date.now(), kind, hash, topic: clean });
   const old = await getDocs(query(versions(topic.id), orderBy('savedAt', 'desc'), limit(KEEP + 10)));
   await Promise.all(old.docs.slice(KEEP).map((d) => deleteDoc(d.ref)));
 }
