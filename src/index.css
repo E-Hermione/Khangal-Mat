@@ -87,7 +87,7 @@
   font-size: 0.85em !important;
 }
 
-/* Division in columns (\longdiv{a}{b}) */
+/* Division in columns (\longdiv{a}{b}): the divisor's cell carries the corner (left + bottom lines) */
 .long-division {
   display: inline-block;
   vertical-align: middle;
@@ -96,10 +96,10 @@
 .long-division table {
   border-collapse: separate;
   border-spacing: 0;
-  line-height: 1.35;
+  line-height: 1.1;
 }
 .long-division td {
-  padding: 0 0.3em;
+  padding: 0.05em 0.3em;
   white-space: nowrap;
 }
 .long-division .ld-minus {
@@ -109,14 +109,12 @@
 .long-division .ld-num {
   text-align: right;
 }
-.long-division .ld-bar {
-  border-right: 2px solid currentColor;
-}
-.long-division .ld-q {
-  border-top: 2px solid currentColor;
+.long-division .ld-div {
+  border-left: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
 }
 .long-division .ld-under {
-  border-bottom: 2px solid currentColor;
+  border-bottom: 1px solid currentColor;
 }
 .long-division .ld-label {
   font-size: 0.85em;
