@@ -124,13 +124,3 @@ export function topicJson(topic: TopicPackage): string {
   const { description, theory, examples, practice, test1, test2, test3 } = topic;
   return JSON.stringify({ description, theory, examples, practice, test1, test2, test3 }, null, 2);
 }
-
-/** The same, saved as a .json file. */
-export function downloadTopicJson(topic: TopicPackage, name: string) {
-  const blob = new Blob([topicJson(topic)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `${name}.json`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-}

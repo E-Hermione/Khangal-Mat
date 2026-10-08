@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Copy, Download, Eye, History, RotateCcw, Trash2, X } from 'lucide-react';
+import { Copy, Eye, History, RotateCcw, Trash2, X } from 'lucide-react';
 import { TopicPackage } from '../types';
-import { deleteTopicVersion, downloadTopicJson, loadTopicVersions, topicJson, TopicVersion } from '../services/topicHistory';
+import { deleteTopicVersion, loadTopicVersions, topicJson, TopicVersion } from '../services/topicHistory';
 import { backdropClose } from '../utils/backdrop';
 
 const KIND_LABEL: Record<TopicVersion['kind'], string> = {
@@ -17,7 +17,7 @@ const when = (t: number) =>
 const counts = (t: TopicPackage) =>
   `Онол ${t.theory?.length || 0} • Жишээ ${t.examples?.length || 0} • Дасгал ${t.practice?.length || 0}`;
 
-/** The topic's saved versions: download any of them, or load one back into the editor. */
+/** The topic's saved versions: view, switch to or delete any of them. */
 export const TopicHistoryDialog: React.FC<{
   topic: TopicPackage;
   onSwitch: (v: TopicVersion) => void;
@@ -36,7 +36,6 @@ export const TopicHistoryDialog: React.FC<{
         setError(true);
       });
   }, [topic.id]);
-  const fileName = (suffix: string) => `${topic.title}-${suffix}`.replace(/[\\/:*?"<>|]/g, '');
 
   return (
     <div {...backdropClose(onClose)} className="fixed inset-0 z-[60] flex items-center justify-center p-3 bg-stone-950/60">
@@ -52,18 +51,10 @@ export const TopicHistoryDialog: React.FC<{
           <button
             type="button"
             onClick={() => setViewing({ title: 'Засаж буй хувилбар', text: topicJson(topic) })}
-            className="px-3 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-800 flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            Харах
-          </button>
-          <button
-            type="button"
-            onClick={() => downloadTopicJson(topic, fileName('одоогийн'))}
             className="flex-1 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-800 flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5" />
-            Засаж буй хувилбарыг файл болгож татах
+            <Eye className="w-3.5 h-3.5" />
+            Засаж буй хувилбарыг харах
           </button>
         </div>
         <div className="flex-1 overflow-y-auto divide-y divide-stone-100">
@@ -94,15 +85,6 @@ export const TopicHistoryDialog: React.FC<{
                   aria-label="Харах"
                 >
                   <Eye className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => downloadTopicJson(v.topic, fileName(new Date(v.updatedAt ?? v.savedAt).toISOString().slice(0, 16).replace(':', '-')))}
-                  className="p-1.5 rounded-md text-stone-500 hover:text-stone-900 hover:bg-stone-100 cursor-pointer"
-                  title="Файл болгож татах"
-                  aria-label="Файл болгож татах"
-                >
-                  <Download className="w-4 h-4" />
                 </button>
                 {!v.current && (
                   <button
