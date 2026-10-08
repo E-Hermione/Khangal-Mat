@@ -22,10 +22,24 @@ import {
   ArrowUp,
   ArrowDown,
   History,
+  ChevronDown,
 } from 'lucide-react';
 import { recordTopicSave } from '../services/topicHistory';
 import { TopicHistoryDialog } from './TopicHistoryDialog';
 import { backdropClose } from '../utils/backdrop';
+
+// The parts «Файлаас оруулах» can bring in one at a time
+const IMPORT_KEYS = ['theory', 'examples', 'practice', 'test1', 'test2', 'test3'] as const;
+type ImportPart = 'all' | (typeof IMPORT_KEYS)[number];
+const IMPORT_LABELS: Record<ImportPart, string> = {
+  all: 'Бүгд',
+  theory: 'Онол',
+  examples: 'Жишээ',
+  practice: 'Бие даан бодох дасгал',
+  test1: 'Анхан сорил',
+  test2: 'Дунд сорил',
+  test3: 'Ахисан сорил',
+};
 
 interface AdminEditorModalProps {
   isOpen: boolean;
@@ -97,36 +111,47 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   // Fills this topic's lesson from a prepared .json file (theory, examples, exercises, the 3 tests).
   // The topic keeps its own name, grade and place in the list; item ids get the topic's id in front
   // so they never clash with another topic's.
+  // «Файлаас оруулах»: one part at a time (or all of them). The file may hold the whole topic
+  // (only the chosen part is taken from it) or just that part (its list, or the test itself).
+  const importTarget = React.useRef<ImportPart>('all');
+  const [importMenu, setImportMenu] = useState(false);
+  const pickImport = (part: ImportPart) => {
+    importTarget.current = part;
+    setImportMenu(false);
+    fileInputRef.current?.click();
+  };
   const importContent = async (file: File) => {
     try {
       const data = JSON.parse(await file.text());
       const pre = (id: string) => (id.startsWith(`${topic.id}-`) ? id : `${topic.id}-${id}`);
       const withIds = <T extends { id: string }>(list: T[] = []) => list.map((x) => ({ ...x, id: pre(x.id) }));
-      const test = (t: TopicPackage['test1'] | undefined, n: 1 | 2 | 3) =>
-        t ? { ...t, id: pre(t.id || `test${n}`), testNumber: n, questions: withIds(t.questions) } : topic[`test${n}` as 'test1'];
-      // Only the parts in the file are replaced; a file with just examples leaves the rest as it is
-      const parts = [
-        Array.isArray(data.theory) && 'Онол',
-        Array.isArray(data.examples) && 'Жишээ',
-        Array.isArray(data.practice) && 'Дасгал',
-        data.test1 && 'Анхан сорил',
-        data.test2 && 'Дунд сорил',
-        data.test3 && 'Ахисан сорил',
-      ].filter(Boolean);
-      if (!parts.length) throw new Error('bad');
-      if (!window.confirm(`Файлаас солигдох хэсэг: ${parts.join(', ')}. Бусад хэсэг хэвээр үлдэнэ. Үргэлжлүүлэх үү?`)) return;
-      setTopic({
-        ...topic,
-        description: data.description ?? topic.description,
-        theory: Array.isArray(data.theory) ? withIds(data.theory) : topic.theory,
-        examples: Array.isArray(data.examples) ? withIds(data.examples) : topic.examples,
-        practice: Array.isArray(data.practice) ? withIds(data.practice) : topic.practice,
-        test1: test(data.test1, 1),
-        test2: test(data.test2, 2),
-        test3: test(data.test3, 3),
-      });
+      const test = (t: TopicPackage['test1'], n: 1 | 2 | 3) => ({ ...t, id: pre(t.id || `test${n}`), testNumber: n, questions: withIds(t.questions) });
+      const part = importTarget.current;
+      const next = { ...topic };
+      const done: string[] = [];
+      for (const key of part === 'all' ? IMPORT_KEYS : [part]) {
+        // The part on its own: a list for theory/examples/practice, the test object for a test
+        const own = part !== 'all' && (key.startsWith('test') ? data && Array.isArray(data.questions) : Array.isArray(data)) ? data : undefined;
+        const value = own ?? data?.[key];
+        if (key.startsWith('test')) {
+          if (!value || !Array.isArray(value.questions)) continue;
+          const n = Number(key.slice(4)) as 1 | 2 | 3;
+          next[key as 'test1'] = test(value, n);
+        } else {
+          if (!Array.isArray(value)) continue;
+          next[key as 'theory'] = withIds(value);
+        }
+        done.push(IMPORT_LABELS[key]);
+      }
+      if (!done.length) {
+        showStatus(part === 'all' ? 'Файлаас оруулах хэсэг олдсонгүй.' : `Файлд «${IMPORT_LABELS[part]}» хэсэг алга.`);
+        return;
+      }
+      if (!window.confirm(`Солигдох хэсэг: ${done.join(', ')}. Бусад хэсэг хэвээр үлдэнэ. Үргэлжлүүлэх үү?`)) return;
+      if (part === 'all' && typeof data.description === 'string') next.description = data.description;
+      setTopic(next);
       importedRef.current = true;
-      showStatus('Файлаас орууллаа. Шалгаад «Хадгалах» дарна уу.');
+      showStatus(`${done.join(', ')}: файлаас орууллаа. Шалгаад «Хадгалах» дарна уу.`);
     } catch {
       showStatus('Файлыг уншиж чадсангүй.');
     }
@@ -296,15 +321,37 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
               <History className="w-3.5 h-3.5" />
               <span>Түүх</span>
             </button>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-100 font-bold text-xs flex items-center space-x-1.5 cursor-pointer"
-              title="Бэлэн агуулгыг .json файлаас оруулах"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              <span>Файлаас оруулах</span>
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setImportMenu((v) => !v)}
+                className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-100 font-bold text-xs flex items-center space-x-1.5 cursor-pointer"
+                title="Бэлэн агуулгыг .json файлаас оруулах: аль хэсгийг гэдгээ сонгоно"
+                aria-expanded={importMenu}
+                data-testid="import-menu"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>Файлаас оруулах</span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+              {importMenu && (
+                <div className="absolute right-0 top-full mt-1 z-30 w-48 bg-white rounded-xl border border-stone-200 shadow-xl py-1 text-stone-800">
+                  {(['all', ...IMPORT_KEYS] as ImportPart[]).map((part) => (
+                    <button
+                      key={part}
+                      type="button"
+                      onClick={() => pickImport(part)}
+                      className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-amber-50 cursor-pointer ${
+                        part === 'all' ? 'border-b border-stone-100 font-black' : ''
+                      }`}
+                      data-testid={`import-${part}`}
+                    >
+                      {part === 'all' ? 'Бүгдийг нэг файлаас' : IMPORT_LABELS[part]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               type="button"
               onClick={handleSave}
