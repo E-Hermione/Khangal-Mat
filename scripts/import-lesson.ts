@@ -63,7 +63,11 @@ const own = patch ? undefined : part.startsWith('test') ? (Array.isArray(data?.q
 const value = own ?? data?.[part];
 const pre = (id: string) => (id.startsWith(`${topicId}-`) ? id : `${topicId}-${id}`);
 const withIds = <T extends { id: string }>(list: T[] = []) => list.map((x) => ({ ...x, id: pre(x.id) }));
-const text = (x: unknown) => String((x as Record<string, unknown>)?.question ?? (x as Record<string, unknown>)?.problem ?? '').replace(/\s+/g, ' ').trim();
+// What makes an item the same as one already there: its question, problem, or (theory) its title and rule
+const text = (x: unknown) => {
+  const r = x as Record<string, unknown>;
+  return String(r?.question ?? r?.problem ?? `${r?.title ?? ''} ${r?.ruleText ?? ''}`).replace(/\s+/g, ' ').trim();
+};
 // For --append: the file's items that are not on the site yet, with ids that don't clash
 function addable<T extends { id: string }>(old: { id: string }[], items: T[]): T[] {
   const seen = new Set(old.map(text));
