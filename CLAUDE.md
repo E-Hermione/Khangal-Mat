@@ -26,3 +26,6 @@
 - Tests get harder from test1 to test3, for every grade and topic: test1 (Анхан) checks the basic ideas, test2 (Дунд)
   covers everything the topic teaches at the level a student who learned it all should reach, test3 (Ахисан) goes
   deeper (larger numbers, borrowing, unknowns, several steps). The owner's textbook pages set the level.
+- From «Энгийн бутархай үржих үйлдэл болон хураах үйлдэл» on, answers are reduced (cancel before multiplying,
+  crossed numbers with what is left written over or under them). In a multiple-choice question no wrong option
+  may equal another option or the answer written another way (no $\frac{15}{60}$ beside $\frac{1}{4}$).
