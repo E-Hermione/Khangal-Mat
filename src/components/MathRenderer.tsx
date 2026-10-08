@@ -18,7 +18,8 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     if (!content) return '';
 
     // If block is explicitly requested and content does not already have delimiters
-    if (block && !content.includes('$')) {
+    const hasLongDiv = content.includes('\\longdiv');
+    if (block && !content.includes('$') && !hasLongDiv) {
       try {
         return katex.renderToString(content.trim(), {
           displayMode: true,
@@ -32,7 +33,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     // Check if content contains LaTeX delimiters: $$...$$ or $...$ or \(...\) or \[...\]
     const hasMathDelimiters = /\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\\\(.+?\\\)|\\\[[\s\S]+?\\\]/.test(content);
 
-    if (!hasMathDelimiters) {
+    if (!hasMathDelimiters && !hasLongDiv) {
       // Check if it looks like a pure LaTeX formula or mathematical expression
       // Contains typical LaTeX commands like \frac, \sqrt, \alpha, \pm, ^, _, \cdot, \begin, etc.
       const looksLikePureFormula = /\\(frac|sqrt|cdot|times|div|pm|mp|in|subset|sum|int|lim|alpha|beta|gamma|theta|pi|le|ge|neq|approx|mathbf|text|vec|angle|sin|cos|tan|cot|log|ln|infty|Delta|to|leftarrow|rightarrow|over|left|right|begin|pmatrix|cases)|[\^_{}]/.test(content);
@@ -59,8 +60,21 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     const render = (math: string, displayMode: boolean) =>
       katex.renderToString(math.trim(), { displayMode, throwOnError: false, macros: displayMode ? undefined : INLINE_MACROS });
 
+    // 0. Division with a remainder, written out in columns: \longdiv{23}{5}, and the older
+    //    "$23 : 5 = 4$, үлдэгдэл $3$" sentences (only when the numbers add up)
+    let processed0 = content.replace(/\$?\s*\\longdiv\{\s*(\d+)\s*\}\{\s*(\d+)\s*\}\s*\$?/g, (whole, a, b) =>
+      Number(b) > 0 ? keep(longDivision(Number(a), Number(b))) : whole
+    );
+    processed0 = processed0.replace(
+      /\$\s*(\d+)\s*(?::|\\div)\s*(\d+)\s*=\s*(\d+)\s*\$\s*,?\s*\(?\s*үлдэгдэл\s*\$\s*(\d+)\s*\$\s*\)?\.?/g,
+      (whole, a, b, q, r) => {
+        const [A, B, Q, R] = [a, b, q, r].map(Number);
+        return B > 0 && Q === Math.floor(A / B) && R === A % B ? keep(longDivision(A, B)) : whole;
+      }
+    );
+
     // 1. Replace $$...$$ block math
-    let processed = content.replace(/\$\$([\s\S]+?)\$\$/g, (whole, math) => {
+    let processed = processed0.replace(/\$\$([\s\S]+?)\$\$/g, (whole, math) => {
       try {
         return keep(`<div class="my-2 overflow-x-auto print:overflow-visible flex justify-center">${render(math, true)}</div>`);
       } catch {
@@ -112,6 +126,27 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
 // Fractions inside a line of text are drawn full height (\dfrac) with slightly smaller digits
 // (see .inline-math in index.css), so 4/7 reads clearly instead of as tiny stacked digits
 const INLINE_MACROS = { '\\frac': '\\dfrac' };
+
+/**
+ * Division in columns, as taught in school:
+ *   −23 | 5
+ *        ‾‾
+ *    20   4  ногд
+ *    ‾‾
+ *     3  үлд
+ */
+function longDivision(a: number, b: number): string {
+  const q = Math.floor(a / b);
+  const num = (n: number | string) => katex.renderToString(String(n), { throwOnError: false });
+  return (
+    `<span class="long-division" title="${a} : ${b} = ${q}, үлдэгдэл ${a % b}"><table><tbody>` +
+    `<tr><td class="ld-minus" rowspan="2">${num('-')}</td><td class="ld-num ld-bar">${num(a)}</td>` +
+    `<td class="ld-div">${num(b)}</td><td></td></tr>` +
+    `<tr><td class="ld-num ld-under">${num(b * q)}</td><td class="ld-q">${num(q)}</td><td class="ld-label">ногд</td></tr>` +
+    `<tr><td></td><td class="ld-num">${num(a % b)}</td><td class="ld-label" colspan="2">үлд</td></tr>` +
+    `</tbody></table></span>`
+  );
+}
 
 function escapeHtml(text: string): string {
   return text

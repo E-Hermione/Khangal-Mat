@@ -87,6 +87,42 @@
   font-size: 0.85em !important;
 }
 
+/* Division in columns (\longdiv{a}{b}) */
+.long-division {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0.25em 0.4em;
+}
+.long-division table {
+  border-collapse: separate;
+  border-spacing: 0;
+  line-height: 1.35;
+}
+.long-division td {
+  padding: 0 0.3em;
+  white-space: nowrap;
+}
+.long-division .ld-minus {
+  vertical-align: middle;
+  padding-right: 0.1em;
+}
+.long-division .ld-num {
+  text-align: right;
+}
+.long-division .ld-bar {
+  border-right: 2px solid currentColor;
+}
+.long-division .ld-q {
+  border-top: 2px solid currentColor;
+}
+.long-division .ld-under {
+  border-bottom: 2px solid currentColor;
+}
+.long-division .ld-label {
+  font-size: 0.85em;
+  padding-left: 0.6em;
+}
+
 .katex-display {
   margin: 0.5em 0 !important;
 }

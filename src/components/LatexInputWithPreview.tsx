@@ -36,6 +36,7 @@ const MATH_SNIPPETS = [
   { label: '≥', snippet: '\\ge ', desc: 'Их буюу тэнцүү' },
   { label: '≠', snippet: '\\neq ', desc: 'Тэнцүү биш' },
   { label: 'π', snippet: '\\pi ', desc: 'Пи тоо' },
+  { label: 'a|b', snippet: '\\longdiv{23}{5}', desc: 'Баганаар хуваах (үлдэгдэлтэй): тоонуудыг сольж бичнэ' },
   { label: 'Таб', snippet: '\\qquad ', desc: 'Таб шиг зай авах' },
   { label: '$', snippet: WRAP, desc: 'Сонгосон хэсгийг $...$ дотор оруулах' },
   { label: '→', snippet: ' \\;\\rightarrow\\; ', desc: 'Сум' },
