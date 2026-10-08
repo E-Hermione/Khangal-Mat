@@ -19,3 +19,7 @@
   is explained, not each digit.
 - Tests and practice use only what this topic's theory and examples teach, or earlier topics of the same
   grade. Nothing from later topics or higher grades (no sequences with $a_n$ in grade 6).
+- Unlike denominators are made alike as in the owner's notebook, never through the least common multiple:
+  split each denominator, cross out the factor both share ($15 = 5 \cdot \cancel{3}$, $33 = 11 \cdot \cancel{3}$),
+  then multiply crosswise by what is left. Grade 6 answers need no reducing, so pick numbers whose answer is
+  already in lowest terms.
