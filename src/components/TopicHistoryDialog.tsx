@@ -47,11 +47,15 @@ interface PartVersion {
   at: number;
 }
 
-/** What a version holds: the parts a file brought in, or else the parts that are not empty. */
-function summary(v: TopicVersion): string {
-  const shown = PARTS.filter((p) =>
-    v.kind === 'import' && v.parts ? v.parts.includes(p.key) : partSize(p.key, v.topic[p.key]) > 0
-  );
+/**
+ * What a version shows: for a file import, only the parts the file brought in (older imports, saved
+ * before this was recorded: the parts that differ from the version before); otherwise the parts
+ * that are not empty.
+ */
+function summary(v: TopicVersion, older?: TopicVersion): string {
+  const brought = (key: PartKey) =>
+    v.parts ? v.parts.includes(key) : older ? partHash(v.topic[key]) !== partHash(older.topic[key]) : partSize(key, v.topic[key]) > 0;
+  const shown = PARTS.filter((p) => (v.kind === 'import' ? brought(p.key) : partSize(p.key, v.topic[p.key]) > 0));
   return shown.map((p) => `${PART_NAME[p.key]} ${partSize(p.key, v.topic[p.key])} ${p.unit}`).join(' • ');
 }
 
@@ -196,13 +200,13 @@ export const TopicHistoryDialog: React.FC<{
               ));
             })()
           ) : (
-            list.map((v) => (
+            list.map((v, i) => (
               <div key={v.id} className="px-4 py-2.5 flex items-center gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-stone-900">
                     {when(v.updatedAt ?? v.savedAt)} <span className="ml-1 font-semibold text-stone-500">{KIND_LABEL[v.kind]}</span>
                   </div>
-                  <div className="text-[11px] text-stone-500">{summary(v)}</div>
+                  <div className="text-[11px] text-stone-500">{summary(v, list[i + 1])}</div>
                 </div>
                 <button
                   type="button"
