@@ -104,6 +104,15 @@ export async function recordTopicSave(before: TopicPackage, after: TopicPackage,
   await addVersion(after, 'import', true);
 }
 
+/** Removes a version, with any copies of the same content (the list shows them as one). */
+export async function deleteTopicVersion(topicId: string, version: TopicVersion): Promise<void> {
+  const hash = contentHash(version.topic);
+  const all = await getDocs(versions(topicId));
+  await Promise.all(
+    all.docs.filter((d) => !d.data().current && contentHash(d.data().topic as TopicPackage) === hash).map((d) => deleteDoc(d.ref))
+  );
+}
+
 /** Puts a saved version in use; no new version is added. */
 export async function switchToVersion(topicId: string, versionId: string): Promise<void> {
   await clearCurrent(topicId);

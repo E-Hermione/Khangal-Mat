@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Copy, Download, Eye, History, RotateCcw, X } from 'lucide-react';
+import { Copy, Download, Eye, History, RotateCcw, Trash2, X } from 'lucide-react';
 import { TopicPackage } from '../types';
-import { downloadTopicJson, loadTopicVersions, topicJson, TopicVersion } from '../services/topicHistory';
+import { deleteTopicVersion, downloadTopicJson, loadTopicVersions, topicJson, TopicVersion } from '../services/topicHistory';
 import { backdropClose } from '../utils/backdrop';
 
 const KIND_LABEL: Record<TopicVersion['kind'], string> = {
@@ -104,6 +104,25 @@ export const TopicHistoryDialog: React.FC<{
                 >
                   <Download className="w-4 h-4" />
                 </button>
+                {!v.current && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!window.confirm(`${when(v.updatedAt ?? v.savedAt)}-ий хувилбарыг устгах уу? Буцааж сэргээх боломжгүй.`)) return;
+                      deleteTopicVersion(topic.id, v)
+                        .then(() => setList((l) => l?.filter((x) => x.id !== v.id) ?? l))
+                        .catch((err) => {
+                          console.error('Version not deleted', err);
+                          window.alert('Устгаж чадсангүй.');
+                        });
+                    }}
+                    className="p-1.5 rounded-md text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                    title="Устгах"
+                    aria-label="Устгах"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
                 {v.current ? (
                   <span className="px-2 py-1 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-bold">Одоогийн</span>
                 ) : (
