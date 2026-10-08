@@ -95,6 +95,15 @@ async function addVersion(topic: TopicPackage, kind: VersionKind, current: boole
  * import starts a new version and puts it in use (the first time, the lesson as it was before goes
  * in first, so nothing is lost).
  */
+/** A lesson with nothing in it (it was deleted): never kept as a version. */
+export const isEmptyLesson = (t: TopicPackage) =>
+  !t.theory?.length &&
+  !t.examples?.length &&
+  !t.practice?.length &&
+  !t.test1?.questions?.length &&
+  !t.test2?.questions?.length &&
+  !t.test3?.questions?.length;
+
 // History writes run one after another; opening the history waits for them
 let pending: Promise<unknown> = Promise.resolve();
 const queued = <T>(job: () => Promise<T>): Promise<T> => {
@@ -108,6 +117,7 @@ export function recordTopicSave(before: TopicPackage, after: TopicPackage, mode:
 }
 
 async function recordTopicSaveNow(before: TopicPackage, after: TopicPackage, mode: SaveMode): Promise<void> {
+  if (isEmptyLesson(after)) return;
   if (mode === 'edit') {
     const cur = await getDocs(query(versions(after.id), where('current', '==', true), limit(1)));
     const target = cur.empty ? await getDocs(query(versions(after.id), orderBy('savedAt', 'desc'), limit(1))) : cur;
@@ -130,6 +140,7 @@ export function ensureCurrentVersion(saved: TopicPackage): Promise<void> {
 }
 
 async function ensureCurrentNow(saved: TopicPackage): Promise<void> {
+  if (isEmptyLesson(saved)) return;
   const hash = contentHash(clean(saved));
   const all = await getDocs(versions(saved.id));
   const same = all.docs.filter((d) => contentHash(d.data().topic as TopicPackage) === hash);
@@ -139,13 +150,20 @@ async function ensureCurrentNow(saved: TopicPackage): Promise<void> {
   await updateDoc(same[0].ref, { current: true });
 }
 
-/** Removes a version, with any copies of the same content (the list shows them as one). */
-export async function deleteTopicVersion(topicId: string, version: TopicVersion): Promise<void> {
-  const hash = contentHash(version.topic);
-  const all = await getDocs(versions(topicId));
-  await Promise.all(
-    all.docs.filter((d) => !d.data().current && contentHash(d.data().topic as TopicPackage) === hash).map((d) => deleteDoc(d.ref))
-  );
+/**
+ * Removes a version, with any copies of the same content (the list shows them as one). The version
+ * in use goes only when it is the last one left (the editor then empties the lesson on the site).
+ */
+export function deleteTopicVersion(topicId: string, version: TopicVersion, inUseToo = false): Promise<void> {
+  return queued(async () => {
+    const hash = contentHash(version.topic);
+    const all = await getDocs(versions(topicId));
+    await Promise.all(
+      all.docs
+        .filter((d) => (inUseToo || !d.data().current) && contentHash(d.data().topic as TopicPackage) === hash)
+        .map((d) => deleteDoc(d.ref))
+    );
+  });
 }
 
 /** Puts a saved version in use; no new version is added. */

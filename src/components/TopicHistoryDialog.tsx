@@ -68,8 +68,10 @@ export const TopicHistoryDialog: React.FC<{
   saved: TopicPackage;
   onSwitch: (v: TopicVersion) => void;
   onSwitchPart: (key: PartKey, value: unknown) => void;
+  // The last version, the one in use, was deleted: the lesson is emptied on the site
+  onLessonDeleted: () => void;
   onClose: () => void;
-}> = ({ topic, saved, onSwitch, onSwitchPart, onClose }) => {
+}> = ({ topic, saved, onSwitch, onSwitchPart, onLessonDeleted, onClose }) => {
   const [tab, setTab] = useState<Tab>('all');
   const [list, setList] = useState<TopicVersion[] | null>(null);
   const [error, setError] = useState(false);
@@ -186,20 +188,27 @@ export const TopicHistoryDialog: React.FC<{
                 >
                   <Eye className="w-4 h-4" />
                 </button>
-                {!v.current && (
+                {(!v.current || list.length === 1) && (
                   <button
                     type="button"
                     onClick={() => {
-                      if (!window.confirm(`${when(v.updatedAt ?? v.savedAt)}-ий хувилбарыг устгах уу? Буцааж сэргээх боломжгүй.`)) return;
-                      deleteTopicVersion(topic.id, v)
-                        .then(() => setList((l) => l?.filter((x) => x.id !== v.id) ?? l))
+                      const last = !!v.current;
+                      const question = last
+                        ? 'Энэ бол сайт дээрх одоогийн, үлдсэн цорын ганц хувилбар. Устгавал энэ хичээлийн агуулга (онол, жишээ, дасгал, сорил) сайтаас бүрэн устна. Устгах уу?'
+                        : `${when(v.updatedAt ?? v.savedAt)}-ий хувилбарыг устгах уу? Буцааж сэргээх боломжгүй.`;
+                      if (!window.confirm(question)) return;
+                      deleteTopicVersion(topic.id, v, last)
+                        .then(() => {
+                          setList((l) => l?.filter((x) => x.id !== v.id) ?? l);
+                          if (last) onLessonDeleted();
+                        })
                         .catch((err) => {
                           console.error('Version not deleted', err);
                           window.alert('Устгаж чадсангүй.');
                         });
                     }}
                     className="p-1.5 rounded-md text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-                    title="Устгах"
+                    title={v.current ? 'Устгах: хичээл сайтаас устна' : 'Устгах'}
                     aria-label="Устгах"
                   >
                     <Trash2 className="w-4 h-4" />

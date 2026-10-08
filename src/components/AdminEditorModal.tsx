@@ -1133,6 +1133,15 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           topic={topic}
           saved={JSON.parse(savedRef.current) as TopicPackage}
           onClose={() => setHistoryOpen(false)}
+          onLessonDeleted={() => {
+            // The whole lesson goes from the site; the topic stays in the list, empty
+            const empty = (test: TopicPackage['test1']) => ({ ...test, questions: [] });
+            const t: TopicPackage = { ...topic, theory: [], examples: [], practice: [], test1: empty(topic.test1), test2: empty(topic.test2), test3: empty(topic.test3) };
+            setTopic(t);
+            persist(t);
+            setHistoryOpen(false);
+            showStatus('Хичээлийн агуулга сайтаас устлаа.');
+          }}
           onSwitchPart={(key, value) => {
             // One part goes back to an earlier content; saved at once as an edit of the version in use
             const t = { ...topic, [key]: value } as TopicPackage;
