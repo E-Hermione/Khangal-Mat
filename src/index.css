@@ -82,6 +82,11 @@
   text-rendering: auto;
 }
 
+/* Fractions in a line of text: full height, digits at 85% so the line stays even */
+.inline-math .katex .mfrac .sizing {
+  font-size: 0.85em !important;
+}
+
 .katex-display {
   margin: 0.5em 0 !important;
 }

@@ -39,10 +39,12 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       
       if (looksLikePureFormula) {
         try {
-          return katex.renderToString(content.trim(), {
+          const html = katex.renderToString(content.trim(), {
             displayMode: block,
             throwOnError: false,
+            macros: block ? undefined : INLINE_MACROS,
           });
+          return block ? html : `<span class="inline-math">${html}</span>`;
         } catch {
           return escapeHtml(content);
         }
@@ -55,7 +57,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     const rendered: string[] = [];
     const keep = (html: string) => `\u0000${rendered.push(html) - 1}\u0000`;
     const render = (math: string, displayMode: boolean) =>
-      katex.renderToString(math.trim(), { displayMode, throwOnError: false });
+      katex.renderToString(math.trim(), { displayMode, throwOnError: false, macros: displayMode ? undefined : INLINE_MACROS });
 
     // 1. Replace $$...$$ block math
     let processed = content.replace(/\$\$([\s\S]+?)\$\$/g, (whole, math) => {
@@ -106,6 +108,10 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     />
   );
 };
+
+// Fractions inside a line of text are drawn full height (\dfrac) with slightly smaller digits
+// (see .inline-math in index.css), so 4/7 reads clearly instead of as tiny stacked digits
+const INLINE_MACROS = { '\\frac': '\\dfrac' };
 
 function escapeHtml(text: string): string {
   return text
