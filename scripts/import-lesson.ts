@@ -81,14 +81,19 @@ if (patch) {
   const test = part.startsWith('test') ? before[part as 'test1'] : undefined;
   const items = (test ? test.questions : (before as unknown as Record<string, { id: string }[]>)[part]) ?? [];
   const next = items.map((x) => ({ ...x }) as Record<string, unknown>);
+  let changed = 0;
   for (const p of data as Patch[]) {
     const item = next.find((x) => x.id === pre(p.id));
     const state = !item ? 'not found' : item[p.field] === p.to ? 'already done' : item[p.field] === p.from ? 'changed' : 'edited by hand, left as is';
-    if (state === 'changed') item![p.field] = p.to;
+    if (state === 'changed') (item![p.field] = p.to), changed++;
     console.log(`  ${p.id}.${p.field}: ${state}`);
   }
   if (test) after[part as 'test1'] = { ...test, questions: next as never };
   else (after as unknown as Record<string, unknown>)[part] = next;
+  if (!changed) {
+    console.log('Nothing to change.');
+    process.exit(0);
+  }
 } else if (part.startsWith('test')) {
   if (!Array.isArray(value?.questions)) throw new Error(`No ${part} in ${file}`);
   const n = Number(part.slice(4)) as 1 | 2 | 3;
