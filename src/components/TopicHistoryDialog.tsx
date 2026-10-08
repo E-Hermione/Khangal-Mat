@@ -125,11 +125,15 @@ export const TopicHistoryDialog: React.FC<{
           ) : rows.length === 0 ? (
             <div className="p-6 text-center text-xs text-stone-500">Түүх хоосон.</div>
           ) : (
-            rows.map((r) => (
-              <div key={r.version.id} className="px-4 py-2.5 flex items-center gap-2">
+            rows.map((r, i) => (
+              // The newest row is what the site shows now
+              <div key={r.version.id} className={`px-4 py-2.5 flex items-center gap-2 ${i === 0 ? 'bg-emerald-50' : ''}`}>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-stone-900">
                     {when(r.at)}
+                    {i === 0 && (
+                      <span className="ml-1.5 px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold align-middle">Одоогийн</span>
+                    )}
                     {r.version.file && <span className="ml-1 font-semibold text-stone-500">{r.version.file}</span>}
                   </div>
                   <div className="text-[11px] text-stone-500">
