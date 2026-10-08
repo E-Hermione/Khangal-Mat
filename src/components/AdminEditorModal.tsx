@@ -93,6 +93,9 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   // Topic history: the dialog, and whether a file was imported since the last save
   const [historyOpen, setHistoryOpen] = useState(false);
   const importedRef = React.useRef(false);
+  // «Файлаас оруулах»: the part chosen in its menu
+  const importTarget = React.useRef<ImportPart>('all');
+  const [importMenu, setImportMenu] = useState(false);
   React.useEffect(() => {
     setTopic({ ...activeTopic });
     savedRef.current = JSON.stringify(activeTopic);
@@ -113,8 +116,6 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   // so they never clash with another topic's.
   // «Файлаас оруулах»: one part at a time (or all of them). The file may hold the whole topic
   // (only the chosen part is taken from it) or just that part (its list, or the test itself).
-  const importTarget = React.useRef<ImportPart>('all');
-  const [importMenu, setImportMenu] = useState(false);
   const pickImport = (part: ImportPart) => {
     importTarget.current = part;
     setImportMenu(false);
