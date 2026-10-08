@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Copy, Eye, History, RotateCcw, Trash2, X } from 'lucide-react';
 import { TopicPackage } from '../types';
-import { deleteTopicVersion, ensureCurrentVersion, loadTopicVersions, partHash, SaveMode, topicJson, TopicVersion } from '../services/topicHistory';
+import { deleteTopicVersion, ensureCurrentVersion, loadTopicVersions, partHash, topicJson, TopicVersion } from '../services/topicHistory';
 import { backdropClose } from '../utils/backdrop';
 
 const KIND_LABEL: Record<TopicVersion['kind'], string> = {
@@ -95,23 +95,22 @@ export const TopicHistoryDialog: React.FC<{
   topic: TopicPackage;
   // The lesson as saved on the site (the editor may hold unsaved changes)
   saved: TopicPackage;
-  onSwitch: (v: TopicVersion) => void;
   onSwitchPart: (key: PartKey, value: unknown) => void;
   // The last version, the one in use, was deleted: the lesson is emptied on the site
   onLessonDeleted: () => void;
   // JSON edited in the viewer goes on the site (true when it did)
-  onApplyJson: (data: unknown, part: 'all' | PartKey, mode: SaveMode) => boolean;
+  onApplyJson: (data: unknown, part: 'all' | PartKey, versionId?: string) => boolean;
   onClose: () => void;
-}> = ({ topic, saved, onSwitch, onSwitchPart, onLessonDeleted, onApplyJson, onClose }) => {
+}> = ({ topic, saved, onSwitchPart, onLessonDeleted, onApplyJson, onClose }) => {
   const [tab, setTab] = useState<Tab>('all');
   const [list, setList] = useState<TopicVersion[] | null>(null);
   const [error, setError] = useState(false);
   // The JSON being viewed in full
   // The JSON being viewed (and edited); `part` and `current` say where an edit goes
-  const [viewing, setViewing] = useState<{ title: string; text: string; part: 'all' | PartKey; current: boolean } | null>(null);
+  const [viewing, setViewing] = useState<{ title: string; text: string; part: 'all' | PartKey; current: boolean; versionId?: string } | null>(null);
   const [draft, setDraft] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
-  const view = (v: { title: string; text: string; part: 'all' | PartKey; current: boolean }) => {
+  const view = (v: { title: string; text: string; part: 'all' | PartKey; current: boolean; versionId?: string }) => {
     setViewing(v);
     setDraft(v.text);
     setJsonError(null);
@@ -204,60 +203,43 @@ export const TopicHistoryDialog: React.FC<{
               <div key={v.id} className="px-4 py-2.5 flex items-center gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-stone-900">
-                    {when(v.updatedAt ?? v.savedAt)} <span className="ml-1 font-semibold text-stone-500">{KIND_LABEL[v.kind]}</span>
+                    {when(v.updatedAt ?? v.savedAt)} <span className="ml-1 font-semibold text-stone-500">{v.file || KIND_LABEL[v.kind]}</span>
                   </div>
                   <div className="text-[11px] text-stone-500">{summary(v, list[i + 1])}</div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => view({ title: `${when(v.updatedAt ?? v.savedAt)} • ${KIND_LABEL[v.kind]}`, text: topicJson(v.topic), part: 'all', current: !!v.current })}
+                  onClick={() => view({ title: `${when(v.updatedAt ?? v.savedAt)} • ${KIND_LABEL[v.kind]}`, text: topicJson(v.topic), part: 'all', current: !!v.current, versionId: v.id })}
                   className="p-1.5 rounded-md text-stone-500 hover:text-stone-900 hover:bg-stone-100 cursor-pointer"
                   title="JSON-ийг бүтнээр нь харах"
                   aria-label="Харах"
                 >
                   <Eye className="w-4 h-4" />
                 </button>
-                {(!v.current || list.length === 1) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const last = !!v.current;
-                      const question = last
-                        ? 'Энэ бол сайт дээрх одоогийн, үлдсэн цорын ганц хувилбар. Устгавал энэ хичээлийн агуулга (онол, жишээ, дасгал, сорил) сайтаас бүрэн устна. Устгах уу?'
-                        : `${when(v.updatedAt ?? v.savedAt)}-ий хувилбарыг устгах уу? Буцааж сэргээх боломжгүй.`;
-                      if (!window.confirm(question)) return;
-                      deleteTopicVersion(topic.id, v, last)
-                        .then(() => {
-                          setList((l) => l?.filter((x) => x.id !== v.id) ?? l);
-                          if (last) onLessonDeleted();
-                        })
-                        .catch((err) => {
-                          console.error('Version not deleted', err);
-                          window.alert('Устгаж чадсангүй.');
-                        });
-                    }}
-                    className="p-1.5 rounded-md text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-                    title={v.current ? 'Устгах: хичээл сайтаас устна' : 'Устгах'}
-                    aria-label="Устгах"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-                {v.current ? (
-                  <span className="px-2 py-1 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-bold">Одоогийн</span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!window.confirm(`${when(v.updatedAt ?? v.savedAt)}-ий хувилбар руу шилжих үү? Сайт дээр шууд солигдоно.`)) return;
-                      onSwitch(v);
-                    }}
-                    className="px-2 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-stone-950 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    Шилжих
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const last = list.length === 1;
+                    const question = last
+                      ? 'Энэ бол үлдсэн цорын ганц мөр. Устгавал энэ хичээлийн агуулга (онол, жишээ, дасгал, сорил) сайтаас бүрэн устна. Устгах уу?'
+                      : `${when(v.updatedAt ?? v.savedAt)}-ий мөрийг устгах уу? Сайт дээрх хичээл өөрчлөгдөхгүй.`;
+                    if (!window.confirm(question)) return;
+                    deleteTopicVersion(topic.id, v, true)
+                      .then(() => {
+                        setList((l) => l?.filter((x) => x.id !== v.id) ?? l);
+                        if (last) onLessonDeleted();
+                      })
+                      .catch((err) => {
+                        console.error('Version not deleted', err);
+                        window.alert('Устгаж чадсангүй.');
+                      });
+                  }}
+                  className="p-1.5 rounded-md text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                  title="Устгах"
+                  aria-label="Устгах"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))
           )}
@@ -292,8 +274,8 @@ export const TopicHistoryDialog: React.FC<{
                     setJsonError(`JSON алдаатай: ${(e as Error).message}`);
                     return;
                   }
-                  // The version in use is edited in place; an older one goes on the site as a new version
-                  if (onApplyJson(data, viewing.part, viewing.current ? 'edit' : 'import')) setViewing(null);
+                  // The edited version's row is updated (and goes in use); no new row
+                  if (onApplyJson(data, viewing.part, viewing.versionId)) setViewing(null);
                 }}
                 className="px-2.5 py-1 rounded-md bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-default text-stone-950 text-[11px] font-bold cursor-pointer"
                 data-testid="json-save"

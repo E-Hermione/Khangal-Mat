@@ -25,7 +25,7 @@ import {
   ChevronDown,
   Check,
 } from 'lucide-react';
-import { recordTopicSave, SaveMode, switchToVersion } from '../services/topicHistory';
+import { recordTopicSave, SaveMode, SaveTarget } from '../services/topicHistory';
 import { TopicHistoryDialog } from './TopicHistoryDialog';
 import { backdropClose } from '../utils/backdrop';
 
@@ -128,7 +128,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   };
   // Puts lesson content (from a file, or JSON edited in the history) on the site at once. Only
   // the chosen part, or every part present when `part` is 'all', is replaced.
-  const applyContent = (data: any, part: ImportPart, mode: SaveMode, source: string): boolean => {
+  const applyContent = (data: any, part: ImportPart, mode: SaveMode, source: string, target: SaveTarget = {}): boolean => {
     const pre = (id: string) => (id.startsWith(`${topic.id}-`) ? id : `${topic.id}-${id}`);
     const withIds = <T extends { id: string }>(list: T[] = []) => list.map((x) => ({ ...x, id: pre(x.id) }));
     const test = (t: TopicPackage['test1'], n: 1 | 2 | 3) => ({ ...t, id: pre(t.id || `test${n}`), testNumber: n, questions: withIds(t.questions) });
@@ -157,7 +157,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
     // Saved at once, so the site and the history get it without a separate «Хадгалах»
     setTopic(next);
     saveModeRef.current = mode;
-    persist(next);
+    persist(next, target);
     showStatus(`${done.join(', ')}: ${source}-оос хадгаллаа.`);
     return true;
   };
@@ -169,14 +169,13 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       showStatus('Файлыг уншиж чадсангүй.');
       return;
     }
-    applyContent(data, importTarget.current, 'import', 'Файл');
+    applyContent(data, importTarget.current, 'import', 'Файл', { file: file.name });
   };
 
-  // Saves to the site; the history notes it (a switch to a saved version only marks it in use)
-  const persist = (t: TopicPackage, switchTo?: string) => {
+  // Saves to the site; the history notes it
+  const persist = (t: TopicPackage, target: SaveTarget = {}) => {
     const before = JSON.parse(savedRef.current) as TopicPackage;
-    const history = switchTo ? switchToVersion(t.id, switchTo) : recordTopicSave(before, t, saveModeRef.current);
-    history.catch((err) => console.error('Topic history not saved', err));
+    recordTopicSave(before, t, saveModeRef.current, target).catch((err) => console.error('Topic history not saved', err));
     saveModeRef.current = 'edit';
     savedRef.current = JSON.stringify(t);
     storageService.saveTopic(t);
@@ -1148,8 +1147,9 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           topic={topic}
           saved={JSON.parse(savedRef.current) as TopicPackage}
           onClose={() => setHistoryOpen(false)}
-          onApplyJson={(data, part, mode) => {
-            const ok = applyContent(data, part, mode, 'JSON');
+          onApplyJson={(data, part, versionId) => {
+            // JSON edits never add rows: a whole version's JSON updates that row, a part's the one in use
+            const ok = applyContent(data, part, 'edit', 'JSON', versionId ? { versionId } : {});
             if (ok) setHistoryOpen(false);
             return ok;
           }}
@@ -1169,14 +1169,6 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
             persist(t);
             setHistoryOpen(false);
             showStatus('Сонгосон хэсгийг шилжүүллээ.');
-          }}
-          onSwitch={(v) => {
-            // The chosen version goes on the site at once; this topic keeps its name and place
-            const t = { ...v.topic, id: topic.id, title: topic.title, grade: topic.grade, category: topic.category, parentId: topic.parentId, order: topic.order };
-            setTopic(t);
-            persist(t, v.id);
-            setHistoryOpen(false);
-            showStatus('Сонгосон хувилбар руу шилжлээ.');
           }}
         />
       )}

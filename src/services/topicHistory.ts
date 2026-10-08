@@ -20,8 +20,9 @@ export interface TopicVersion {
   topic: TopicPackage;
   // The version in use on the site
   current?: boolean;
-  // The parts a file brought in with this version (unset on older versions)
+  // The parts a file brought in with this version (unset on older versions), and the file's name
   parts?: string[];
+  file?: string;
 }
 
 const KEEP = 30;
@@ -86,10 +87,16 @@ async function clearCurrent(topicId: string): Promise<void> {
 
 export const LESSON_PARTS = ['theory', 'examples', 'practice', 'test1', 'test2', 'test3'] as const;
 
-async function addVersion(topic: TopicPackage, kind: VersionKind, current: boolean, parts: string[] = [...LESSON_PARTS]): Promise<void> {
+async function addVersion(
+  topic: TopicPackage,
+  kind: VersionKind,
+  current: boolean,
+  parts: string[] = [...LESSON_PARTS],
+  file?: string
+): Promise<void> {
   const t = clean(topic);
   if (current) await clearCurrent(topic.id);
-  await addDoc(versions(topic.id), { savedAt: Date.now(), kind, hash: contentHash(t), topic: t, current, parts });
+  await addDoc(versions(topic.id), { savedAt: Date.now(), kind, hash: contentHash(t), topic: t, current, parts, ...(file ? { file } : {}) });
   const old = await getDocs(query(versions(topic.id), orderBy('savedAt', 'desc'), limit(KEEP + 10)));
   await Promise.all(old.docs.slice(KEEP).filter((d) => !d.data().current).map((d) => deleteDoc(d.ref)));
 }
@@ -116,12 +123,35 @@ const queued = <T>(job: () => Promise<T>): Promise<T> => {
   return run;
 };
 
-export function recordTopicSave(before: TopicPackage, after: TopicPackage, mode: SaveMode): Promise<void> {
-  return queued(() => recordTopicSaveNow(before, after, mode));
+/**
+ * Where a save goes in the history. `file`: the name of the imported file (the same file again
+ * updates its row); `versionId`: a version whose JSON was edited (that row is updated).
+ */
+export interface SaveTarget {
+  file?: string;
+  versionId?: string;
 }
 
-async function recordTopicSaveNow(before: TopicPackage, after: TopicPackage, mode: SaveMode): Promise<void> {
+export function recordTopicSave(before: TopicPackage, after: TopicPackage, mode: SaveMode, target: SaveTarget = {}): Promise<void> {
+  return queued(() => recordTopicSaveNow(before, after, mode, target));
+}
+
+// Updates a version in place and puts it in use; `parts` adds to the parts it brought in
+async function updateVersion(ref: Parameters<typeof updateDoc>[0], topicId: string, after: TopicPackage, parts?: string[], had?: string[]) {
+  const t = clean(after);
+  await clearCurrent(topicId);
+  await updateDoc(ref, {
+    topic: t,
+    hash: contentHash(t),
+    updatedAt: Date.now(),
+    current: true,
+    ...(parts ? { parts: [...new Set([...(had || []), ...parts])] } : {}),
+  });
+}
+
+async function recordTopicSaveNow(before: TopicPackage, after: TopicPackage, mode: SaveMode, target: SaveTarget): Promise<void> {
   if (isEmptyLesson(after)) return;
+  if (target.versionId) return updateVersion(doc(versions(after.id), target.versionId), after.id, after);
   if (mode === 'edit') {
     const cur = await getDocs(query(versions(after.id), where('current', '==', true), limit(1)));
     const target = cur.empty ? await getDocs(query(versions(after.id), orderBy('savedAt', 'desc'), limit(1))) : cur;
@@ -130,16 +160,21 @@ async function recordTopicSaveNow(before: TopicPackage, after: TopicPackage, mod
     await updateDoc(target.docs[0].ref, { topic: t, hash: contentHash(t), updatedAt: Date.now(), current: true });
     return;
   }
-  const any = await getDocs(query(versions(after.id), limit(1)));
-  if (any.empty && !isEmptyLesson(before)) await addVersion(before, 'original', false);
   // The parts this import brought in (each part's own history lists only these)
   const parts = LESSON_PARTS.filter((k) => partHash(before[k]) !== partHash(after[k]));
-  await addVersion(after, 'import', true, parts);
+  // The same file brought in again (changed): its row is updated, no new row
+  if (target.file) {
+    const same = await getDocs(query(versions(after.id), where('file', '==', target.file), limit(1)));
+    if (!same.empty) return updateVersion(same.docs[0].ref, after.id, after, parts, same.docs[0].data().parts);
+  }
+  const any = await getDocs(query(versions(after.id), limit(1)));
+  if (any.empty && !isEmptyLesson(before)) await addVersion(before, 'original', false);
+  await addVersion(after, 'import', true, parts, target.file);
 }
 
 /**
- * The lesson as it is on the site is always in the history, marked as the one in use: added if
- * no version holds it (e.g. the history was emptied), marked if a version does.
+ * The lesson as it is on the site is in the history: added when the history is empty, and the
+ * version holding it is marked as the one in use.
  */
 export function ensureCurrentVersion(saved: TopicPackage): Promise<void> {
   return queued(() => ensureCurrentNow(saved));
@@ -150,7 +185,8 @@ async function ensureCurrentNow(saved: TopicPackage): Promise<void> {
   const hash = contentHash(clean(saved));
   const all = await getDocs(versions(saved.id));
   const same = all.docs.filter((d) => contentHash(d.data().topic as TopicPackage) === hash);
-  if (!same.length) return addVersion(saved, 'original', true);
+  // Only an empty history gets the site's lesson added (a row deleted on purpose stays deleted)
+  if (!same.length) return all.empty ? addVersion(saved, 'original', true) : undefined;
   if (same.some((d) => d.data().current)) return;
   await clearCurrent(saved.id);
   await updateDoc(same[0].ref, { current: true });
@@ -169,14 +205,6 @@ export function deleteTopicVersion(topicId: string, version: TopicVersion, inUse
         .filter((d) => (inUseToo || !d.data().current) && contentHash(d.data().topic as TopicPackage) === hash)
         .map((d) => deleteDoc(d.ref))
     );
-  });
-}
-
-/** Puts a saved version in use; no new version is added. */
-export function switchToVersion(topicId: string, versionId: string): Promise<void> {
-  return queued(async () => {
-    await clearCurrent(topicId);
-    await updateDoc(doc(versions(topicId), versionId), { current: true });
   });
 }
 
