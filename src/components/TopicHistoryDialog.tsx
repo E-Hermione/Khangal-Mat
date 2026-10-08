@@ -1,21 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Copy, Eye, History, RotateCcw, Trash2, X } from 'lucide-react';
+import { Copy, Eye, History, Trash2, X } from 'lucide-react';
 import { TopicPackage } from '../types';
-import { deleteTopicVersion, ensureCurrentVersion, loadTopicVersions, partHash, topicJson, TopicVersion } from '../services/topicHistory';
+import { ensureCurrentVersion, loadTopicVersions, partHash, removePartFromVersion, TopicVersion } from '../services/topicHistory';
 import { backdropClose } from '../utils/backdrop';
-
-const KIND_LABEL: Record<TopicVersion['kind'], string> = {
-  save: 'Хадгалсан',
-  import: 'Файлаас оруулсан',
-  original: 'Анхны хувилбар',
-  restore: 'Хадгалсан',
-};
 
 const when = (t: number) =>
   new Date(t).toLocaleString('mn-MN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 
-
-// Each part has its own history too: the different contents it has had across the versions
+// Each part of the lesson has its own history
 const PARTS = [
   { key: 'theory', label: 'Онол', unit: 'дүрэм' },
   { key: 'examples', label: 'Жишээ', unit: 'жишээ' },
@@ -25,47 +17,25 @@ const PARTS = [
   { key: 'test3', label: 'Ахисан', unit: 'бодлого' },
 ] as const;
 type PartKey = (typeof PARTS)[number]['key'];
-const PART_NAME: Record<PartKey, string> = {
-  theory: 'Онол',
-  examples: 'Жишээ',
-  practice: 'Дасгал',
-  test1: 'Анхан сорил',
-  test2: 'Дунд сорил',
-  test3: 'Ахисан сорил',
-};
-type Tab = 'all' | PartKey;
 
 const partSize = (key: PartKey, value: unknown): number => {
   if (key.startsWith('test')) return (value as TopicPackage['test1'] | undefined)?.questions?.length || 0;
   return Array.isArray(value) ? value.length : 0;
 };
 
-interface PartVersion {
-  hash: string;
+interface PartRow {
+  version: TopicVersion;
   value: unknown;
-  // When this content first appeared
   at: number;
 }
 
 /**
- * What a version shows: for a file import, only the parts the file brought in (older imports, saved
- * before this was recorded: the parts that differ from the version before); otherwise the parts
- * that are not empty.
+ * A part's history: a row for each file that brought it in (and the lesson as it first was),
+ * newest first. Edits change a row in place, so the newest row is the part as it is on the site
+ * now, under the time it last changed.
  */
-function summary(v: TopicVersion, older?: TopicVersion): string {
-  const brought = (key: PartKey) =>
-    v.parts ? v.parts.includes(key) : older ? partHash(v.topic[key]) !== partHash(older.topic[key]) : partSize(key, v.topic[key]) > 0;
-  const shown = PARTS.filter((p) => (v.kind === 'import' ? brought(p.key) : partSize(p.key, v.topic[p.key]) > 0));
-  return shown.map((p) => `${PART_NAME[p.key]} ${partSize(p.key, v.topic[p.key])} ${p.unit}`).join(' • ');
-}
-
-/**
- * A part's own history: a row for each time a file brought it in (and the lesson's first
- * version), newest first. Hand edits do not add rows: the newest row is the part as it is on the
- * site now, under the time it last changed.
- */
-function partVersions(list: TopicVersion[], key: PartKey, site: TopicPackage): PartVersion[] {
-  const rows: PartVersion[] = [];
+function partRows(list: TopicVersion[], key: PartKey, site: TopicPackage): PartRow[] {
+  const rows: PartRow[] = [];
   const oldestFirst = [...list].reverse();
   oldestFirst.forEach((v, i) => {
     const value = v.topic[key];
@@ -74,57 +44,54 @@ function partVersions(list: TopicVersion[], key: PartKey, site: TopicPackage): P
     const brought = v.parts
       ? v.parts.includes(key)
       : i === 0 || partHash(value) !== partHash(oldestFirst[i - 1].topic[key]); // older versions: when it changed
-    if (!brought && rows.length) return;
-    rows.push({ hash: partHash(value), value, at: v.updatedAt ?? v.savedAt });
+    if (brought) rows.push({ version: v, value, at: v.updatedAt ?? v.savedAt });
   });
   if (rows.length) {
-    // The newest row holds what the site has now, dated by the version in use
     const inUse = list.find((v) => v.current) ?? list[0];
     const last = rows[rows.length - 1];
     last.value = site[key];
-    last.hash = partHash(site[key]);
     last.at = Math.max(last.at, inUse ? inUse.updatedAt ?? inUse.savedAt : 0);
   }
-  // Same content twice: shown once
-  const seen = new Set<string>();
-  return rows.reverse().filter((r) => !seen.has(r.hash) && seen.add(r.hash));
+  return rows.reverse();
 }
 
-/** The topic's saved versions: view, switch to or delete any of them. */
+/** The history of each part of the topic: view or edit a version's JSON, or delete it. */
 export const TopicHistoryDialog: React.FC<{
   topic: TopicPackage;
   // The lesson as saved on the site (the editor may hold unsaved changes)
   saved: TopicPackage;
-  onSwitchPart: (key: PartKey, value: unknown) => void;
-  // The last version, the one in use, was deleted: the lesson is emptied on the site
-  onLessonDeleted: () => void;
   // JSON edited in the viewer goes on the site (true when it did)
-  onApplyJson: (data: unknown, part: 'all' | PartKey, versionId?: string) => boolean;
+  onApplyJson: (data: unknown, part: PartKey) => boolean;
+  // The last row of a part was deleted: that part is emptied on the site
+  onPartDeleted: (part: PartKey) => void;
   onClose: () => void;
-}> = ({ topic, saved, onSwitchPart, onLessonDeleted, onApplyJson, onClose }) => {
-  const [tab, setTab] = useState<Tab>('all');
+}> = ({ topic, saved, onApplyJson, onPartDeleted, onClose }) => {
+  const [tab, setTab] = useState<PartKey>('theory');
   const [list, setList] = useState<TopicVersion[] | null>(null);
   const [error, setError] = useState(false);
-  // The JSON being viewed in full
-  // The JSON being viewed (and edited); `part` and `current` say where an edit goes
-  const [viewing, setViewing] = useState<{ title: string; text: string; part: 'all' | PartKey; current: boolean; versionId?: string } | null>(null);
+  // The JSON being viewed (and edited); an edit goes to that part on the site
+  const [viewing, setViewing] = useState<{ title: string; text: string; part: PartKey } | null>(null);
   const [draft, setDraft] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
-  const view = (v: { title: string; text: string; part: 'all' | PartKey; current: boolean; versionId?: string }) => {
+  const [copied, setCopied] = useState(false);
+  const view = (v: { title: string; text: string; part: PartKey }) => {
     setViewing(v);
     setDraft(v.text);
     setJsonError(null);
   };
-  const [copied, setCopied] = useState(false);
-  useEffect(() => {
-    ensureCurrentVersion(saved)
-      .then(() => loadTopicVersions(topic.id))
+  const load = () =>
+    loadTopicVersions(topic.id)
       .then(setList)
       .catch((err) => {
         console.error('Topic history not loaded', err);
         setError(true);
       });
+  useEffect(() => {
+    ensureCurrentVersion(saved).then(load, load);
   }, [topic.id]);
+
+  const part = PARTS.find((p) => p.key === tab)!;
+  const rows = list ? partRows(list, tab, saved) : [];
 
   return (
     <div {...backdropClose(onClose)} className="fixed inset-0 z-[60] flex items-center justify-center p-3 bg-stone-950/60">
@@ -137,7 +104,7 @@ export const TopicHistoryDialog: React.FC<{
           </button>
         </div>
         <div className="flex gap-1 p-2 border-b border-stone-200 overflow-x-auto" data-testid="history-tabs">
-          {([{ key: 'all', label: 'Бүгд' }, ...PARTS] as { key: Tab; label: string }[]).map((t) => (
+          {PARTS.map((t) => (
             <button
               key={t.key}
               type="button"
@@ -155,63 +122,25 @@ export const TopicHistoryDialog: React.FC<{
             <div className="p-6 text-center text-xs text-red-700">Түүх ачаалж чадсангүй.</div>
           ) : !list ? (
             <div className="p-6 text-center text-xs text-stone-500">Ачаалж байна...</div>
-          ) : list.length === 0 ? (
-            <div className="p-6 text-center text-xs text-stone-500">
-              Түүх хоосон. Сэдвийг хадгалахад энд хадгалагдана.
-            </div>
-          ) : tab !== 'all' ? (
-            (() => {
-              const part = PARTS.find((p) => p.key === tab)!;
-              const currentHash = partHash(saved[tab]);
-              return partVersions(list, tab, saved).map((pv) => (
-                <div key={pv.hash} className="px-4 py-2.5 flex items-center gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold text-stone-900">{when(pv.at)}</div>
-                    <div className="text-[11px] text-stone-500">
-                      {part.label}: {partSize(tab, pv.value)} {part.unit}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => view({ title: `${part.label} • ${when(pv.at)}`, text: JSON.stringify(pv.value, null, 2), part: tab, current: pv.hash === currentHash })}
-                    className="p-1.5 rounded-md text-stone-500 hover:text-stone-900 hover:bg-stone-100 cursor-pointer"
-                    title="JSON-ийг бүтнээр нь харах"
-                    aria-label="Харах"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  {pv.hash === currentHash ? (
-                    <span className="px-2 py-1 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-bold">Одоогийн</span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!window.confirm(`${part.label}-ыг ${when(pv.at)}-ий хувилбар руу шилжүүлэх үү? Бусад хэсэг хэвээр үлдэнэ.`)) return;
-                        onSwitchPart(tab, pv.value);
-                      }}
-                      className="px-2 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-stone-950 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                      Шилжих
-                    </button>
-                  )}
-                </div>
-              ));
-            })()
+          ) : rows.length === 0 ? (
+            <div className="p-6 text-center text-xs text-stone-500">Түүх хоосон.</div>
           ) : (
-            list.map((v, i) => (
-              <div key={v.id} className="px-4 py-2.5 flex items-center gap-2">
+            rows.map((r) => (
+              <div key={r.version.id} className="px-4 py-2.5 flex items-center gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-stone-900">
-                    {when(v.updatedAt ?? v.savedAt)} <span className="ml-1 font-semibold text-stone-500">{v.file || KIND_LABEL[v.kind]}</span>
+                    {when(r.at)}
+                    {r.version.file && <span className="ml-1 font-semibold text-stone-500">{r.version.file}</span>}
                   </div>
-                  <div className="text-[11px] text-stone-500">{summary(v, list[i + 1])}</div>
+                  <div className="text-[11px] text-stone-500">
+                    {part.label}: {partSize(tab, r.value)} {part.unit}
+                  </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => view({ title: `${when(v.updatedAt ?? v.savedAt)} • ${KIND_LABEL[v.kind]}`, text: topicJson(v.topic), part: 'all', current: !!v.current, versionId: v.id })}
+                  onClick={() => view({ title: `${part.label} • ${when(r.at)}`, text: JSON.stringify(r.value, null, 2), part: tab })}
                   className="p-1.5 rounded-md text-stone-500 hover:text-stone-900 hover:bg-stone-100 cursor-pointer"
-                  title="JSON-ийг бүтнээр нь харах"
+                  title="JSON-ийг харах, засах"
                   aria-label="Харах"
                 >
                   <Eye className="w-4 h-4" />
@@ -219,15 +148,15 @@ export const TopicHistoryDialog: React.FC<{
                 <button
                   type="button"
                   onClick={() => {
-                    const last = list.length === 1;
+                    const last = rows.length === 1;
                     const question = last
-                      ? 'Энэ бол үлдсэн цорын ганц мөр. Устгавал энэ хичээлийн агуулга (онол, жишээ, дасгал, сорил) сайтаас бүрэн устна. Устгах уу?'
-                      : `${when(v.updatedAt ?? v.savedAt)}-ий мөрийг устгах уу? Сайт дээрх хичээл өөрчлөгдөхгүй.`;
+                      ? `Энэ бол «${part.label}»-ын үлдсэн цорын ганц мөр. Устгавал «${part.label}» сайтаас устна. Устгах уу?`
+                      : `${part.label}: ${when(r.at)}-ий мөрийг устгах уу?`;
                     if (!window.confirm(question)) return;
-                    deleteTopicVersion(topic.id, v, true)
+                    removePartFromVersion(topic.id, r.version, tab)
                       .then(() => {
-                        setList((l) => l?.filter((x) => x.id !== v.id) ?? l);
-                        if (last) onLessonDeleted();
+                        if (last) onPartDeleted(tab);
+                        else load();
                       })
                       .catch((err) => {
                         console.error('Version not deleted', err);
@@ -274,8 +203,7 @@ export const TopicHistoryDialog: React.FC<{
                     setJsonError(`JSON алдаатай: ${(e as Error).message}`);
                     return;
                   }
-                  // The edited version's row is updated (and goes in use); no new row
-                  if (onApplyJson(data, viewing.part, viewing.versionId)) setViewing(null);
+                  if (onApplyJson(data, viewing.part)) setViewing(null);
                 }}
                 className="px-2.5 py-1 rounded-md bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-default text-stone-950 text-[11px] font-bold cursor-pointer"
                 data-testid="json-save"

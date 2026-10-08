@@ -31,9 +31,8 @@ import { backdropClose } from '../utils/backdrop';
 
 // The parts «Файлаас оруулах» can bring in one at a time
 const IMPORT_KEYS = ['theory', 'examples', 'practice', 'test1', 'test2', 'test3'] as const;
-type ImportPart = 'all' | (typeof IMPORT_KEYS)[number];
+type ImportPart = (typeof IMPORT_KEYS)[number];
 const IMPORT_LABELS: Record<ImportPart, string> = {
-  all: 'Бүгд',
   theory: 'Онол',
   examples: 'Жишээ',
   practice: 'Бие даан бодох дасгал',
@@ -99,7 +98,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   // How the editor's content came about since the last save: edited, imported or restored
   const saveModeRef = React.useRef<SaveMode>('edit');
   // «Файлаас оруулах»: the part chosen in its menu
-  const importTarget = React.useRef<ImportPart>('all');
+  const importTarget = React.useRef<ImportPart>('theory');
   const [importMenu, setImportMenu] = useState(false);
   React.useEffect(() => {
     setTopic({ ...activeTopic });
@@ -127,16 +126,16 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
     fileInputRef.current?.click();
   };
   // Puts lesson content (from a file, or JSON edited in the history) on the site at once. Only
-  // the chosen part, or every part present when `part` is 'all', is replaced.
+  // the chosen part is replaced.
   const applyContent = (data: any, part: ImportPart, mode: SaveMode, source: string, target: SaveTarget = {}): boolean => {
     const pre = (id: string) => (id.startsWith(`${topic.id}-`) ? id : `${topic.id}-${id}`);
     const withIds = <T extends { id: string }>(list: T[] = []) => list.map((x) => ({ ...x, id: pre(x.id) }));
     const test = (t: TopicPackage['test1'], n: 1 | 2 | 3) => ({ ...t, id: pre(t.id || `test${n}`), testNumber: n, questions: withIds(t.questions) });
     const next = { ...topic };
     const done: string[] = [];
-    for (const key of part === 'all' ? IMPORT_KEYS : [part]) {
+    for (const key of [part]) {
       // The part on its own: a list for theory/examples/practice, the test object for a test
-      const own = part !== 'all' && (key.startsWith('test') ? data && Array.isArray(data.questions) : Array.isArray(data)) ? data : undefined;
+      const own = (key.startsWith('test') ? data && Array.isArray(data.questions) : Array.isArray(data)) ? data : undefined;
       const value = own ?? data?.[key];
       if (key.startsWith('test')) {
         if (!value || !Array.isArray(value.questions)) continue;
@@ -149,11 +148,10 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       done.push(IMPORT_LABELS[key]);
     }
     if (!done.length) {
-      showStatus(part === 'all' ? `${source}: оруулах хэсэг олдсонгүй.` : `${source}: «${IMPORT_LABELS[part]}» хэсэг алга.`);
+      showStatus(`${source}: «${IMPORT_LABELS[part]}» хэсэг алга.`);
       return false;
     }
     if (!window.confirm(`Солигдох хэсэг: ${done.join(', ')}. Бусад хэсэг хэвээр үлдэнэ. Үргэлжлүүлэх үү?`)) return false;
-    if (part === 'all' && typeof data.description === 'string') next.description = data.description;
     // Saved at once, so the site and the history get it without a separate «Хадгалах»
     setTopic(next);
     saveModeRef.current = mode;
@@ -356,17 +354,15 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
               </button>
               {importMenu && (
                 <div className="absolute right-0 top-full mt-1 z-30 w-48 bg-white rounded-xl border border-stone-200 shadow-xl py-1 text-stone-800">
-                  {(['all', ...IMPORT_KEYS] as ImportPart[]).map((part) => (
+                  {IMPORT_KEYS.map((part) => (
                     <button
                       key={part}
                       type="button"
                       onClick={() => pickImport(part)}
-                      className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-amber-50 cursor-pointer ${
-                        part === 'all' ? 'border-b border-stone-100 font-black' : ''
-                      }`}
+                      className="w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-amber-50 cursor-pointer"
                       data-testid={`import-${part}`}
                     >
-                      {part === 'all' ? 'Бүгдийг нэг файлаас' : IMPORT_LABELS[part]}
+                      {IMPORT_LABELS[part]}
                     </button>
                   ))}
                 </div>
@@ -1147,28 +1143,18 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           topic={topic}
           saved={JSON.parse(savedRef.current) as TopicPackage}
           onClose={() => setHistoryOpen(false)}
-          onApplyJson={(data, part, versionId) => {
-            // JSON edits never add rows: a whole version's JSON updates that row, a part's the one in use
-            const ok = applyContent(data, part, 'edit', 'JSON', versionId ? { versionId } : {});
+          onApplyJson={(data, part) => {
+            const ok = applyContent(data, part, 'edit', 'JSON');
             if (ok) setHistoryOpen(false);
             return ok;
           }}
-          onLessonDeleted={() => {
-            // The whole lesson goes from the site; the topic stays in the list, empty
-            const empty = (test: TopicPackage['test1']) => ({ ...test, questions: [] });
-            const t: TopicPackage = { ...topic, theory: [], examples: [], practice: [], test1: empty(topic.test1), test2: empty(topic.test2), test3: empty(topic.test3) };
+          onPartDeleted={(part) => {
+            // The part's last row was deleted: that part goes from the site
+            const t = { ...topic, [part]: part.startsWith('test') ? { ...topic[part as 'test1'], questions: [] } : [] } as TopicPackage;
             setTopic(t);
             persist(t);
             setHistoryOpen(false);
-            showStatus('Хичээлийн агуулга сайтаас устлаа.');
-          }}
-          onSwitchPart={(key, value) => {
-            // One part goes back to an earlier content; saved at once as an edit of the version in use
-            const t = { ...topic, [key]: value } as TopicPackage;
-            setTopic(t);
-            persist(t);
-            setHistoryOpen(false);
-            showStatus('Сонгосон хэсгийг шилжүүллээ.');
+            showStatus('Устгалаа.');
           }}
         />
       )}

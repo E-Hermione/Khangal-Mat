@@ -125,11 +125,10 @@ const queued = <T>(job: () => Promise<T>): Promise<T> => {
 
 /**
  * Where a save goes in the history. `file`: the name of the imported file (the same file again
- * updates its row); `versionId`: a version whose JSON was edited (that row is updated).
+ * updates its row).
  */
 export interface SaveTarget {
   file?: string;
-  versionId?: string;
 }
 
 export function recordTopicSave(before: TopicPackage, after: TopicPackage, mode: SaveMode, target: SaveTarget = {}): Promise<void> {
@@ -151,7 +150,6 @@ async function updateVersion(ref: Parameters<typeof updateDoc>[0], topicId: stri
 
 async function recordTopicSaveNow(before: TopicPackage, after: TopicPackage, mode: SaveMode, target: SaveTarget): Promise<void> {
   if (isEmptyLesson(after)) return;
-  if (target.versionId) return updateVersion(doc(versions(after.id), target.versionId), after.id, after);
   if (mode === 'edit') {
     const cur = await getDocs(query(versions(after.id), where('current', '==', true), limit(1)));
     const target = cur.empty ? await getDocs(query(versions(after.id), orderBy('savedAt', 'desc'), limit(1))) : cur;
@@ -193,23 +191,14 @@ async function ensureCurrentNow(saved: TopicPackage): Promise<void> {
 }
 
 /**
- * Removes a version, with any copies of the same content (the list shows them as one). The version
- * in use goes only when it is the last one left (the editor then empties the lesson on the site).
+ * Takes one part out of a version (the row in that part's history); a version left with no parts
+ * is removed.
  */
-export function deleteTopicVersion(topicId: string, version: TopicVersion, inUseToo = false): Promise<void> {
+export function removePartFromVersion(topicId: string, version: TopicVersion, key: string): Promise<void> {
   return queued(async () => {
-    const hash = contentHash(version.topic);
-    const all = await getDocs(versions(topicId));
-    await Promise.all(
-      all.docs
-        .filter((d) => (inUseToo || !d.data().current) && contentHash(d.data().topic as TopicPackage) === hash)
-        .map((d) => deleteDoc(d.ref))
-    );
+    const ref = doc(versions(topicId), version.id);
+    const parts = (version.parts ?? [...LESSON_PARTS]).filter((k) => k !== key);
+    if (parts.length) await updateDoc(ref, { parts });
+    else await deleteDoc(ref);
   });
-}
-
-/** The lesson parts of a topic as JSON in the «Файлаас оруулах» format. */
-export function topicJson(topic: TopicPackage): string {
-  const { description, theory, examples, practice, test1, test2, test3 } = topic;
-  return JSON.stringify({ description, theory, examples, practice, test1, test2, test3 }, null, 2);
 }
