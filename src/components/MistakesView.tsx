@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Award, CheckCircle2, RotateCcw, XCircle } from 'lucide-react';
+import { SolutionSteps, solutionLines } from './SolutionSteps';
 import { MathRenderer } from './MathRenderer';
 import { learningPlan, Mistake, topicMeta, useLearningPlanVersion } from '../services/learningPlan';
 import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect, questionStem } from '../utils/examGrading';
@@ -96,7 +97,7 @@ const MistakeCard: React.FC<{ m: Mistake; index: number }> = ({ m, index }) => {
               <div>
                 Зөв хариу: <MathRenderer content={right ? `${right.letter}) ${right.text}` : q.answer || '—'} className="inline" />
               </div>
-              {q.solution && <MathRenderer content={q.solution} />}
+              {q.solution && <SolutionSteps steps={solutionLines(q.solution)} indent={false} />}
             </div>
           </details>
         </div>

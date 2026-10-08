@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { GradeNumber, TopicPackage, TestPackage } from '../types';
 import { GradeTestTakers } from './GradeTestTakers';
 import { loadLeaderboard, saveLeaderboardEntry, LeaderboardEntry } from '../services/leaderboard';
+import { SolutionSteps, solutionLines } from './SolutionSteps';
 import { MathRenderer } from './MathRenderer';
 import {
   Award,
@@ -830,7 +831,7 @@ function ViewSolutionModal({
                 </div>
                 {q.solution && (
                   <div className="text-stone-700 text-xs pt-1 border-t border-dashed border-stone-200 leading-relaxed">
-                    <MathRenderer content={q.solution} />
+                    <SolutionSteps steps={solutionLines(q.solution)} indent={false} />
                   </div>
                 )}
               </div>
@@ -1087,7 +1088,7 @@ function ViewErrorCheckModal({
                 {q.solution && (
                   <div className="p-3 bg-white/80 border border-stone-200 rounded-lg text-xs text-stone-700 leading-relaxed">
                     <span className="font-bold text-stone-900 block mb-0.5">Бодолт ба тайлбар:</span>
-                    <MathRenderer content={q.solution} />
+                    <SolutionSteps steps={solutionLines(q.solution)} indent={false} />
                   </div>
                 )}
               </div>

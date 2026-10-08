@@ -1,33 +1,45 @@
 import React from 'react';
 import { MathRenderer } from './MathRenderer';
 
-/** Solution steps as a plain numbered list, one step per line, with the answer below them. */
+// A step that is only a formula (or a column division) stands centred on its own line
+const formulaOnly = (step: string): string | null => {
+  const s = step.trim();
+  if (/^\\longdiv\{[^}]*\}\{[^}]*\}$/.test(s)) return s;
+  if (/^\$\$[\s\S]+\$\$$/.test(s)) return s;
+  const m = s.match(/^\$([^$]+)\$[.,;]?$/);
+  return m ? `$$${m[1]}$$` : null;
+};
+
+/**
+ * A worked solution written out like the lesson's theory: each step a sentence of its own, and a
+ * step that is just a formula centred on its line; the answer below.
+ */
 export const SolutionSteps: React.FC<{ steps: string[]; answer?: string; indent?: boolean }> = ({
   steps,
   answer,
   indent = true,
 }) => (
-  <div className={`text-[15px] text-stone-700 print:text-black leading-relaxed ${indent ? 'md:pl-8' : ''}`}>
-    {steps.length > 0 && (
-      <ol className="space-y-1.5 border-l-2 border-amber-200 pl-4">
-        {steps.map((step, i) => (
-          <li key={i} className="flex gap-2">
-            <span className="shrink-0 w-5 text-right text-stone-400 font-semibold tabular-nums">{i + 1}.</span>
-            <div className="min-w-0 break-words">
-              <MathRenderer content={step} className="inline" />
-            </div>
-          </li>
-        ))}
-      </ol>
-    )}
+  <div className={`text-[15px] text-stone-700 print:text-black leading-relaxed space-y-1.5 ${indent ? 'md:pl-8' : ''}`}>
+    {steps.map((step, i) => {
+      const formula = formulaOnly(step);
+      return formula ? (
+        <div key={i} className="flex justify-center py-0.5">
+          <MathRenderer content={formula} />
+        </div>
+      ) : (
+        <div key={i} className="break-words">
+          <MathRenderer content={step} className="inline" />
+        </div>
+      );
+    })}
     {answer && (
-      <div className={`${steps.length ? 'mt-2.5' : ''} text-stone-800 print:text-black`}>
+      <div className="pt-1 text-stone-800 print:text-black">
         <span className="font-bold text-stone-950">Хариу:</span> <MathRenderer content={answer} className="inline" />
       </div>
     )}
   </div>
 );
 
-/** A practice solution stored as text: one step per line. */
+/** A solution stored as text: one step per line. */
 export const solutionLines = (solution?: string) =>
   (solution || '').split('\n').map((s) => s.trim()).filter(Boolean);

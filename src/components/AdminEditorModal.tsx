@@ -7,6 +7,7 @@ import { theoryNumbers } from '../utils/theoryBlocks';
 import { TheoryBlocksEditor } from './TheoryBlocksEditor';
 import { TopicPackage, GradeNumber, TheoryRule, WorkedExample, PracticeProblem, TestQuestion } from '../types';
 import { storageService } from '../services/storageService';
+import { SolutionSteps, solutionLines } from './SolutionSteps';
 import { MathRenderer } from './MathRenderer';
 import { LatexInputWithPreview, LatexToolbar } from './LatexInputWithPreview';
 import {
@@ -1009,7 +1010,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                                   </div>
                                   {q.solution && (
                                     <div className="text-stone-700">
-                                      <span className="font-bold text-stone-900">Бодолт:</span> <MathRenderer content={q.solution} className="inline" />
+                                      <span className="font-bold text-stone-900">Бодолт:</span> <SolutionSteps steps={solutionLines(q.solution)} indent={false} />
                                     </div>
                                   )}
                                 </div>

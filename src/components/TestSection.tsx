@@ -1,5 +1,6 @@
 import React from 'react';
 import { TestPackage, TestQuestion } from '../types';
+import { SolutionSteps, solutionLines } from './SolutionSteps';
 import { MathRenderer } from './MathRenderer';
 import { PrintHeader } from './PrintHeader';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
@@ -148,7 +149,7 @@ export const TestSection: React.FC<TestSectionProps> = ({
                   {q.solution && (
                     <div className="mt-1 text-stone-700 print:text-stone-900">
                       <span className="font-semibold">Бодолт: </span>
-                      <MathRenderer content={q.solution} className="inline" />
+                      <SolutionSteps steps={solutionLines(q.solution)} indent={false} />
                     </div>
                   )}
                 </div>
