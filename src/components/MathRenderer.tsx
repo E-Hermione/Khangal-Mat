@@ -64,8 +64,12 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
 
     // 0. Division with a remainder, written out in columns: \longdiv{23}{5}, and the older
     //    "$23 : 5 = 4$, үлдэгдэл $3$" sentences (only when the numbers add up)
-    let processed0 = content.replace(/\$?\s*\\longdiv\{\s*(\d+)\s*\}\{\s*(\d+)\s*\}\s*\$?/g, (whole, a, b) =>
-      Number(b) > 0 ? keep(longDivision(Number(a), Number(b))) : whole
+    //    Wrapped in $$…$$ it stands centred on its own line; the dollars are taken with it either way,
+    //    or a lone leftover $ pair would turn the placeholder into a red KaTeX error.
+    let processed0 = content.replace(/(\$\$|\$)?\s*\\longdiv\{\s*(\d+)\s*\}\{\s*(\d+)\s*\}\s*(\$\$|\$)?/g, (whole, open, a, b) =>
+      Number(b) > 0
+        ? keep(open === '$$' ? `<div class="my-2 flex justify-center">${longDivision(Number(a), Number(b))}</div>` : longDivision(Number(a), Number(b)))
+        : whole
     );
     processed0 = processed0.replace(
       /\$\s*(\d+)\s*(?::|\\div)\s*(\d+)\s*=\s*(\d+)\s*\$\s*,?\s*\(?\s*үлдэгдэл\s*\$\s*(\d+)\s*\$\s*\)?\.?/g,
@@ -80,7 +84,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       const columns = columnSums(math);
       if (columns) return keep(`<div class="my-2 flex justify-center">${columns}</div>`);
       try {
-        return keep(`<div class="my-2 overflow-x-auto print:overflow-visible flex justify-center">${render(math, true)}</div>`);
+        return keep(`<div class="my-2 overflow-x-auto overflow-y-hidden scrollbar-none print:overflow-visible flex justify-center">${render(math, true)}</div>`);
       } catch {
         return whole;
       }
@@ -89,7 +93,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     // 2. Replace \[...\] block math
     processed = processed.replace(/\\\[([\s\S]+?)\\\]/g, (whole, math) => {
       try {
-        return keep(`<div class="my-2 overflow-x-auto print:overflow-visible flex justify-center">${render(math, true)}</div>`);
+        return keep(`<div class="my-2 overflow-x-auto overflow-y-hidden scrollbar-none print:overflow-visible flex justify-center">${render(math, true)}</div>`);
       } catch {
         return whole;
       }

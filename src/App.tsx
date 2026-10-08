@@ -27,6 +27,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { getFirebaseAuth, isFirebaseConfigured } from './services/firebase';
 import { loadSession, signOutUser, isRegistering, isGeneralLogin } from './services/authService';
 import { startCloudSync, stopCloudSync, cloud } from './services/cloud';
+import ContentStatus from './components/ContentStatus';
 import { seedCloudFromLegacyData } from './services/migration';
 import {
   registerCurrentDevice,
@@ -863,10 +864,13 @@ export default function App() {
           ) : isStudent && activeView === 'placement' && learningPlan.canTakePlacement(placementGrade) ? (
             <PlacementTestView key={placementGrade} uid={viewUid!} grade={placementGrade} />
           ) : currentUser.role === 'admin' && generalView && !previewAsUser && homeShown ? (
-            // General view: no student steps or cards on the home page
-            <h1 className="max-w-5xl mx-auto text-2xl font-black text-stone-950" data-testid="general-home">
-              Сайн байна уу{currentUser.name ? `, ${currentUser.name.split(' ').pop()}` : ''}!
-            </h1>
+            // General view: no student steps or cards on the home page, only how complete the topics are
+            <div className="max-w-5xl mx-auto" data-testid="general-home">
+              <h1 className="text-2xl font-black text-stone-950">
+                Сайн байна уу{currentUser.name ? `, ${currentUser.name.split(' ').pop()}` : ''}!
+              </h1>
+              <ContentStatus topics={topics} onOpenTopic={(topicId) => openPlanTopic(topicId, 'topics')} />
+            </div>
           ) : (isStudent && (homeShown || activeView === 'placement')) ||
             (currentUser.role === 'admin' && !previewAsUser && homeShown) ? (
             <StudentHome

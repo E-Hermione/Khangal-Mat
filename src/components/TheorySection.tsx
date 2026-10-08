@@ -113,7 +113,7 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
                 {/* Content in reading order: text, centred formulas, notes */}
                 {theoryBlocks(rule).map((block, bIdx) =>
                   block.type === 'formula' ? (
-                    <div key={bIdx} className="my-3 text-center overflow-x-auto">
+                    <div key={bIdx} className="my-3 text-center overflow-x-auto overflow-y-hidden scrollbar-none">
                       <MathRenderer content={`$$${block.value}$$`} block />
                     </div>
                   ) : block.type === 'note' ? (
