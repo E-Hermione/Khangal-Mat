@@ -102,6 +102,18 @@
   padding: 0.05em 0.3em;
   white-space: nowrap;
 }
+/* First row: the cells hug the digits so the divisor's line starts at their top */
+.long-division tr:first-child td {
+  line-height: 0.7;
+  padding-top: 0;
+  padding-bottom: 0.2em;
+}
+.long-division tr:first-child .katex {
+  line-height: 0.7;
+}
+.long-division tr:first-child .ld-minus {
+  line-height: 1.1;
+}
 .long-division .ld-minus {
   vertical-align: middle;
   padding-right: 0.1em;
