@@ -10,3 +10,5 @@
   `--patch` (a list of `{ id, field, from, to }`) changes a field only while it still reads `from`.
 - Solutions are written with the subject's terms: «$\frac{9}{8}$ бутархайн хувьд $9 > 8$ буюу хүртвэр нь
   хуваариасаа их», never «$\frac{9}{8}: 9>8$» or «зураасны доорх тоо». Each solution states its rule in bold.
+  A sentence never ends in a formula followed by «:» («… $7{,}2 = 7{,}20$:»); it ends in words («… гэж бичээд хасна.»).
+  A label before its content («Зууны орон: $0 + 5 = 5$») is fine.
