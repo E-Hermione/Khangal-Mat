@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Copy, Eye, History, RotateCcw, Trash2, X } from 'lucide-react';
 import { TopicPackage } from '../types';
-import { deleteTopicVersion, loadTopicVersions, topicJson, TopicVersion } from '../services/topicHistory';
+import { deleteTopicVersion, loadTopicVersions, partHash, topicJson, TopicVersion } from '../services/topicHistory';
 import { backdropClose } from '../utils/backdrop';
 
 const KIND_LABEL: Record<TopicVersion['kind'], string> = {
@@ -17,12 +17,50 @@ const when = (t: number) =>
 const counts = (t: TopicPackage) =>
   `Онол ${t.theory?.length || 0} • Жишээ ${t.examples?.length || 0} • Дасгал ${t.practice?.length || 0}`;
 
+// Each part has its own history too: the different contents it has had across the versions
+const PARTS = [
+  { key: 'theory', label: 'Онол', unit: 'дүрэм' },
+  { key: 'examples', label: 'Жишээ', unit: 'жишээ' },
+  { key: 'practice', label: 'Дасгал', unit: 'дасгал' },
+  { key: 'test1', label: 'Анхан', unit: 'бодлого' },
+  { key: 'test2', label: 'Дунд', unit: 'бодлого' },
+  { key: 'test3', label: 'Ахисан', unit: 'бодлого' },
+] as const;
+type PartKey = (typeof PARTS)[number]['key'];
+type Tab = 'all' | PartKey;
+
+const partSize = (key: PartKey, value: unknown): number => {
+  if (key.startsWith('test')) return (value as TopicPackage['test1'] | undefined)?.questions?.length || 0;
+  return Array.isArray(value) ? value.length : 0;
+};
+
+interface PartVersion {
+  hash: string;
+  value: unknown;
+  // When this content first appeared
+  at: number;
+}
+
+/** The distinct contents a part has had, newest first, each under the date it first appeared. */
+function partVersions(list: TopicVersion[], key: PartKey): PartVersion[] {
+  const seen = new Map<string, PartVersion>();
+  for (const v of [...list].reverse()) {
+    const value = v.topic[key];
+    if (value === undefined) continue;
+    const hash = partHash(value);
+    if (!seen.has(hash)) seen.set(hash, { hash, value, at: v.updatedAt ?? v.savedAt });
+  }
+  return [...seen.values()].reverse();
+}
+
 /** The topic's saved versions: view, switch to or delete any of them. */
 export const TopicHistoryDialog: React.FC<{
   topic: TopicPackage;
   onSwitch: (v: TopicVersion) => void;
+  onSwitchPart: (key: PartKey, value: unknown) => void;
   onClose: () => void;
-}> = ({ topic, onSwitch, onClose }) => {
+}> = ({ topic, onSwitch, onSwitchPart, onClose }) => {
+  const [tab, setTab] = useState<Tab>('all');
   const [list, setList] = useState<TopicVersion[] | null>(null);
   const [error, setError] = useState(false);
   // The JSON being viewed in full
@@ -47,15 +85,19 @@ export const TopicHistoryDialog: React.FC<{
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="p-3 border-b border-stone-200 flex gap-2">
-          <button
-            type="button"
-            onClick={() => setViewing({ title: 'Засаж буй хувилбар', text: topicJson(topic) })}
-            className="flex-1 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-bold text-stone-800 flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            Засаж буй хувилбарыг харах
-          </button>
+        <div className="flex gap-1 p-2 border-b border-stone-200 overflow-x-auto" data-testid="history-tabs">
+          {([{ key: 'all', label: 'Бүгд' }, ...PARTS] as { key: Tab; label: string }[]).map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer ${
+                tab === t.key ? 'bg-stone-900 text-amber-400' : 'text-stone-600 hover:bg-stone-100'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
         <div className="flex-1 overflow-y-auto divide-y divide-stone-100">
           {error ? (
@@ -66,6 +108,45 @@ export const TopicHistoryDialog: React.FC<{
             <div className="p-6 text-center text-xs text-stone-500">
               Түүх хоосон. Сэдвийг хадгалахад энд хадгалагдана.
             </div>
+          ) : tab !== 'all' ? (
+            (() => {
+              const part = PARTS.find((p) => p.key === tab)!;
+              const currentHash = partHash(topic[tab]);
+              return partVersions(list, tab).map((pv) => (
+                <div key={pv.hash} className="px-4 py-2.5 flex items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-stone-900">{when(pv.at)}</div>
+                    <div className="text-[11px] text-stone-500">
+                      {part.label}: {partSize(tab, pv.value)} {part.unit}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setViewing({ title: `${part.label} • ${when(pv.at)}`, text: JSON.stringify(pv.value, null, 2) })}
+                    className="p-1.5 rounded-md text-stone-500 hover:text-stone-900 hover:bg-stone-100 cursor-pointer"
+                    title="JSON-ийг бүтнээр нь харах"
+                    aria-label="Харах"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  {pv.hash === currentHash ? (
+                    <span className="px-2 py-1 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-bold">Одоогийн</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!window.confirm(`${part.label}-ыг ${when(pv.at)}-ий хувилбар руу шилжүүлэх үү? Бусад хэсэг хэвээр үлдэнэ.`)) return;
+                        onSwitchPart(tab, pv.value);
+                      }}
+                      className="px-2 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-stone-950 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Шилжих
+                    </button>
+                  )}
+                </div>
+              ));
+            })()
           ) : (
             list.map((v) => (
               <div key={v.id} className="px-4 py-2.5 flex items-center gap-2">

@@ -1130,6 +1130,14 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
         <TopicHistoryDialog
           topic={topic}
           onClose={() => setHistoryOpen(false)}
+          onSwitchPart={(key, value) => {
+            // One part goes back to an earlier content; saved at once as an edit of the version in use
+            const t = { ...topic, [key]: value } as TopicPackage;
+            setTopic(t);
+            persist(t);
+            setHistoryOpen(false);
+            showStatus('Сонгосон хэсгийг шилжүүллээ.');
+          }}
           onSwitch={(v) => {
             // The chosen version goes on the site at once; this topic keeps its name and place
             const t = { ...v.topic, id: topic.id, title: topic.title, grade: topic.grade, category: topic.category, parentId: topic.parentId, order: topic.order };

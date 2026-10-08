@@ -25,7 +25,6 @@ export interface TopicVersion {
 const KEEP = 30;
 const versions = (topicId: string) => collection(getDb(), 'topicHistory', topicId, 'versions');
 
-/** A short fingerprint of a version's lesson content, to tell identical versions apart. */
 // Key order and empty fields do not count: Firestore hands maps back with sorted keys
 const canonical = (x: unknown): unknown => {
   if (Array.isArray(x)) return x.map(canonical);
@@ -41,12 +40,17 @@ const canonical = (x: unknown): unknown => {
   return x;
 };
 
-function contentHash(topic: TopicPackage): string {
-  const { description, theory, examples, practice, test1, test2, test3 } = topic;
-  const text = JSON.stringify(canonical({ description, theory, examples, practice, test1, test2, test3 }));
+/** A short fingerprint of any lesson content (a whole topic or one part of it). */
+export function partHash(value: unknown): string {
+  const text = JSON.stringify(canonical(value ?? null));
   let h = 5381;
   for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
   return `${text.length}-${(h >>> 0).toString(36)}`;
+}
+
+function contentHash(topic: TopicPackage): string {
+  const { description, theory, examples, practice, test1, test2, test3 } = topic;
+  return partHash({ description, theory, examples, practice, test1, test2, test3 });
 }
 
 /** Newest first; a content saved several times shows once, with the date it was first saved. */
