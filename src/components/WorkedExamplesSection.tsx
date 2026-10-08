@@ -111,10 +111,9 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
               </div>
 
               {/* The solution; the answer stays hidden behind «Зөв хариу» (printed as is) */}
-              <SolutionSteps steps={ex.solutionSteps || []} />
+              <SolutionSteps steps={ex.solutionSteps || []} tail={ex.answer ? <RevealAnswer answer={ex.answer} /> : null} />
               {ex.answer && (
                 <>
-                  <RevealAnswer answer={ex.answer} className="mt-2.5 md:pl-8" />
                   <div className="hidden print:block mt-2 text-black">
                     <span className="font-bold">Хариу:</span> <MathRenderer content={ex.answer} className="inline" />
                   </div>

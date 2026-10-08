@@ -808,7 +808,9 @@ function ViewSolutionModal({
                 ))}
               </div>
               )}
-              <RevealAnswer answer={correctAnswerText(q, getQuestionOptions(q))} />
+              <div className="flow-root">
+                <RevealAnswer answer={correctAnswerText(q, getQuestionOptions(q))} />
+              </div>
 
               {/* Solution Box */}
               <div className="p-3.5 bg-white border border-rose-200 rounded-lg space-y-1.5 text-xs md:text-sm">
@@ -1019,7 +1021,11 @@ function ViewErrorCheckModal({
                     <div className={`p-2.5 rounded-xl border ${isCorrect ? 'bg-emerald-50 border-emerald-400' : 'bg-rose-50 border-rose-400'}`}>
                       Таны хариулт: <b>{userAns || 'Хариулаагүй'}</b>
                     </div>
-                    {!isCorrect && <RevealAnswer answer={correctAnswerText(q, opts)} />}
+                    {!isCorrect && (
+                      <div className="flow-root">
+                        <RevealAnswer answer={correctAnswerText(q, opts)} />
+                      </div>
+                    )}
                   </div>
                 ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
@@ -1067,7 +1073,11 @@ function ViewErrorCheckModal({
                 </div>
                 )}
 
-                {!isCorrect && !isOpenQuestion(q) && <RevealAnswer answer={correctAnswerText(q, opts)} />}
+                {!isCorrect && !isOpenQuestion(q) && (
+                  <div className="flow-root">
+                    <RevealAnswer answer={correctAnswerText(q, opts)} />
+                  </div>
+                )}
                 {q.solution && (
                   <div className="p-3 bg-white/80 border border-stone-200 rounded-lg text-xs text-stone-700 leading-relaxed">
                     <span className="font-bold text-stone-900 block mb-0.5">Бодолт ба тайлбар:</span>

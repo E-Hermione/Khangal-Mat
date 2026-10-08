@@ -100,9 +100,13 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                 {/* Question header */}
                 {/* The number, then the problem itself */}
                 <div className="flex items-start justify-between gap-2 mb-1.5">
-                  <div className="flex gap-2 text-stone-800 print:text-black text-[15px] leading-relaxed">
+                  <div className="flex gap-2 text-stone-800 print:text-black text-[15px] leading-relaxed flex-1 min-w-0">
                     <span className="font-bold text-[17px] text-stone-950 shrink-0">{item.number}.</span>
-                    <MathRenderer content={item.question} />
+                    {/* The «Зөв хариу» button at the end of the question's last line */}
+                    <div className="flow-root flex-1 min-w-0">
+                      <MathRenderer content={item.question} className="inline" />
+                      {!teacherVersion && item.answer && <RevealAnswer answer={item.answer} />}
+                    </div>
                   </div>
 
                   {isEditable && (
@@ -149,8 +153,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                     <SolutionSteps steps={solutionLines(item.solution)} answer={teacherVersion ? item.answer : undefined} />
                   </div>
                 )}
-                {/* Students: the answer hidden behind «Зөв хариу» */}
-                {!teacherVersion && item.answer && <RevealAnswer answer={item.answer} className="mt-2 pl-7" />}
+
               </div>
             );
           })}
