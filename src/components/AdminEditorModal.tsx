@@ -151,9 +151,11 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       }
       if (!window.confirm(`Солигдох хэсэг: ${done.join(', ')}. Бусад хэсэг хэвээр үлдэнэ. Үргэлжлүүлэх үү?`)) return;
       if (part === 'all' && typeof data.description === 'string') next.description = data.description;
+      // Saved at once, so the site and the history get it without a separate «Хадгалах»
       setTopic(next);
       saveModeRef.current = 'import';
-      showStatus(`${done.join(', ')}: файлаас орууллаа. Шалгаад «Хадгалах» дарна уу.`);
+      persist(next);
+      showStatus(`${done.join(', ')}: файлаас оруулж хадгаллаа.`);
     } catch {
       showStatus('Файлыг уншиж чадсангүй.');
     }

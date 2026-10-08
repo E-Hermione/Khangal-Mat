@@ -27,6 +27,14 @@ const PARTS = [
   { key: 'test3', label: 'Ахисан', unit: 'бодлого' },
 ] as const;
 type PartKey = (typeof PARTS)[number]['key'];
+const PART_NAME: Record<PartKey, string> = {
+  theory: 'Онол',
+  examples: 'Жишээ',
+  practice: 'Дасгал',
+  test1: 'Анхан сорил',
+  test2: 'Дунд сорил',
+  test3: 'Ахисан сорил',
+};
 type Tab = 'all' | PartKey;
 
 const partSize = (key: PartKey, value: unknown): number => {
@@ -151,7 +159,7 @@ export const TopicHistoryDialog: React.FC<{
               ));
             })()
           ) : (
-            list.map((v) => (
+            list.map((v, i) => (
               <div key={v.id} className="px-4 py-2.5 flex items-center gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-stone-900">
@@ -160,6 +168,14 @@ export const TopicHistoryDialog: React.FC<{
                   <div className="text-[11px] text-stone-500">
                     {counts(v.topic)}
                   </div>
+                  {list[i + 1] && (() => {
+                    // What this version changed compared with the one before it
+                    const older = list[i + 1].topic;
+                    const changed = PARTS.filter((p) => partHash(v.topic[p.key]) !== partHash(older[p.key])).map((p) => PART_NAME[p.key]);
+                    return changed.length ? (
+                      <div className="text-[11px] text-amber-700 font-semibold">Өөрчлөгдсөн: {changed.join(', ')}</div>
+                    ) : null;
+                  })()}
                 </div>
                 <button
                   type="button"

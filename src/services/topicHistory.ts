@@ -25,14 +25,15 @@ export interface TopicVersion {
 const KEEP = 30;
 const versions = (topicId: string) => collection(getDb(), 'topicHistory', topicId, 'versions');
 
-// Key order and empty fields do not count: Firestore hands maps back with sorted keys
+// Key order, empty fields and what saving derives (a test question's answer check) do not count:
+// Firestore hands maps back with sorted keys
 const canonical = (x: unknown): unknown => {
   if (Array.isArray(x)) return x.map(canonical);
   if (x && typeof x === 'object') {
     const out: Record<string, unknown> = {};
     for (const k of Object.keys(x).sort()) {
       const v = (x as Record<string, unknown>)[k];
-      if (v === undefined || v === null || v === '' || v === false) continue;
+      if (v === undefined || v === null || v === '' || v === false || k === 'answerHash') continue;
       out[k] = canonical(v);
     }
     return out;
@@ -94,7 +95,19 @@ async function addVersion(topic: TopicPackage, kind: VersionKind, current: boole
  * import starts a new version and puts it in use (the first time, the lesson as it was before goes
  * in first, so nothing is lost).
  */
-export async function recordTopicSave(before: TopicPackage, after: TopicPackage, mode: SaveMode): Promise<void> {
+// History writes run one after another; opening the history waits for them
+let pending: Promise<unknown> = Promise.resolve();
+const queued = <T>(job: () => Promise<T>): Promise<T> => {
+  const run = pending.then(job, job);
+  pending = run.catch(() => undefined);
+  return run;
+};
+
+export function recordTopicSave(before: TopicPackage, after: TopicPackage, mode: SaveMode): Promise<void> {
+  return queued(() => recordTopicSaveNow(before, after, mode));
+}
+
+async function recordTopicSaveNow(before: TopicPackage, after: TopicPackage, mode: SaveMode): Promise<void> {
   if (mode === 'edit') {
     const cur = await getDocs(query(versions(after.id), where('current', '==', true), limit(1)));
     const target = cur.empty ? await getDocs(query(versions(after.id), orderBy('savedAt', 'desc'), limit(1))) : cur;
@@ -112,7 +125,11 @@ export async function recordTopicSave(before: TopicPackage, after: TopicPackage,
  * The lesson as it is on the site is always in the history, marked as the one in use: added if
  * no version holds it (e.g. the history was emptied), marked if a version does.
  */
-export async function ensureCurrentVersion(saved: TopicPackage): Promise<void> {
+export function ensureCurrentVersion(saved: TopicPackage): Promise<void> {
+  return queued(() => ensureCurrentNow(saved));
+}
+
+async function ensureCurrentNow(saved: TopicPackage): Promise<void> {
   const hash = contentHash(clean(saved));
   const all = await getDocs(versions(saved.id));
   const same = all.docs.filter((d) => contentHash(d.data().topic as TopicPackage) === hash);
@@ -132,9 +149,11 @@ export async function deleteTopicVersion(topicId: string, version: TopicVersion)
 }
 
 /** Puts a saved version in use; no new version is added. */
-export async function switchToVersion(topicId: string, versionId: string): Promise<void> {
-  await clearCurrent(topicId);
-  await updateDoc(doc(versions(topicId), versionId), { current: true });
+export function switchToVersion(topicId: string, versionId: string): Promise<void> {
+  return queued(async () => {
+    await clearCurrent(topicId);
+    await updateDoc(doc(versions(topicId), versionId), { current: true });
+  });
 }
 
 /** The lesson parts of a topic as JSON in the «Файлаас оруулах» format. */
