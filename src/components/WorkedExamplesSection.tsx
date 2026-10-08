@@ -2,6 +2,7 @@ import React from 'react';
 import { WorkedExample } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { SolutionSteps } from './SolutionSteps';
+import { RevealAnswer } from './RevealAnswer';
 import { Lightbulb, Plus, Edit2, Trash2 } from 'lucide-react';
 import { LessonSectionHeader } from './LessonSectionHeader';
 
@@ -109,8 +110,16 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
                 )}
               </div>
 
-              {/* Solution steps as boxes joined by arrows, the answer below them */}
-              <SolutionSteps steps={ex.solutionSteps || []} answer={ex.answer} />
+              {/* The solution; the answer stays hidden behind «Зөв хариу» (printed as is) */}
+              <SolutionSteps steps={ex.solutionSteps || []} />
+              {ex.answer && (
+                <>
+                  <RevealAnswer answer={ex.answer} className="mt-2.5 md:pl-8" />
+                  <div className="hidden print:block mt-2 text-black">
+                    <span className="font-bold">Хариу:</span> <MathRenderer content={ex.answer} className="inline" />
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>

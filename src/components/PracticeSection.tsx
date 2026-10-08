@@ -1,5 +1,6 @@
 import React from 'react';
 import { SolutionSteps, solutionLines } from './SolutionSteps';
+import { RevealAnswer } from './RevealAnswer';
 import { PracticeProblem } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { PencilLine, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
@@ -145,9 +146,11 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                 {/* Teacher Solution on Screen or in Print: steps like the worked examples */}
                 {showSol && (item.answer || item.solution) && (
                   <div className="mt-3">
-                    <SolutionSteps steps={solutionLines(item.solution)} answer={item.answer} />
+                    <SolutionSteps steps={solutionLines(item.solution)} answer={teacherVersion ? item.answer : undefined} />
                   </div>
                 )}
+                {/* Students: the answer hidden behind «Зөв хариу» */}
+                {!teacherVersion && item.answer && <RevealAnswer answer={item.answer} className="mt-2 pl-7" />}
               </div>
             );
           })}

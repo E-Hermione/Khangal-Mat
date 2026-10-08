@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { GradeNumber, TopicPackage, TestPackage } from '../types';
+import { GradeNumber, TopicPackage, TestPackage, TestQuestion } from '../types';
 import { GradeTestTakers } from './GradeTestTakers';
 import { loadLeaderboard, saveLeaderboardEntry, LeaderboardEntry } from '../services/leaderboard';
 import { SolutionSteps, solutionLines } from './SolutionSteps';
+import { RevealAnswer } from './RevealAnswer';
 import { MathRenderer } from './MathRenderer';
 import {
   Award,
@@ -741,6 +742,13 @@ function TakeExamModal({
 /* ==============================================================
    MODAL 2: VIEW SOLUTIONS (Бодолт харах цонх)
    ============================================================== */
+// The correct answer as shown behind «Зөв хариу»: the option's letter and text, or an open answer
+function correctAnswerText(q: TestQuestion, opts: ReturnType<typeof getQuestionOptions>): string {
+  const o = correctOption(q, opts);
+  if (isOpenQuestion(q)) return o?.text || q.answer || '—';
+  return o ? `${o.letter}. ${o.text}` : q.answer || '—';
+}
+
 function ViewSolutionModal({
   exam,
   onClose,
@@ -782,47 +790,25 @@ function ViewSolutionModal({
                 </div>
               </div>
 
-              {/* Test Options (A, B, C, D) with Correct Answer Highlighted */}
-              {isOpenQuestion(q) ? (
-                <div className="p-2.5 rounded-xl border bg-emerald-50 border-emerald-400 text-emerald-950 text-xs md:text-sm font-bold">
-                  ✓ Зөв хариу: <MathRenderer content={correctOption(q, getQuestionOptions(q))?.text || q.answer || '—'} />
-                </div>
-              ) : (
+              {/* The options; the correct answer stays hidden behind «Зөв хариу» */}
+              {isOpenQuestion(q) ? null : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                {getQuestionOptions(q).map((opt) => {
-                  const isCorrect = isOptionCorrect(opt.letter, q, getQuestionOptions(q));
-
-                  return (
-                    <div
-                      key={opt.letter}
-                      className={`p-2.5 rounded-xl border text-left flex items-start space-x-2.5 ${
-                        isCorrect
-                          ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-300 text-emerald-950 font-bold'
-                          : 'bg-white border-stone-200 text-stone-700 opacity-70'
-                      }`}
-                    >
-                      <span
-                        className={`w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center shrink-0 ${
-                          isCorrect
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-stone-100 text-stone-600'
-                        }`}
-                      >
-                        {opt.letter}
-                      </span>
-                      <div className="text-xs md:text-sm font-medium pt-0.5 flex-1">
-                        <MathRenderer content={opt.text} />
-                        {isCorrect && (
-                          <span className="ml-2 text-[10px] text-emerald-700 font-bold uppercase tracking-wider">
-                            ✓ Зөв хариу
-                          </span>
-                        )}
-                      </div>
+                {getQuestionOptions(q).map((opt) => (
+                  <div
+                    key={opt.letter}
+                    className="p-2.5 rounded-xl border text-left flex items-start space-x-2.5 bg-white border-stone-200 text-stone-700"
+                  >
+                    <span className="w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center shrink-0 bg-stone-100 text-stone-600">
+                      {opt.letter}
+                    </span>
+                    <div className="text-xs md:text-sm font-medium pt-0.5 flex-1">
+                      <MathRenderer content={opt.text} />
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
               )}
+              <RevealAnswer answer={correctAnswerText(q, getQuestionOptions(q))} />
 
               {/* Solution Box */}
               <div className="p-3.5 bg-white border border-rose-200 rounded-lg space-y-1.5 text-xs md:text-sm">
@@ -1033,11 +1019,7 @@ function ViewErrorCheckModal({
                     <div className={`p-2.5 rounded-xl border ${isCorrect ? 'bg-emerald-50 border-emerald-400' : 'bg-rose-50 border-rose-400'}`}>
                       Таны хариулт: <b>{userAns || 'Хариулаагүй'}</b>
                     </div>
-                    {!isCorrect && (
-                      <div className="p-2.5 rounded-xl border bg-emerald-50 border-emerald-400 font-bold text-emerald-950">
-                        ✓ Зөв хариу: <MathRenderer content={correctOption(q, opts)?.text || q.answer || '—'} />
-                      </div>
-                    )}
+                    {!isCorrect && <RevealAnswer answer={correctAnswerText(q, opts)} />}
                   </div>
                 ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
@@ -1048,9 +1030,9 @@ function ViewErrorCheckModal({
                     let boxStyle = 'bg-white border-stone-200 text-stone-600';
                     let badge = null;
 
-                    if (isRightOption) {
+                    // The correct option shows only when it was the student's choice; else behind «Зөв хариу»
+                    if (isUserChoice && isRightOption) {
                       boxStyle = 'bg-emerald-50 border-emerald-500 font-bold text-emerald-950 ring-1 ring-emerald-400';
-                      badge = <span className="text-[10px] text-emerald-700 font-bold ml-1.5">✓ Зөв хариу</span>;
                     }
                     if (isUserChoice && !isRightOption) {
                       boxStyle = 'bg-rose-50 border-rose-500 font-bold text-rose-950 ring-1 ring-rose-400';
@@ -1066,7 +1048,7 @@ function ViewErrorCheckModal({
                       >
                         <span
                           className={`w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center shrink-0 ${
-                            isRightOption
+                            isRightOption && isUserChoice
                               ? 'bg-emerald-600 text-white'
                               : isUserChoice
                               ? 'bg-rose-600 text-white'
@@ -1085,6 +1067,7 @@ function ViewErrorCheckModal({
                 </div>
                 )}
 
+                {!isCorrect && !isOpenQuestion(q) && <RevealAnswer answer={correctAnswerText(q, opts)} />}
                 {q.solution && (
                   <div className="p-3 bg-white/80 border border-stone-200 rounded-lg text-xs text-stone-700 leading-relaxed">
                     <span className="font-bold text-stone-900 block mb-0.5">Бодолт ба тайлбар:</span>
