@@ -80,16 +80,15 @@ export const TopicHistoryDialog: React.FC<{
               <div key={v.id} className="px-4 py-2.5 flex items-center gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-stone-900">
-                    {when(v.savedAt)} <span className="ml-1 font-semibold text-stone-500">{KIND_LABEL[v.kind]}</span>
+                    {when(v.updatedAt ?? v.savedAt)} <span className="ml-1 font-semibold text-stone-500">{KIND_LABEL[v.kind]}</span>
                   </div>
                   <div className="text-[11px] text-stone-500">
                     {counts(v.topic)}
-                    {v.updatedAt && <span> • Сүүлд засварласан: {when(v.updatedAt)}</span>}
                   </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setViewing({ title: `${when(v.savedAt)} • ${KIND_LABEL[v.kind]}`, text: topicJson(v.topic) })}
+                  onClick={() => setViewing({ title: `${when(v.updatedAt ?? v.savedAt)} • ${KIND_LABEL[v.kind]}`, text: topicJson(v.topic) })}
                   className="p-1.5 rounded-md text-stone-500 hover:text-stone-900 hover:bg-stone-100 cursor-pointer"
                   title="JSON-ийг бүтнээр нь харах"
                   aria-label="Харах"
@@ -98,7 +97,7 @@ export const TopicHistoryDialog: React.FC<{
                 </button>
                 <button
                   type="button"
-                  onClick={() => downloadTopicJson(v.topic, fileName(new Date(v.savedAt).toISOString().slice(0, 16).replace(':', '-')))}
+                  onClick={() => downloadTopicJson(v.topic, fileName(new Date(v.updatedAt ?? v.savedAt).toISOString().slice(0, 16).replace(':', '-')))}
                   className="p-1.5 rounded-md text-stone-500 hover:text-stone-900 hover:bg-stone-100 cursor-pointer"
                   title="Файл болгож татах"
                   aria-label="Файл болгож татах"
@@ -108,7 +107,7 @@ export const TopicHistoryDialog: React.FC<{
                 <button
                   type="button"
                   onClick={() => {
-                    if (!window.confirm(`${when(v.savedAt)}-ий хувилбарыг засах цонхонд ачаалах уу? Дараа нь «Хадгалах» дарж батална.`)) return;
+                    if (!window.confirm(`${when(v.updatedAt ?? v.savedAt)}-ий хувилбарыг засах цонхонд ачаалах уу? Дараа нь «Хадгалах» дарж батална.`)) return;
                     onRestore(v.topic);
                   }}
                   className="px-2 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-stone-950 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
