@@ -54,7 +54,8 @@ function partVersions(list: TopicVersion[], key: PartKey): PartVersion[] {
   const seen = new Map<string, PartVersion>();
   for (const v of [...list].reverse()) {
     const value = v.topic[key];
-    if (value === undefined) continue;
+    // An empty part (nothing in it yet) is not a version of that part
+    if (value === undefined || partSize(key, value) === 0) continue;
     const hash = partHash(value);
     if (!seen.has(hash)) seen.set(hash, { hash, value, at: v.updatedAt ?? v.savedAt });
   }
