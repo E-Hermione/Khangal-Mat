@@ -8,7 +8,7 @@ const KIND_LABEL: Record<TopicVersion['kind'], string> = {
   save: 'Хадгалсан',
   import: 'Файлаас оруулсан',
   original: 'Анхны хувилбар',
-  restore: 'Сэргээсэн',
+  restore: 'Хадгалсан',
 };
 
 const when = (t: number) =>
@@ -20,9 +20,9 @@ const counts = (t: TopicPackage) =>
 /** The topic's saved versions: download any of them, or load one back into the editor. */
 export const TopicHistoryDialog: React.FC<{
   topic: TopicPackage;
-  onRestore: (t: TopicPackage) => void;
+  onSwitch: (v: TopicVersion) => void;
   onClose: () => void;
-}> = ({ topic, onRestore, onClose }) => {
+}> = ({ topic, onSwitch, onClose }) => {
   const [list, setList] = useState<TopicVersion[] | null>(null);
   const [error, setError] = useState(false);
   // The JSON being viewed in full
@@ -104,17 +104,21 @@ export const TopicHistoryDialog: React.FC<{
                 >
                   <Download className="w-4 h-4" />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!window.confirm(`${when(v.updatedAt ?? v.savedAt)}-ий хувилбарыг засах цонхонд ачаалах уу? Дараа нь «Хадгалах» дарж батална.`)) return;
-                    onRestore(v.topic);
-                  }}
-                  className="px-2 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-stone-950 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  Сэргээх
-                </button>
+                {v.current ? (
+                  <span className="px-2 py-1 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-bold">Одоогийн</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!window.confirm(`${when(v.updatedAt ?? v.savedAt)}-ий хувилбар руу шилжих үү? Сайт дээр шууд солигдоно.`)) return;
+                      onSwitch(v);
+                    }}
+                    className="px-2 py-1 rounded-md bg-amber-500 hover:bg-amber-400 text-stone-950 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Шилжих
+                  </button>
+                )}
               </div>
             ))
           )}

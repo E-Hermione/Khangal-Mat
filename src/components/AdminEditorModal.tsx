@@ -24,7 +24,7 @@ import {
   History,
   ChevronDown,
 } from 'lucide-react';
-import { recordTopicSave, SaveMode } from '../services/topicHistory';
+import { recordTopicSave, SaveMode, switchToVersion } from '../services/topicHistory';
 import { TopicHistoryDialog } from './TopicHistoryDialog';
 import { backdropClose } from '../utils/backdrop';
 
@@ -159,15 +159,19 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
     }
   };
 
-  const handleSave = () => {
-    // Keep this version (and, the first time, the one before it) in the topic's history
+  // Saves to the site; the history notes it (a switch to a saved version only marks it in use)
+  const persist = (t: TopicPackage, switchTo?: string) => {
     const before = JSON.parse(savedRef.current) as TopicPackage;
-    recordTopicSave(before, topic, saveModeRef.current).catch((err) => console.error('Topic history not saved', err));
+    const history = switchTo ? switchToVersion(t.id, switchTo) : recordTopicSave(before, t, saveModeRef.current);
+    history.catch((err) => console.error('Topic history not saved', err));
     saveModeRef.current = 'edit';
-    savedRef.current = JSON.stringify(topic);
-    storageService.saveTopic(topic);
-    onTopicUpdated(topic);
+    savedRef.current = JSON.stringify(t);
+    storageService.saveTopic(t);
+    onTopicUpdated(t);
     onRefreshAllTopics();
+  };
+  const handleSave = () => {
+    persist(topic);
     showStatus('Амжилттай хадгалагдлаа!');
   };
 
@@ -1126,12 +1130,13 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
         <TopicHistoryDialog
           topic={topic}
           onClose={() => setHistoryOpen(false)}
-          onRestore={(t) => {
-            // The restored version keeps this topic's identity and place in the list
-            setTopic({ ...t, id: topic.id, title: topic.title, grade: topic.grade, category: topic.category, parentId: topic.parentId, order: topic.order });
-            saveModeRef.current = 'restore';
+          onSwitch={(v) => {
+            // The chosen version goes on the site at once; this topic keeps its name and place
+            const t = { ...v.topic, id: topic.id, title: topic.title, grade: topic.grade, category: topic.category, parentId: topic.parentId, order: topic.order };
+            setTopic(t);
+            persist(t, v.id);
             setHistoryOpen(false);
-            showStatus('Хувилбарыг ачааллаа. Шалгаад «Хадгалах» дарна уу.');
+            showStatus('Сонгосон хувилбар руу шилжлээ.');
           }}
         />
       )}
