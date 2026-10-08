@@ -20,8 +20,10 @@ interface LatexInputWithPreviewProps {
   hideToolbar?: boolean;
 }
 
-// Toolbar marker: wrap the selection in $…$
+// Toolbar markers: wrap the selection in $…$ or (…)
 const WRAP = '<wrap>';
+const PAREN = '<paren>';
+const WRAPS: Record<string, [string, string]> = { [WRAP]: ['$', '$'], [PAREN]: ['(', ')'] };
 const CENTRED = '\n$$ x $$\n';
 
 const MATH_SNIPPETS = [
@@ -34,11 +36,16 @@ const MATH_SNIPPETS = [
   { label: '·', snippet: '\\cdot ', desc: 'Үржүүлэх' },
   { label: '≤', snippet: '\\le ', desc: 'Бага буюу тэнцүү' },
   { label: '≥', snippet: '\\ge ', desc: 'Их буюу тэнцүү' },
+  { label: '=', snippet: ' = ', desc: 'Тэнцүү' },
+  { label: '<', snippet: ' < ', desc: 'Бага' },
+  { label: '>', snippet: ' > ', desc: 'Их' },
   { label: '≠', snippet: '\\neq ', desc: 'Тэнцүү биш' },
   { label: 'π', snippet: '\\pi ', desc: 'Пи тоо' },
   { label: 'a|b', snippet: '\\longdiv{23}{5}', desc: 'Баганаар хуваах (үлдэгдэлтэй): тоонуудыг сольж бичнэ' },
   { label: 'Таб', snippet: '\\qquad ', desc: 'Таб шиг зай авах' },
   { label: '$', snippet: WRAP, desc: 'Сонгосон хэсгийг $...$ дотор оруулах' },
+  { label: '\\', snippet: '\\', desc: 'Ташуу зураас (LaTeX командын эхлэл)' },
+  { label: '( )', snippet: PAREN, desc: 'Сонгосон хэсгийг (...) дугуй хаалтад оруулах' },
   { label: '→', snippet: ' \\;\\rightarrow\\; ', desc: 'Сум' },
   { label: '↔', snippet: ' \\;\\leftrightarrow\\; ', desc: 'Хоёр тийш сум' },
 ];
@@ -149,10 +156,11 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
 
     const start = input.selectionStart || 0;
     const end = input.selectionEnd || 0;
-    // $: put dollar signs on both sides of the selected text (cursor between them if none is selected)
-    if (snippet === WRAP) {
+    // $ and ( ): put the pair on both sides of the selected text (cursor between them if none is selected)
+    const pair = WRAPS[snippet];
+    if (pair) {
       const selected = value.substring(start, end);
-      change(value.substring(0, start) + '$' + selected + '$' + value.substring(end), false);
+      change(value.substring(0, start) + pair[0] + selected + pair[1] + value.substring(end), false);
       setTimeout(() => {
         input.focus();
         input.setSelectionRange(start + 1, start + 1 + selected.length);
