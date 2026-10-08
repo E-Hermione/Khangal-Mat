@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Copy, Eye, History, RotateCcw, Trash2, X } from 'lucide-react';
 import { TopicPackage } from '../types';
-import { deleteTopicVersion, loadTopicVersions, partHash, topicJson, TopicVersion } from '../services/topicHistory';
+import { deleteTopicVersion, ensureCurrentVersion, loadTopicVersions, partHash, topicJson, TopicVersion } from '../services/topicHistory';
 import { backdropClose } from '../utils/backdrop';
 
 const KIND_LABEL: Record<TopicVersion['kind'], string> = {
@@ -56,10 +56,12 @@ function partVersions(list: TopicVersion[], key: PartKey): PartVersion[] {
 /** The topic's saved versions: view, switch to or delete any of them. */
 export const TopicHistoryDialog: React.FC<{
   topic: TopicPackage;
+  // The lesson as saved on the site (the editor may hold unsaved changes)
+  saved: TopicPackage;
   onSwitch: (v: TopicVersion) => void;
   onSwitchPart: (key: PartKey, value: unknown) => void;
   onClose: () => void;
-}> = ({ topic, onSwitch, onSwitchPart, onClose }) => {
+}> = ({ topic, saved, onSwitch, onSwitchPart, onClose }) => {
   const [tab, setTab] = useState<Tab>('all');
   const [list, setList] = useState<TopicVersion[] | null>(null);
   const [error, setError] = useState(false);
@@ -67,7 +69,8 @@ export const TopicHistoryDialog: React.FC<{
   const [viewing, setViewing] = useState<{ title: string; text: string } | null>(null);
   const [copied, setCopied] = useState(false);
   useEffect(() => {
-    loadTopicVersions(topic.id)
+    ensureCurrentVersion(saved)
+      .then(() => loadTopicVersions(topic.id))
       .then(setList)
       .catch((err) => {
         console.error('Topic history not loaded', err);

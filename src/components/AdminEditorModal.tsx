@@ -1129,6 +1129,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       {historyOpen && (
         <TopicHistoryDialog
           topic={topic}
+          saved={JSON.parse(savedRef.current) as TopicPackage}
           onClose={() => setHistoryOpen(false)}
           onSwitchPart={(key, value) => {
             // One part goes back to an earlier content; saved at once as an edit of the version in use

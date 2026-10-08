@@ -108,6 +108,20 @@ export async function recordTopicSave(before: TopicPackage, after: TopicPackage,
   await addVersion(after, 'import', true);
 }
 
+/**
+ * The lesson as it is on the site is always in the history, marked as the one in use: added if
+ * no version holds it (e.g. the history was emptied), marked if a version does.
+ */
+export async function ensureCurrentVersion(saved: TopicPackage): Promise<void> {
+  const hash = contentHash(clean(saved));
+  const all = await getDocs(versions(saved.id));
+  const same = all.docs.filter((d) => contentHash(d.data().topic as TopicPackage) === hash);
+  if (!same.length) return addVersion(saved, 'original', true);
+  if (same.some((d) => d.data().current)) return;
+  await clearCurrent(saved.id);
+  await updateDoc(same[0].ref, { current: true });
+}
+
 /** Removes a version, with any copies of the same content (the list shows them as one). */
 export async function deleteTopicVersion(topicId: string, version: TopicVersion): Promise<void> {
   const hash = contentHash(version.topic);
