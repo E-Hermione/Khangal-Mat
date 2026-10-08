@@ -205,6 +205,11 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Saved versions of each topic's lesson (the editor's «Түүх»)
+    match /topicHistory/{topicId}/versions/{versionId} {
+      allow read, write: if isAdmin();
+    }
+
     // Who has each topic's practice solutions
     match /practiceGrants/{topicId} {
       allow read, write: if isAdmin();

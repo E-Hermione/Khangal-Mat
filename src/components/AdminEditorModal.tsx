@@ -21,7 +21,10 @@ import {
   Upload,
   ArrowUp,
   ArrowDown,
+  History,
 } from 'lucide-react';
+import { recordTopicSave } from '../services/topicHistory';
+import { TopicHistoryDialog } from './TopicHistoryDialog';
 import { backdropClose } from '../utils/backdrop';
 
 interface AdminEditorModalProps {
@@ -73,6 +76,9 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   // Sync state when activeTopic changes
   // The topic as last saved: closing asks for confirmation only when there are unsaved changes
   const savedRef = React.useRef(JSON.stringify(activeTopic));
+  // Topic history: the dialog, and whether a file was imported since the last save
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const importedRef = React.useRef(false);
   React.useEffect(() => {
     setTopic({ ...activeTopic });
     savedRef.current = JSON.stringify(activeTopic);
@@ -98,17 +104,28 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
       const withIds = <T extends { id: string }>(list: T[] = []) => list.map((x) => ({ ...x, id: pre(x.id) }));
       const test = (t: TopicPackage['test1'] | undefined, n: 1 | 2 | 3) =>
         t ? { ...t, id: pre(t.id || `test${n}`), testNumber: n, questions: withIds(t.questions) } : topic[`test${n}` as 'test1'];
-      if (!Array.isArray(data.theory) && !Array.isArray(data.practice)) throw new Error('bad');
+      // Only the parts in the file are replaced; a file with just examples leaves the rest as it is
+      const parts = [
+        Array.isArray(data.theory) && 'Онол',
+        Array.isArray(data.examples) && 'Жишээ',
+        Array.isArray(data.practice) && 'Дасгал',
+        data.test1 && 'Анхан сорил',
+        data.test2 && 'Дунд сорил',
+        data.test3 && 'Ахисан сорил',
+      ].filter(Boolean);
+      if (!parts.length) throw new Error('bad');
+      if (!window.confirm(`Файлаас солигдох хэсэг: ${parts.join(', ')}. Бусад хэсэг хэвээр үлдэнэ. Үргэлжлүүлэх үү?`)) return;
       setTopic({
         ...topic,
         description: data.description ?? topic.description,
-        theory: withIds(data.theory),
-        examples: withIds(data.examples),
-        practice: withIds(data.practice),
+        theory: Array.isArray(data.theory) ? withIds(data.theory) : topic.theory,
+        examples: Array.isArray(data.examples) ? withIds(data.examples) : topic.examples,
+        practice: Array.isArray(data.practice) ? withIds(data.practice) : topic.practice,
         test1: test(data.test1, 1),
         test2: test(data.test2, 2),
         test3: test(data.test3, 3),
       });
+      importedRef.current = true;
       showStatus('Файлаас орууллаа. Шалгаад «Хадгалах» дарна уу.');
     } catch {
       showStatus('Файлыг уншиж чадсангүй.');
@@ -116,6 +133,10 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   };
 
   const handleSave = () => {
+    // Keep this version (and, the first time, the one before it) in the topic's history
+    const before = JSON.parse(savedRef.current) as TopicPackage;
+    recordTopicSave(before, topic, importedRef.current).catch((err) => console.error('Topic history not saved', err));
+    importedRef.current = false;
     savedRef.current = JSON.stringify(topic);
     storageService.saveTopic(topic);
     onTopicUpdated(topic);
@@ -265,6 +286,16 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
               }}
               data-testid="import-content-file"
             />
+            <button
+              type="button"
+              onClick={() => setHistoryOpen(true)}
+              className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-100 font-bold text-xs flex items-center space-x-1.5 cursor-pointer"
+              title="Хадгалсан хувилбарууд: татах, сэргээх"
+              data-testid="topic-history-open"
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>Түүх</span>
+            </button>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -1042,6 +1073,18 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           )}
         </div>
       </div>
+      {historyOpen && (
+        <TopicHistoryDialog
+          topic={topic}
+          onClose={() => setHistoryOpen(false)}
+          onRestore={(t) => {
+            // The restored version keeps this topic's identity and place in the list
+            setTopic({ ...t, id: topic.id, title: topic.title, grade: topic.grade, category: topic.category, parentId: topic.parentId, order: topic.order });
+            setHistoryOpen(false);
+            showStatus('Хувилбарыг ачааллаа. Шалгаад «Хадгалах» дарна уу.');
+          }}
+        />
+      )}
     </div>
   );
 };
