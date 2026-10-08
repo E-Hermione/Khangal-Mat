@@ -23,3 +23,6 @@
   split each denominator, cross out the factor both share ($15 = 5 \cdot \cancel{3}$, $33 = 11 \cdot \cancel{3}$),
   then multiply crosswise by what is left. Grade 6 answers need no reducing, so pick numbers whose answer is
   already in lowest terms.
+- Tests get harder from test1 to test3, for every grade and topic: test1 (Анхан) checks the basic ideas, test2 (Дунд)
+  covers everything the topic teaches at the level a student who learned it all should reach, test3 (Ахисан) goes
+  deeper (larger numbers, borrowing, unknowns, several steps). The owner's textbook pages set the level.
