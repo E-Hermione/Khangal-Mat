@@ -30,3 +30,7 @@
 - From «Энгийн бутархай үржих үйлдэл болон хураах үйлдэл» on, answers are reduced (cancel before multiplying,
   crossed numbers with what is left written over or under them). In a multiple-choice question no wrong option
   may equal another option or the answer written another way (no $\frac{15}{60}$ beside $\frac{1}{4}$).
+- Each pair of numbers cancelled against each other gets its own color (`\textcolor{#hex}{…}` around both).
+- A solution explains this problem's own steps in words (which numbers, why, what comes out), not just the
+  rule followed by a bare chain of numbers. A whole number in a product or quotient is first written as
+  $\frac{n}{1}$ right after the equals sign ($3 \cdot \frac{2}{7} = \frac{3}{\textcolor{#dc2626}{1}} \cdot \frac{2}{7}$).
