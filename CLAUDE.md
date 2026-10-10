@@ -18,6 +18,8 @@
 - Mixed numbers are added and subtracted in one line («$3\frac{2}{7} + 1\frac{3}{7} = 4\frac{5}{7}$»), never with
   the whole parts worked out on their own («$3 + 1 = 4$»). The same for column sums: only a carry or a borrow
   is explained, not each digit.
+- The 15 practice exercises are 5 хөнгөн, 5 дунд and 5 хүнд, in that order, each with `level: 1 | 2 | 3`
+  (the page groups them under those headings). The хүнд ones are really harder: several steps, brackets, mixed numbers.
 - Tests and practice use only what this topic's theory and examples teach, or earlier topics of the same
   grade. Nothing from later topics or higher grades (no sequences with $a_n$ in grade 6).
 - Unlike denominators are made alike as in the owner's notebook, never through the least common multiple:
