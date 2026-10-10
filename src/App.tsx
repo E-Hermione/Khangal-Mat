@@ -732,6 +732,43 @@ export default function App() {
                         ))}
                       </div>
                     </div>
+                    {/* The topic's tests: each on its own page with the options A–D; with solutions if chosen */}
+                    <div className="px-3.5 pt-1 pb-2" data-testid="print-tests">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1.5">Сорил</div>
+                      <div className="flex gap-1.5">
+                        {(
+                          [
+                            ['test1', 'Анхан'],
+                            ['test2', 'Дунд'],
+                            ['test3', 'Ахисан'],
+                          ] as const
+                        ).map(([key, label]) => (
+                          <label
+                            key={key}
+                            className={`flex-1 flex items-center justify-center gap-1 text-[11px] font-bold cursor-pointer select-none px-1.5 py-1 rounded-lg border ${
+                              printSelection[key] ? 'bg-amber-50 border-amber-200 text-stone-900' : 'border-stone-200 text-stone-500'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={printSelection[key]}
+                              onChange={() => setPrintSelection({ ...printSelection, [key]: !printSelection[key] })}
+                              className="w-3 h-3 accent-amber-700 cursor-pointer"
+                            />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
+                      <label className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-stone-700 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={printSelection.answers}
+                          onChange={() => setPrintSelection({ ...printSelection, answers: !printSelection.answers })}
+                          className="w-3.5 h-3.5 accent-amber-700 cursor-pointer"
+                        />
+                        Сорилыг бодолттой хэвлэх
+                      </label>
+                    </div>
                     <div className="my-1 border-t border-stone-100" />
                     <button
                       type="button"

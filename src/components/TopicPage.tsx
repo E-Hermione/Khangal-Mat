@@ -4,6 +4,7 @@ import { TheorySection } from './TheorySection';
 import { WorkedExamplesSection } from './WorkedExamplesSection';
 import { PracticeSection } from './PracticeSection';
 import { MaterialsSection } from './MaterialsSection';
+import { TestsPrint } from './TestsPrint';
 import { usePrintSelection } from '../services/printSelection';
 import { ItemEditorModal, ItemEditorType } from './ItemEditorModal';
 import { visibilityService, TopicAccessMode } from '../services/visibilityService';
@@ -540,6 +541,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
 
           {renderSections(mainTopic, true)}
           {isAdmin && lessonTab === 'materials' && <MaterialsSection topicId={topic.id} />}
+          {isAdmin && <TestsPrint topic={topic} selection={selection} viewerGrade={viewerGrade} />}
 
           {/* Link to 3-tier Exams Hub for this topic (Neat banner) */}
         </article>
