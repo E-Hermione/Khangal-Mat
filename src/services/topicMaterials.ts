@@ -1,4 +1,4 @@
-import { arrayRemove, arrayUnion, Bytes, deleteDoc, doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
+import { arrayRemove, arrayUnion, Bytes, deleteDoc, doc, getDoc, runTransaction, setDoc, writeBatch } from 'firebase/firestore';
 import { getDb } from './firebase';
 
 /**
@@ -61,4 +61,17 @@ export async function materialBlob(m: TopicMaterial): Promise<Blob> {
 export async function deleteMaterial(topicId: string, m: TopicMaterial): Promise<void> {
   await setDoc(listDoc(topicId), { files: arrayRemove(m) }, { merge: true });
   await Promise.all(Array.from({ length: m.chunks }, (_, i) => deleteDoc(chunkDoc(m.id, i))));
+}
+
+// A new name for a file (kept with .pdf at the end)
+export async function renameMaterial(topicId: string, m: TopicMaterial, name: string): Promise<TopicMaterial> {
+  const clean = name.trim().replace(/\.pdf$/i, '');
+  if (!clean) throw new Error('Нэр хоосон байж болохгүй.');
+  const next = { ...m, name: `${clean}.pdf` };
+  await runTransaction(getDb(), async (tx) => {
+    const snap = await tx.get(listDoc(topicId));
+    const files = ((snap.exists() ? snap.data().files : []) || []) as TopicMaterial[];
+    tx.set(listDoc(topicId), { files: files.map((f) => (f.id === m.id ? next : f)) }, { merge: true });
+  });
+  return next;
 }

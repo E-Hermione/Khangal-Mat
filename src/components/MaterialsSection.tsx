@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FileText, Eye, Printer, Trash2, Upload, Loader2 } from 'lucide-react';
+import { FileText, Eye, Printer, Trash2, Upload, Loader2, Pencil, Check, X } from 'lucide-react';
 import { LessonSectionHeader } from './LessonSectionHeader';
-import { deleteMaterial, loadMaterials, materialBlob, MAX_MATERIAL_BYTES, TopicMaterial, uploadMaterial } from '../services/topicMaterials';
+import { deleteMaterial, loadMaterials, materialBlob, MAX_MATERIAL_BYTES, renameMaterial, TopicMaterial, uploadMaterial } from '../services/topicMaterials';
 
 // Extra material of a topic (admin only): PDF files to add, open and print
 export const MaterialsSection: React.FC<{ topicId: string }> = ({ topicId }) => {
@@ -9,6 +9,8 @@ export const MaterialsSection: React.FC<{ topicId: string }> = ({ topicId }) => 
   const [error, setError] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  // The file whose name is being changed, and the name typed so far
+  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const blobs = useRef(new Map<string, string>());
 
@@ -86,6 +88,15 @@ export const MaterialsSection: React.FC<{ topicId: string }> = ({ topicId }) => 
     });
   };
 
+  const saveName = (m: TopicMaterial) => {
+    const name = editing?.name ?? '';
+    run(`ren-${m.id}`, async () => {
+      const next = await renameMaterial(topicId, m, name);
+      setFiles((f) => (f || []).map((x) => (x.id === m.id ? next : x)));
+      setEditing(null);
+    });
+  };
+
   const btn =
     'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-default';
 
@@ -127,7 +138,45 @@ export const MaterialsSection: React.FC<{ topicId: string }> = ({ topicId }) => 
             <li key={m.id} className="flex flex-wrap items-center gap-3 p-3.5 rounded-xl border border-stone-200 bg-stone-50/60">
               <FileText className="w-6 h-6 text-rose-500 shrink-0" />
               <div className="flex-1 min-w-[10rem]">
-                <p className="text-sm font-bold text-stone-900 break-all">{m.name}</p>
+                {editing?.id === m.id ? (
+                  <form
+                    className="flex items-center gap-1.5"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      saveName(m);
+                    }}
+                  >
+                    <input
+                      autoFocus
+                      value={editing.name}
+                      onChange={(e) => setEditing({ id: m.id, name: e.target.value })}
+                      onKeyDown={(e) => e.key === 'Escape' && setEditing(null)}
+                      className="flex-1 min-w-0 text-sm font-bold text-stone-900 border border-amber-300 rounded-lg px-2 py-1 bg-white"
+                      data-testid="material-name-input"
+                    />
+                    <span className="text-sm text-stone-500">.pdf</span>
+                    <button type="submit" disabled={!!busy} title="Хадгалах" className="p-1 rounded text-emerald-700 hover:bg-emerald-50 cursor-pointer">
+                      {busy === `ren-${m.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    </button>
+                    <button type="button" onClick={() => setEditing(null)} title="Болих" className="p-1 rounded text-stone-500 hover:bg-stone-100 cursor-pointer">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </form>
+                ) : (
+                  <p className="text-sm font-bold text-stone-900 break-all flex items-center gap-1.5">
+                    {m.name}
+                    <button
+                      type="button"
+                      disabled={!!busy}
+                      onClick={() => setEditing({ id: m.id, name: m.name.replace(/\.pdf$/i, '') })}
+                      title="Нэрийг солих"
+                      className="p-1 rounded text-stone-400 hover:text-stone-900 hover:bg-stone-100 cursor-pointer"
+                      data-testid="material-rename"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </p>
+                )}
                 <p className="text-xs text-stone-500">
                   {(m.size / 1024 / 1024).toFixed(m.size < 1024 * 1024 ? 2 : 1)} MB · {new Date(m.uploadedAt).toLocaleDateString('mn-MN')}
                 </p>
