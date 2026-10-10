@@ -41,7 +41,18 @@ export const TestsPrint: React.FC<{ topic: TopicPackage; selection: PrintSection
               </p>
             </div>
             {!selection.answers && (
-              <p className="text-xs text-black mb-3">Нэр: ............................................ Анги: .......... Огноо: ..........</p>
+              <div className="flex items-stretch justify-between gap-4 mb-3 text-xs text-black">
+                <p className="self-center">Нэр: ............................................ Анги: .......... Огноо: ..........</p>
+                {/* Filled in by the teacher: points out of the total, and the percent */}
+                <div className="shrink-0 border border-black rounded px-3 py-1.5 flex gap-4 text-[13px]" data-testid="score-box">
+                  <span>
+                    <span className="font-bold">Авсан оноо:</span> ______ / {points}
+                  </span>
+                  <span>
+                    <span className="font-bold">Хувь:</span> ______ %
+                  </span>
+                </div>
+              </div>
             )}
             <ol className="space-y-3">
               {questions.map((q, i) => {
