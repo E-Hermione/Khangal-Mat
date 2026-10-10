@@ -104,7 +104,7 @@ export interface PrintSectionsSelection {
   test2: boolean;
   test3: boolean;
   answers: boolean;
-  // The browser's own lines on each printed page (date, page title, web address): off unless chosen
+  // The site's name at the top of each printed page (the browser's date and web address never print)
   pageHeaders?: boolean;
 }
 

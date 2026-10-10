@@ -542,6 +542,7 @@ export default function App() {
     <div
       className="min-h-screen flex flex-col font-sans text-stone-900 bg-stone-900 print:bg-white overflow-x-clip"
     >
+      {printSelection.pageHeaders && <div className="hidden print-page-title">{document.title}</div>}
       {/* The admin edits content, so copying stays allowed for them */}
       <CopyProtection enabled={appSettings.copyProtection && currentUser.role !== 'admin'} />
       <ScreenProtection
@@ -770,7 +771,7 @@ export default function App() {
                       </label>
                     </div>
                     <div className="px-3.5 pb-2">
-                      <label className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 cursor-pointer select-none" title="Браузерын хуудас бүрт нэмдэг огноо, нэр, вэбийн хаяг">
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 cursor-pointer select-none" title="Хуудас бүрийн дээд талд: Alpha сургалтын сан | Alpha Mat San — математикийн цахим сургалт">
                         <input
                           type="checkbox"
                           checked={!!printSelection.pageHeaders}
@@ -778,7 +779,7 @@ export default function App() {
                           className="w-3.5 h-3.5 accent-amber-700 cursor-pointer"
                           data-testid="print-page-headers"
                         />
-                        Огноо, вэб хаяг хэвлэх
+                        Сайтын нэрийг хуудсын дээр хэвлэх
                       </label>
                     </div>
                     <div className="my-1 border-t border-stone-100" />
