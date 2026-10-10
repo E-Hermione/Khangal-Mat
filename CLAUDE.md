@@ -35,7 +35,8 @@
   rule followed by a bare chain of numbers. A whole number in a product or quotient is first written as
   $\frac{n}{1}$ right after the equals sign ($3 \cdot \frac{2}{7} = \frac{3}{\textcolor{#dc2626}{1}} \cdot \frac{2}{7}$).
 - Decimal multiplication is written in a column, downwards (`$$\colmul{57,46}{24}$$`), and division as a long
-  division in steps (`$$\coldiv{1,3}{2,5}$$`: the commas move until the divisor is whole, then it is divided),
+  division in steps. For a decimal divisor first write the original a : b, say by what both are multiplied
+  ($1{,}3 \cdot 10 = 13$, $2{,}5 \cdot 10 = 25$), then divide the new numbers (`$$\coldiv{13}{25}$$`, never the old commas),
   with the textbook rule «Аравтын бутархайг аравтын бутархайд хуваахдаа хуваагчийг бүхэл тоо болтол нь хуваагдагч
   ба хуваагч бутархайн таслалыг ижил орноор шилжүүлж, үйлдлийг гүйцэтгэнэ.» Both are drawn by `columnOps.ts`.
 - A part the owner ticked as checked on the home page (`settings/app.contentChecks[topicId]`) keeps its content:
