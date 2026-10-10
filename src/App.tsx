@@ -769,6 +769,18 @@ export default function App() {
                         Сорилыг бодолттой хэвлэх
                       </label>
                     </div>
+                    <div className="px-3.5 pb-2">
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 cursor-pointer select-none" title="Браузерын хуудас бүрт нэмдэг огноо, нэр, вэбийн хаяг">
+                        <input
+                          type="checkbox"
+                          checked={!!printSelection.pageHeaders}
+                          onChange={() => setPrintSelection({ ...printSelection, pageHeaders: !printSelection.pageHeaders })}
+                          className="w-3.5 h-3.5 accent-amber-700 cursor-pointer"
+                          data-testid="print-page-headers"
+                        />
+                        Огноо, вэб хаяг хэвлэх
+                      </label>
+                    </div>
                     <div className="my-1 border-t border-stone-100" />
                     <button
                       type="button"
