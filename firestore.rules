@@ -215,6 +215,15 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Extra material of each topic: PDF files (the list, and the files' bytes in pieces)
+    match /topicMaterials/{topicId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /topicMaterialChunks/{chunkId} {
+      allow read, write: if isAdmin();
+    }
+
     match /phones/{phone} {
       allow get: if true;
       allow create: if signedIn()

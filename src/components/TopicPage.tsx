@@ -3,6 +3,7 @@ import { GradeNumber, TopicPackage, PrintOptions, TheoryRule, WorkedExample, Pra
 import { TheorySection } from './TheorySection';
 import { WorkedExamplesSection } from './WorkedExamplesSection';
 import { PracticeSection } from './PracticeSection';
+import { MaterialsSection } from './MaterialsSection';
 import { usePrintSelection } from '../services/printSelection';
 import { ItemEditorModal, ItemEditorType } from './ItemEditorModal';
 import { visibilityService, TopicAccessMode } from '../services/visibilityService';
@@ -57,7 +58,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   const grantedSolutions = usePracticeSolutions(isAdmin ? undefined : getFirebaseAuth().currentUser?.uid, topic.id);
   const [grantsOpen, setGrantsOpen] = useState(false);
   // The lesson shows one part at a time: theory, examples or exercises (printing shows them all)
-  const [lessonTab, setLessonTab] = useState<'theory' | 'examples' | 'practice'>('theory');
+  const [lessonTab, setLessonTab] = useState<'theory' | 'examples' | 'practice' | 'materials'>('theory');
   useEffect(() => setLessonTab('theory'), [topic.id]);
   const [grantCount, setGrantCount] = useState<number | null>(null);
   useEffect(() => {
@@ -473,6 +474,8 @@ export const TopicPage: React.FC<TopicPageProps> = ({
               ['theory', 'Дүрэм, тодорхойлолт', mainTopic.theory.length, (isAdmin && selection.theory) || (!isAdmin && isTheoryAllowed)],
               ['examples', 'Жишээ', mainTopic.examples.length, (isAdmin && selection.examples) || (!isAdmin && isExamplesAllowed)],
               ['practice', 'Бие даан бодох дасгал', mainTopic.practice.length, (isAdmin && selection.practice) || (!isAdmin && isPracticeAllowed)],
+              // PDF files the admin adds to the topic, to open and print
+              ['materials', 'Нэмэлт материал', 0, isAdmin],
             ] as const
           ).filter(([, , , shown]) => shown);
           if (tabs.length > 0 && !tabs.some(([key]) => key === lessonTab)) setTimeout(() => setLessonTab(tabs[0][0]));
@@ -536,6 +539,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           )}
 
           {renderSections(mainTopic, true)}
+          {isAdmin && lessonTab === 'materials' && <MaterialsSection topicId={topic.id} />}
 
           {/* Link to 3-tier Exams Hub for this topic (Neat banner) */}
         </article>
