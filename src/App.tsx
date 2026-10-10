@@ -43,7 +43,6 @@ import {
   Menu,
   Printer,
   ChevronDown,
-  FileDown,
   X,
   Shield,
   UserCheck,
@@ -800,24 +799,6 @@ export default function App() {
                       </div>
                     </button>
 
-                    <div className="my-1 border-t border-stone-100" />
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPrintMenuOpen(false);
-                        window.print();
-                      }}
-                      className="w-full px-3.5 py-2.5 text-left hover:bg-stone-50 flex items-center space-x-2.5 transition-colors group cursor-pointer"
-                    >
-                      <div className="w-7 h-7 rounded-lg bg-stone-100 flex items-center justify-center text-stone-700 group-hover:bg-amber-100 group-hover:text-amber-800 transition-colors">
-                        <FileDown className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-stone-900">PDF-ээр хадгалах</div>
-                        <div className="text-[10px] text-stone-500">Цонхноос &quot;Save as PDF&quot; сонгох</div>
-                      </div>
-                    </button>
                   </div>
                 )}
               </div>
