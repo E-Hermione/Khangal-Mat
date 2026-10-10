@@ -35,7 +35,6 @@ export const TestsPrint: React.FC<{ topic: TopicPackage; selection: PrintSection
                 <h2 className="text-lg font-black text-black">
                   {topic.title} — {t.title} сорил
                 </h2>
-                {t.subtitle && <p className="text-xs text-stone-700">{t.subtitle}</p>}
               </div>
               <p className="text-xs text-black shrink-0">
                 {questions.length} асуулт · {points} оноо

@@ -47,7 +47,6 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
       <LessonSectionHeader
         icon={<PencilLine className="w-5 h-5" />}
         title="Дасгал"
-        subtitle="Бие даан бодоорой: хялбараас ахисан руу"
         tone="emerald"
       >
           {headerExtra}

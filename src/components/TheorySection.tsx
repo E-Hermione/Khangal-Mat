@@ -29,7 +29,6 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
       <LessonSectionHeader
         icon={<BookOpen className="w-5 h-5" />}
         title="Онол"
-        subtitle={theory?.length ? `${theory.length} дүрэм, тодорхойлолт` : undefined}
         tone="sky"
       >
         {isEditable && onAddRule && (

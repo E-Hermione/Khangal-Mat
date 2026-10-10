@@ -29,7 +29,6 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
       <LessonSectionHeader
         icon={<Lightbulb className="w-5 h-5" />}
         title="Жишээ"
-        subtitle={examples?.length ? `${examples.length} бодлого алхам алхмаар бодсон` : undefined}
         tone="violet"
       >
 
