@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import katex from 'katex';
+import { colDiv, colMul } from './columnOps';
 
 interface MathRendererProps {
   content: string;
@@ -18,7 +19,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     if (!content) return '';
 
     // If block is explicitly requested and content does not already have delimiters
-    const hasLongDiv = content.includes('\\longdiv');
+    const hasLongDiv = /\\(longdiv|colmul|coldiv)\{/.test(content);
     if (block && !content.includes('$') && !hasLongDiv) {
       const columns = columnSums(content);
       if (columns) return columns;
@@ -70,6 +71,18 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       Number(b) > 0
         ? keep(open === '$$' ? `<div class="my-2 flex justify-center">${longDivision(Number(a), Number(b))}</div>` : longDivision(Number(a), Number(b)))
         : whole
+    );
+    // Decimal multiplication and division in columns: \colmul{57,46}{24}, \coldiv{1,3}{2,5}
+    processed0 = processed0.replace(
+      /(\$\$|\$)?\s*\\(colmul|coldiv)\{\s*([\d.,]+)\s*\}\{\s*([\d.,]+)\s*\}\s*(\$\$|\$)?/g,
+      (whole, open, op, a, b) => {
+        try {
+          const html = op === 'colmul' ? colMul(a, b) : colDiv(a, b);
+          return keep(open === '$$' ? `<div class="my-2 flex justify-center">${html}</div>` : html);
+        } catch {
+          return whole;
+        }
+      }
     );
     processed0 = processed0.replace(
       /\$\s*(\d+)\s*(?::|\\div)\s*(\d+)\s*=\s*(\d+)\s*\$\s*,?\s*\(?\s*үлдэгдэл\s*\$\s*(\d+)\s*\$\s*\)?\.?/g,

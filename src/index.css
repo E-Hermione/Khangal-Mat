@@ -140,6 +140,81 @@
   padding-left: 0.6em;
 }
 
+/* Decimal multiplication / division in columns (\colmul, \coldiv): one digit per cell, the comma
+   on the right edge of its digit taking no width */
+.col-op {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0.25em 0.4em;
+  font-family: KaTeX_Main, 'Times New Roman', serif;
+  font-size: 1.21em;
+}
+.col-op table {
+  border-collapse: collapse;
+  line-height: 1.2;
+}
+.col-op td {
+  padding: 0 0.12em;
+  min-width: 0.62em;
+  text-align: center;
+  white-space: nowrap;
+}
+.col-op .co-d {
+  position: relative;
+}
+.col-op .co-sign {
+  text-align: right;
+  padding-right: 0.25em;
+}
+.col-mul tr.co-line td:not(:first-child) {
+  border-bottom: 1px solid currentColor;
+}
+.co-comma {
+  position: absolute;
+  right: -0.14em;
+  bottom: 0;
+  color: #dc2626;
+  font-weight: 700;
+}
+.co-quot .co-comma {
+  position: static;
+}
+.co-old {
+  color: #9ca3af;
+  text-decoration: line-through;
+  font-weight: 400;
+}
+.col-op .co-frac {
+  color: #2563eb;
+}
+.col-op .co-added {
+  color: #16a34a;
+}
+.col-div .co-under {
+  border-bottom: 1px solid currentColor;
+}
+.col-op .co-up {
+  display: inline-block;
+  transform: translateY(-50%);
+}
+.col-div .co-rest {
+  color: #dc2626;
+}
+.col-div .co-divisor {
+  border-left: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  padding: 0 0.4em;
+  text-align: left;
+}
+.col-div .co-quot {
+  color: #15803d;
+  padding: 0 0.4em;
+  text-align: left;
+}
+.col-div .co-divisor .co-comma {
+  position: static;
+}
+
 /* Addition / subtraction in columns: the sign halfway between the numbers, the line only under them */
 .column-sum {
   display: inline-block;
