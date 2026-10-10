@@ -34,3 +34,6 @@
 - A solution explains this problem's own steps in words (which numbers, why, what comes out), not just the
   rule followed by a bare chain of numbers. A whole number in a product or quotient is first written as
   $\frac{n}{1}$ right after the equals sign ($3 \cdot \frac{2}{7} = \frac{3}{\textcolor{#dc2626}{1}} \cdot \frac{2}{7}$).
+- A part the owner ticked as checked on the home page (`settings/app.contentChecks[topicId]`) keeps its content:
+  never replace, add or remove its theory, examples, problems or test questions. Only the written solutions on
+  its problem cards may be improved, through `import-lesson.ts --patch` on the `solution` field.
