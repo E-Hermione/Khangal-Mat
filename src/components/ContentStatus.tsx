@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, ChevronDown, ChevronRight, Circle, ExternalLink, Eye, EyeOff } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { cloud } from '../services/cloud';
 import { TestPackage, TopicPackage } from '../types';
 
@@ -92,11 +92,20 @@ const ContentStatus: React.FC<{ topics: TopicPackage[]; onOpenTopic: (topicId: s
     return () => window.removeEventListener('app-settings-updated', refresh);
   }, []);
 
+  // Opening a topic closes the topic that was open before (its own parent topics stay open)
+  const parentOf = useMemo(() => new Map(topics.map((t) => [t.id, t.parentId])), [topics]);
   const toggleOpen = (id: string) =>
     setOpen((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
-      else next.add(id);
+      else {
+        if (id.startsWith('t:')) {
+          const keep = new Set<string>();
+          for (let p = parentOf.get(id.slice(2)); p; p = parentOf.get(p)) keep.add(`t:${p}`);
+          for (const o of prev) if (o.startsWith('t:') && !keep.has(o)) next.delete(o);
+        }
+        next.add(id);
+      }
       try {
         localStorage.setItem(OPEN_KEY, JSON.stringify([...next]));
       } catch {
@@ -106,6 +115,22 @@ const ContentStatus: React.FC<{ topics: TopicPackage[]; onOpenTopic: (topicId: s
     });
 
   const isChecked = (topicId: string, part: string) => (checks[topicId] || []).includes(part);
+  // The round button before a topic: checks all its parts (and its subtopics'), or clears them all
+  const toggleAll = (n: Node) => {
+    const next = { ...checks };
+    const on = !isDone(n);
+    const walk = (m: Node) => {
+      const own = ownParts(m).map((p) => p.key);
+      if (own.length) {
+        if (on) next[m.topic.id] = own;
+        else delete next[m.topic.id];
+      }
+      m.children.forEach(walk);
+    };
+    walk(n);
+    setChecks(next);
+    cloud.setAppSettings({ contentChecks: next });
+  };
   const toggleCheck = (topicId: string, part: string) => {
     const now = checks[topicId] || [];
     const list = now.includes(part) ? now.filter((p) => p !== part) : [...now, part];
@@ -202,12 +227,25 @@ const ContentStatus: React.FC<{ topics: TopicPackage[]; onOpenTopic: (topicId: s
             className="flex items-center gap-2 min-w-0 text-left text-sm font-bold text-stone-900 cursor-pointer"
           >
             <Toggle id={id} />
-            {isDone(n) ? (
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-            ) : (
-              <Circle className="w-4 h-4 shrink-0 text-stone-300" />
-            )}
-            <span className="truncate">{n.topic.title}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => toggleAll(n)}
+            title={isDone(n) ? 'Бүх чагтыг арилгах' : 'Сэдвийг бүтнээр нь шалгасан гэж чагтлах'}
+            aria-pressed={isDone(n)}
+            data-testid="check-topic"
+            className={`w-5 h-5 shrink-0 rounded-full border-2 flex items-center justify-center cursor-pointer transition-colors ${
+              isDone(n) ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-emerald-500 bg-white hover:bg-emerald-50'
+            }`}
+          >
+            {isDone(n) && <Check className="w-3 h-3" strokeWidth={3.5} />}
+          </button>
+          <button
+            type="button"
+            onClick={() => toggleOpen(id)}
+            className="min-w-0 text-left text-sm font-bold text-stone-900 cursor-pointer"
+          >
+            <span className="truncate block">{n.topic.title}</span>
           </button>
           <button
             type="button"
