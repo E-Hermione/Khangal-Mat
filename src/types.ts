@@ -42,6 +42,8 @@ export interface PracticeProblem {
   solution?: string;
   // The grade this exercise belongs to (unset: the topic's own grade)
   prerequisiteGrade?: number;
+  // How hard it is: 1 хөнгөн, 2 дунд, 3 хүнд (the exercises are shown grouped under these headings)
+  level?: 1 | 2 | 3;
 }
 
 export interface TestQuestion {

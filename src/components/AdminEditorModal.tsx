@@ -777,6 +777,17 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                         <div className="flex items-center justify-between">
                           <span className="font-black text-sm text-stone-900">Дасгал {sel + 1}</span>
                           <div className="flex items-center gap-2">
+                            <select
+                              value={item.level ?? ''}
+                              onChange={(e) => update(sel, { level: e.target.value ? (Number(e.target.value) as 1 | 2 | 3) : undefined })}
+                              className="text-xs border border-stone-300 rounded-lg px-2 py-1 bg-white"
+                              title="Дасгалын түвшин"
+                            >
+                              <option value="">Түвшингүй</option>
+                              <option value="1">Хөнгөн</option>
+                              <option value="2">Дунд</option>
+                              <option value="3">Хүнд</option>
+                            </select>
                             <ItemGradePicker value={item.prerequisiteGrade} onChange={(g) => update(sel, { prerequisiteGrade: g })} />
                             <button
                               type="button"

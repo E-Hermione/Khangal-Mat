@@ -6,6 +6,13 @@ import { MathRenderer } from './MathRenderer';
 import { PencilLine, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
 import { LessonSectionHeader } from './LessonSectionHeader';
 
+// Headings for the exercises grouped by level (5 хөнгөн, 5 дунд, 5 хүнд)
+const LEVELS = {
+  1: { label: 'Хөнгөн', cls: 'text-emerald-700 print:text-black', dot: 'bg-emerald-500' },
+  2: { label: 'Дунд', cls: 'text-amber-700 print:text-black', dot: 'bg-amber-500' },
+  3: { label: 'Хүнд', cls: 'text-rose-700 print:text-black', dot: 'bg-rose-500' },
+} as const;
+
 interface PracticeSectionProps {
   practice: PracticeProblem[];
   teacherVersion?: boolean;
@@ -106,9 +113,18 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
           }
         >
           {practice.map((item, idx) => {
+            const heading = item.level && item.level !== practice[idx - 1]?.level ? LEVELS[item.level] : null;
             return (
+              <React.Fragment key={item.id || item.number || idx}>
+              {heading && (
+                <h3
+                  className={`${cards ? 'md:col-span-2 print:col-span-2' : ''} ${idx ? 'mt-3' : ''} flex items-center gap-2 text-sm font-bold uppercase tracking-wide ${heading.cls}`}
+                >
+                  <span className={`inline-block w-2 h-2 rounded-full ${heading.dot}`} />
+                  {heading.label}
+                </h3>
+              )}
               <div
-                key={item.id || item.number || idx}
                 className={`avoid-break relative group ${cards ? 'rounded-2xl border border-stone-200 bg-white p-5 md:p-6 print:p-3' : ''}`}
               >
                 {/* Question header */}
@@ -170,6 +186,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                 )}
 
               </div>
+              </React.Fragment>
             );
           })}
         </div>
