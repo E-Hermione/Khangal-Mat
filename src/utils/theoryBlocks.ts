@@ -32,3 +32,32 @@ export function theoryText(rule: TheoryRule): string {
 export function withText(rule: TheoryRule, text: string): TheoryRule {
   return { ...rule, ruleText: text, formula: undefined, note: undefined, blocks: undefined };
 }
+
+export type TheoryPart = { kind: 'rule' | 'text' | 'formula'; value: string };
+
+/**
+ * A theory text split for display: a line that starts in bold is a rule (shown in its own box),
+ * a line that is only a $$…$$ formula stands centred on its own, and the other lines are
+ * plain text, consecutive ones kept together.
+ */
+export function theoryParts(text: string): TheoryPart[] {
+  const parts: TheoryPart[] = [];
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    if (!line) continue;
+    if (line.startsWith('$$')) {
+      // a display formula may run over several lines
+      while (!/^\$\$[\s\S]+\$\$$/.test(line) && i + 1 < lines.length) line += '\n' + lines[++i];
+      if (/^\$\$[\s\S]+?\$\$$/.test(line) && line.indexOf('$$', 2) === line.length - 2) {
+        parts.push({ kind: 'formula', value: line.slice(2, -2) });
+        continue;
+      }
+    }
+    const kind = line.startsWith('**') ? 'rule' : 'text';
+    const last = parts[parts.length - 1];
+    if (kind === 'text' && last?.kind === 'text') last.value += '\n' + line;
+    else parts.push({ kind, value: line });
+  }
+  return parts;
+}

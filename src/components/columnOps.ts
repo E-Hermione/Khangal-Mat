@@ -165,3 +165,49 @@ export function colDiv(aText: string, bText: string): string {
   if (!steps.length) rows.push(`<tr>${row(width, [{ text: '0' }], width - 1)}<td class="co-quot">0</td></tr>`);
   return `<span class="col-op col-div" title="${aText} : ${bText}"><table><tbody>${rows.join('')}</tbody></table></span>`;
 }
+
+/**
+ * A proportion with its terms joined the way it is taught: \proportion{x}{12}{5}{4} is drawn as
+ *
+ *    ┌───────────────────┐        the outer terms (захын гишүүд) joined by a red line above,
+ *    x  :  12  =  5  :  4
+ *          └──────┘               the middle terms (дундын гишүүд) by a blue line below.
+ *
+ * Each term is a TeX snippet, rendered by the caller's `tex` function.
+ */
+export function proportion(terms: string[], tex: (s: string) => string): string {
+  const [a, b, c, d] = terms.map(tex);
+  const colon = tex(':');
+  const cell = (cls: string, html: string) => `<span class="pp-c ${cls}">${html}</span>`;
+  return (
+    `<span class="prop-op" title="Захын гишүүд улаан, дундын гишүүд цэнхэр">` +
+    cell('pp-os pp-outer', a) +
+    cell('pp-om', colon) +
+    cell('pp-om pp-ms pp-mid', b) +
+    cell('pp-om pp-mm', tex('=')) +
+    cell('pp-om pp-me pp-mid', c) +
+    cell('pp-om', colon) +
+    cell('pp-oe pp-outer', d) +
+    `</span>`
+  );
+}
+
+/** The four {…} arguments of a \proportion, braces inside them kept (\frac{1}{2} and the like). */
+export function braceArgs(s: string, count: number): { args: string[]; end: number } | null {
+  const args: string[] = [];
+  let i = 0;
+  while (args.length < count) {
+    while (s[i] === ' ') i++;
+    if (s[i] !== '{') return null;
+    let depth = 0;
+    const start = i + 1;
+    for (; i < s.length; i++) {
+      if (s[i] === '{') depth++;
+      else if (s[i] === '}' && --depth === 0) break;
+    }
+    if (depth !== 0) return null;
+    args.push(s.slice(start, i));
+    i++;
+  }
+  return { args, end: i };
+}

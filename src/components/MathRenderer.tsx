@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import katex from 'katex';
-import { colDiv, colMul } from './columnOps';
+import { braceArgs, colDiv, colMul, proportion } from './columnOps';
 
 interface MathRendererProps {
   content: string;
@@ -19,7 +19,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     if (!content) return '';
 
     // If block is explicitly requested and content does not already have delimiters
-    const hasLongDiv = /\\(longdiv|colmul|coldiv)\{/.test(content);
+    const hasLongDiv = /\\(longdiv|colmul|coldiv|proportion)\{/.test(content);
     if (block && !content.includes('$') && !hasLongDiv) {
       const columns = columnSums(content);
       if (columns) return columns;
@@ -84,6 +84,10 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
         }
       }
     );
+    // A proportion with its outer and middle terms joined by coloured lines: \proportion{x}{12}{5}{4}
+    processed0 = replaceProportions(processed0, (html, display) =>
+      keep(display ? `<div class="my-2 flex justify-center">${html}</div>` : html)
+    );
     processed0 = processed0.replace(
       /\$\s*(\d+)\s*(?::|\\div)\s*(\d+)\s*=\s*(\d+)\s*\$\s*,?\s*\(?\s*үлдэгдэл\s*\$\s*(\d+)\s*\$\s*\)?\.?/g,
       (whole, a, b, q, r) => {
@@ -143,6 +147,29 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     />
   );
 };
+
+/** Swaps each \proportion{a}{b}{c}{d} (with the $$ or $ around it, if any) for its drawing. */
+function replaceProportions(text: string, put: (html: string, display: boolean) => string): string {
+  let out = '';
+  let rest = text;
+  for (;;) {
+    const at = rest.indexOf('\\proportion{');
+    if (at < 0) return out + rest;
+    const parsed = braceArgs(rest.slice(at + '\\proportion'.length), 4);
+    if (!parsed) return out + rest;
+    let before = rest.slice(0, at);
+    let after = rest.slice(at + '\\proportion'.length + parsed.end);
+    const open = /(\$\$|\$)\s*$/.exec(before);
+    const close = open && new RegExp(`^\\s*${open[1].replace(/\$/g, '\\$')}`).exec(after);
+    if (open && close) {
+      before = before.slice(0, open.index);
+      after = after.slice(close[0].length);
+    }
+    const tex = (s: string) => katex.renderToString(s.trim(), { throwOnError: false, macros: INLINE_MACROS });
+    out += before + put(proportion(parsed.args, tex), open?.[1] === '$$');
+    rest = after;
+  }
+}
 
 // Fractions inside a line of text are drawn full height (\dfrac) with slightly smaller digits
 // (see .inline-math in index.css), so 4/7 reads clearly instead of as tiny stacked digits

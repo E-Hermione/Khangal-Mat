@@ -289,3 +289,62 @@ body.copy-protected *:not(input):not(textarea) {
     display: none;
   }
 }
+
+/* A proportion with its outer terms joined above (red) and its middle terms below (blue), see columnOps.ts */
+.prop-op {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  padding: 0.85em 0.2em;
+  font-size: 1.15em;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.prop-op .pp-c {
+  position: relative;
+  padding: 0 0.32em;
+}
+.prop-op .pp-outer { color: #dc2626; }
+.prop-op .pp-mid { color: #2563eb; }
+.prop-op .pp-os::before,
+.prop-op .pp-om::before,
+.prop-op .pp-oe::before {
+  content: '';
+  position: absolute;
+  top: -0.55em;
+  height: 0.45em;
+  left: 0;
+  right: 0;
+  border-top: 2px solid #dc2626;
+}
+.prop-op .pp-os::before {
+  left: 50%;
+  border-left: 2px solid #dc2626;
+  border-top-left-radius: 0.4em;
+}
+.prop-op .pp-oe::before {
+  right: 50%;
+  border-right: 2px solid #dc2626;
+  border-top-right-radius: 0.4em;
+}
+.prop-op .pp-ms::after,
+.prop-op .pp-mm::after,
+.prop-op .pp-me::after {
+  content: '';
+  position: absolute;
+  bottom: -0.55em;
+  height: 0.45em;
+  left: 0;
+  right: 0;
+  border-bottom: 2px solid #2563eb;
+}
+.prop-op .pp-ms::after {
+  left: 50%;
+  border-left: 2px solid #2563eb;
+  border-bottom-left-radius: 0.4em;
+}
+.prop-op .pp-me::after {
+  right: 50%;
+  border-right: 2px solid #2563eb;
+  border-bottom-right-radius: 0.4em;
+}

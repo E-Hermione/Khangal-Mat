@@ -1,5 +1,5 @@
 import React from 'react';
-import { theoryBlocks, theoryNumbers } from '../utils/theoryBlocks';
+import { theoryBlocks, theoryNumbers, theoryParts } from '../utils/theoryBlocks';
 import { TheoryRule } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { BookOpen, Plus, Edit2, Trash2 } from 'lucide-react';
@@ -73,9 +73,18 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
             >
               <div>
                 {/* Header Box */}
-                <div className="flex items-start justify-between gap-2 mb-1.5">
-                  <h3 className="font-bold text-[17px] leading-snug text-[#3D0C02]">
-                    <span className="text-[#3D0C02]">{numbers[idx]}.</span> {rule.title}
+                <div className="flex items-start justify-between gap-2 mb-2.5">
+                  <h3 className={`flex items-center gap-2.5 font-bold leading-snug text-[#3D0C02] ${rule.sub ? 'text-[16px]' : 'text-[18px]'}`}>
+                    <span
+                      className={`inline-flex shrink-0 items-center justify-center rounded-md font-bold tabular-nums print:border print:border-[#3D0C02] ${
+                        rule.sub
+                          ? 'h-6 min-w-[2.25rem] px-1.5 text-[12px] bg-[#3D0C02]/10 text-[#3D0C02]'
+                          : 'h-7 min-w-[1.75rem] px-1.5 text-[13px] bg-[#3D0C02] text-white print:bg-white print:text-[#3D0C02]'
+                      }`}
+                    >
+                      {numbers[idx]}
+                    </span>
+                    <span>{rule.title}</span>
                   </h3>
 
                   {/* Edit/Delete controls for editable mode */}
@@ -116,12 +125,30 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
                       <MathRenderer content={`$$${block.value}$$`} block />
                     </div>
                   ) : block.type === 'note' ? (
-                    <div key={bIdx} className="mt-2 text-[13px] text-stone-500 leading-relaxed print:text-stone-800">
+                    <div key={bIdx} className="mt-3 rounded-md border border-amber-200 bg-amber-50/70 px-3 py-2 text-[14px] text-stone-700 leading-relaxed print:bg-white print:text-black">
+                      <span className="font-bold text-amber-800 print:text-black">Санамж: </span>
                       <MathRenderer content={block.value} className="inline" />
                     </div>
                   ) : (
-                    <div key={bIdx} className="mt-1 text-[15px] text-stone-700 print:text-black leading-relaxed">
-                      <MathRenderer content={block.value} />
+                    <div key={bIdx}>
+                      {theoryParts(block.value).map((part, pIdx) =>
+                        part.kind === 'formula' ? (
+                          <div key={pIdx} className="my-2 text-center overflow-x-auto overflow-y-hidden scrollbar-none">
+                            <MathRenderer content={`$$${part.value}$$`} />
+                          </div>
+                        ) : part.kind === 'rule' ? (
+                          <div
+                            key={pIdx}
+                            className="my-2.5 rounded-r-md border-l-4 border-sky-500 bg-sky-50 px-3 py-2 text-[15px] text-stone-800 leading-relaxed print:bg-white print:text-black"
+                          >
+                            <MathRenderer content={part.value} />
+                          </div>
+                        ) : (
+                          <div key={pIdx} className="my-1.5 text-[15px] text-stone-700 print:text-black leading-relaxed">
+                            <MathRenderer content={part.value} />
+                          </div>
+                        )
+                      )}
                     </div>
                   )
                 )}
