@@ -78,7 +78,7 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
                     <span
                       className={`inline-flex shrink-0 items-center justify-center rounded-md font-bold tabular-nums print:border print:border-[#3D0C02] ${
                         rule.sub
-                          ? 'h-6 min-w-[2.25rem] px-1.5 text-[12px] bg-[#3D0C02]/10 text-[#3D0C02]'
+                          ? 'h-6 min-w-[2.25rem] px-1.5 text-[12px] bg-[#3D0C02] text-white print:bg-white print:text-[#3D0C02]'
                           : 'h-7 min-w-[1.75rem] px-1.5 text-[13px] bg-[#3D0C02] text-white print:bg-white print:text-[#3D0C02]'
                       }`}
                     >
@@ -125,8 +125,7 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
                       <MathRenderer content={`$$${block.value}$$`} block />
                     </div>
                   ) : block.type === 'note' ? (
-                    <div key={bIdx} className="mt-3 rounded-md border border-amber-200 bg-amber-50/70 px-3 py-2 text-[14px] text-stone-700 leading-relaxed print:bg-white print:text-black">
-                      <span className="font-bold text-amber-800 print:text-black">Санамж: </span>
+                    <div key={bIdx} className="mt-2 text-[13px] text-stone-500 leading-relaxed print:text-stone-800">
                       <MathRenderer content={block.value} className="inline" />
                     </div>
                   ) : (
@@ -137,10 +136,7 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
                             <MathRenderer content={`$$${part.value}$$`} />
                           </div>
                         ) : part.kind === 'rule' ? (
-                          <div
-                            key={pIdx}
-                            className="my-2.5 rounded-r-md border-l-4 border-sky-500 bg-sky-50 px-3 py-2 text-[15px] text-stone-800 leading-relaxed print:bg-white print:text-black"
-                          >
+                          <div key={pIdx} className="my-1.5 text-[15px] text-stone-700 print:text-black leading-relaxed">
                             <MathRenderer content={part.value} />
                           </div>
                         ) : (
