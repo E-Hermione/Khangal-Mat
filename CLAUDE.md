@@ -44,3 +44,6 @@
 - A part the owner ticked as checked on the home page (`settings/app.contentChecks[topicId]`) keeps its content:
   never replace, add or remove its theory, examples, problems or test questions. Only the written solutions on
   its problem cards may be improved, through `import-lesson.ts --patch` on the `solution` field.
+- In every grade and topic, a solution never stops at the rule: after the bold rule it says how that rule is used
+  in this very problem (which numbers, which steps, why this operation), briefly, then the result. A rule followed only by
+  a bare formula or answer is not a solution.
