@@ -213,30 +213,9 @@ function theoryGroups(theory: TheoryRule[]): { cards: boolean; items: { rule: Th
 }
 
 /**
- * Cards in the order they are laid out two to a row. With an odd number the middle one takes a
- * whole row of its own, set between the pairs; the others keep their order in pairs (with three,
- * the last one takes the whole row: 2.1 2.2 / 2.3):
- * 7 cards → 1.1 1.2 / 1.3 1.5 / 1.4 (whole row) / 1.6 1.7.
+ * Cards two to a row in their own order; with an odd number the last one takes a whole row:
+ * 7 cards → 1.1 1.2 / 1.3 1.4 / 1.5 1.6 / 1.7 (whole row).
  */
 function cardOrder<T>(items: T[]): (T & { wide: boolean })[] {
-  const all = items.map((x) => ({ ...x, wide: false }));
-  if (all.length % 2 === 0) return all;
-  // one or three cards: they keep their order and the last one takes the whole row
-  if (all.length <= 3) return all.map((x, i) => (i === all.length - 1 ? { ...x, wide: true } : x));
-  const mid = (all.length - 1) / 2;
-  const middle = { ...all[mid], wide: true };
-  const rest = all.filter((_, i) => i !== mid);
-  const at = Math.ceil(rest.length / 2 / 2) * 2;
-  return [...rest.slice(0, at), middle, ...rest.slice(at)];
-}
-
-/**
- * A formula row of several formulas set apart with \qquad, one formula a line, so it fits in a
- * half-width card. Left whole when a piece would cut through braces or an environment.
- */
-function formulaLines(f: string): string[] {
-  if (!f.includes('\\qquad') || f.includes('\\begin')) return [f];
-  const pieces = f.split(/\s*(?:\\qquad\s*)+/).map((x) => x.replace(/[,;]\s*$/, '').trim()).filter(Boolean);
-  const balanced = (x: string) => [...x].reduce((d, c) => (d < 0 ? d : c === '{' ? d + 1 : c === '}' ? d - 1 : d), 0) === 0;
-  return pieces.length > 1 && pieces.every(balanced) ? pieces : [f];
+  return items.map((x, i) => ({ ...x, wide: items.length % 2 === 1 && i === items.length - 1 }));
 }
