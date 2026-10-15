@@ -1,6 +1,6 @@
 import React from 'react';
 import { theoryBlocks, theoryNumbers, theoryParts } from '../utils/theoryBlocks';
-import { TheoryRule, TheorySplit } from '../types';
+import { TheoryRule } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { BookOpen, Plus, Edit2, Trash2 } from 'lucide-react';
 import { LessonSectionHeader } from './LessonSectionHeader';
@@ -118,9 +118,8 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
                   )}
                 </div>
 
-                {rule.split ? <SplitTheory split={rule.split} /> : null}
                 {/* Content in reading order: text, centred formulas, notes */}
-                {!rule.split && theoryBlocks(rule).map((block, bIdx) =>
+                {theoryBlocks(rule).map((block, bIdx) =>
                   block.type === 'formula' ? (
                     <div key={bIdx} className="my-3 text-center overflow-x-auto overflow-y-hidden scrollbar-none">
                       <MathRenderer content={`$$${block.value}$$`} block />
@@ -171,74 +170,3 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
     </section>
   );
 };
-
-/**
- * Rule and example side by side: the definition and its explanation on the left, the example on
- * the right with its calculation as numbered steps (one under another) and the answer last.
- * The two columns share an accent and an arrow, so the example reads as this rule in use.
- */
-const SplitTheory: React.FC<{ split: TheorySplit }> = ({ split }) => (
-  <div className="grid gap-4 md:grid-cols-2 md:gap-0 items-stretch">
-    <div className="md:pr-6 md:border-r-2 md:border-dashed md:border-sky-200 relative">
-      <div className="text-[11px] font-bold uppercase tracking-wide text-sky-700 mb-1.5">Тодорхойлолт</div>
-      <div className="rounded-lg border-l-4 border-sky-600 bg-sky-50/70 px-3.5 py-2.5 text-[15px] text-stone-900 leading-relaxed print:bg-white">
-        <MathRenderer content={split.rule} />
-      </div>
-      {split.explain && (
-        <>
-          <div className="text-[11px] font-bold uppercase tracking-wide text-stone-500 mt-3 mb-1">Тайлбар</div>
-          <div className="text-[14px] text-stone-700 leading-relaxed print:text-black">
-            <MathRenderer content={split.explain} />
-          </div>
-        </>
-      )}
-      <span
-        aria-hidden
-        className="hidden md:flex absolute top-8 -right-[13px] h-6 w-6 items-center justify-center rounded-full bg-sky-600 text-white text-[13px] font-bold shadow-sm print:hidden"
-      >
-        →
-      </span>
-    </div>
-    <div className="md:pl-7">
-      <div className="text-[11px] font-bold uppercase tracking-wide text-amber-700 mb-1.5">Жишээ</div>
-      <div className="rounded-lg border border-amber-200 bg-amber-50/50 px-3.5 py-2.5 text-[14.5px] text-stone-800 leading-relaxed print:bg-white">
-        <MathRenderer content={split.example} />
-      </div>
-      {!!split.steps?.length && (
-        <>
-          <div className="text-[11px] font-bold uppercase tracking-wide text-stone-500 mt-3 mb-1.5">Тооцоолол</div>
-          <ol className="space-y-2">
-            {split.steps.map((st, i) => (
-              <li key={i} className="flex gap-2.5">
-                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-stone-800 text-white text-[11px] font-bold tabular-nums">
-                  {i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13.5px] font-semibold text-stone-700">
-                    <MathRenderer content={st.label} />
-                  </div>
-                  {st.note && (
-                    <div className="text-[12.5px] text-stone-500 leading-snug">
-                      <MathRenderer content={st.note} />
-                    </div>
-                  )}
-                  <div className="mt-0.5 rounded-md bg-white border border-stone-200 px-2.5 py-1 overflow-x-auto scrollbar-none text-center">
-                    <MathRenderer content={`$${st.value}$`} />
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </>
-      )}
-      {split.answer && (
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-300 px-3 py-2 print:bg-white">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">Хариу</span>
-          <span className="text-[15px] font-bold text-emerald-900">
-            <MathRenderer content={split.answer} className="inline" />
-          </span>
-        </div>
-      )}
-    </div>
-  </div>
-);
