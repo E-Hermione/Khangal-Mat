@@ -20,11 +20,12 @@ interface LatexInputWithPreviewProps {
   hideToolbar?: boolean;
 }
 
-// Toolbar markers: wrap the selection in $…$, (…) or **…** (bold)
+// Toolbar markers: wrap the selection in $…$, (…), **…** (bold) or __…__ (italic)
 const WRAP = '<wrap>';
 const PAREN = '<paren>';
 const BOLD = '<bold>';
-const WRAPS: Record<string, [string, string]> = { [WRAP]: ['$', '$'], [PAREN]: ['(', ')'], [BOLD]: ['**', '**'] };
+const ITALIC = '<italic>';
+const WRAPS: Record<string, [string, string]> = { [WRAP]: ['$', '$'], [PAREN]: ['(', ')'], [BOLD]: ['**', '**'], [ITALIC]: ['__', '__'] };
 const CENTRED = '\n$$ x $$\n';
 
 const MATH_SNIPPETS = [
@@ -48,6 +49,7 @@ const MATH_SNIPPETS = [
   { label: '\\', snippet: '\\', desc: 'Ташуу зураас (LaTeX командын эхлэл)' },
   { label: '( )', snippet: PAREN, desc: 'Сонгосон хэсгийг (...) дугуй хаалтад оруулах' },
   { label: 'B', snippet: BOLD, desc: 'Сонгосон үгийг тод (bold) болгох: **үг**' },
+  { label: 'I', snippet: ITALIC, desc: 'Сонгосон үгийг ташуу (italic) болгох: __үг__' },
   { label: '→', snippet: ' \\;\\rightarrow\\; ', desc: 'Сум' },
   { label: '↔', snippet: ' \\;\\leftrightarrow\\; ', desc: 'Хоёр тийш сум' },
 ];
