@@ -212,6 +212,16 @@ export function expandBracket(args: string[], tex: (s: string) => string): strin
   );
 }
 
+/**
+ * A table of headings over values with a rounded frame: \placetable{Мянгат;Зуут}{2;3}.
+ * Cells are separated by ; and each is a TeX snippet, rendered by the caller's `tex` function.
+ */
+export function placeTable(args: string[], tex: (s: string) => string): string {
+  const [head, vals] = args.map((a) => a.split(';').map((c) => c.trim()));
+  const row = (cells: string[], tag: string) => `<tr>${cells.map((c) => `<${tag}>${tex(c)}</${tag}>`).join('')}</tr>`;
+  return `<span class="place-table"><table><thead>${row(head, 'th')}</thead><tbody>${row(vals, 'td')}</tbody></table></span>`;
+}
+
 /** The four {…} arguments of a \proportion, braces inside them kept (\frac{1}{2} and the like). */
 export function braceArgs(s: string, count: number): { args: string[]; end: number } | null {
   const args: string[] = [];
