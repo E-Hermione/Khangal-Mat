@@ -18,7 +18,7 @@ import { backdropClose } from '../utils/backdrop';
 import { generateTopicTests } from '../utils/topicTests';
 import { correctOption, getQuestionOptions, isOpenQuestion, isOptionCorrect, questionStem, testForGrade } from '../utils/examGrading';
 import { visibilityService } from '../services/visibilityService';
-import { catalogTopics, isGroupTopic, learningPlan } from '../services/learningPlan';
+import { catalogTopics, isGroupTopic, learningPlan, lessonSequence } from '../services/learningPlan';
 import type { ExamFilter } from './SidebarPanels';
 import { userPermissionsService } from '../services/userPermissionsService';
 import { subscribeAttempts, saveAttempt as saveAttemptCloud, AttemptMap, ExamAttempt } from '../services/examAttempts';
@@ -214,7 +214,12 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
     });
 
     // Topics that group subtopics have no tests of their own; their subtopics are listed instead
-    return Array.from(topicMap.values()).filter((t) => !isGroupTopic(t.id));
+    // In the order of the topic list, so moving a topic there moves its tests here too
+    const seq = lessonSequence(selectedGrade);
+    const rank = (id: string) => (seq.includes(id) ? seq.indexOf(id) : seq.length);
+    return Array.from(topicMap.values())
+      .filter((t) => !isGroupTopic(t.id))
+      .sort((a, b) => rank(a.id) - rank(b.id));
   }, [topics, selectedGrade]);
 
   const visibleExamTopics = allGradeTopics
