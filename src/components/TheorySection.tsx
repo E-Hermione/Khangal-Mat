@@ -214,12 +214,15 @@ function theoryGroups(theory: TheoryRule[]): { cards: boolean; items: { rule: Th
 
 /**
  * Cards in the order they are laid out two to a row. With an odd number the middle one takes a
- * whole row of its own, set between the pairs; the others keep their order in pairs:
+ * whole row of its own, set between the pairs; the others keep their order in pairs (with three,
+ * the last one takes the whole row: 2.1 2.2 / 2.3):
  * 7 cards → 1.1 1.2 / 1.3 1.5 / 1.4 (whole row) / 1.6 1.7.
  */
 function cardOrder<T>(items: T[]): (T & { wide: boolean })[] {
   const all = items.map((x) => ({ ...x, wide: false }));
   if (all.length % 2 === 0) return all;
+  // one or three cards: they keep their order and the last one takes the whole row
+  if (all.length <= 3) return all.map((x, i) => (i === all.length - 1 ? { ...x, wide: true } : x));
   const mid = (all.length - 1) / 2;
   const middle = { ...all[mid], wide: true };
   const rest = all.filter((_, i) => i !== mid);
