@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { GradeNumber, AuthUser } from '../types';
 import { GRADES_LIST } from '../data/initialData';
 import { visibilityService } from '../services/visibilityService';
@@ -278,9 +278,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (ra >= 0 && rb >= 0) return ra - rb;
     return (a.order ?? 0) - (b.order ?? 0);
   };
-  // Admin: drag a topic with the mouse and drop it on another topic next to it to move it there
-  const [drag, setDrag] = useState<{ id: string; siblings: string[] } | null>(null);
+  // Admin: press a topic with the mouse, drag it onto another topic next to it and let go to move it there.
+  // Done with pointer events (not HTML drag and drop) so it works on the topic buttons in every browser.
+  const [drag, setDrag] = useState<{ id: string; siblings: string[]; moved: boolean } | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const dragStart = useRef<{ id: string; siblings: string[]; y: number } | null>(null);
   const moveTopic = (siblings: string[], id: string, targetId: string) => {
     const i = siblings.indexOf(id);
     const j = siblings.indexOf(targetId);
@@ -290,33 +292,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const rest = (cloud.getAppSettings().topicOrder || []).filter((x) => !next.includes(x));
     cloud.setAppSettings({ topicOrder: [...rest, ...next] });
   };
+  useEffect(() => {
+    const rowAt = (x: number, y: number) =>
+      (document.elementFromPoint(x, y)?.closest('[data-drag-topic]') as HTMLElement | null)?.dataset.dragTopic || null;
+    const onMove = (e: PointerEvent) => {
+      const st = dragStart.current;
+      if (!st) return;
+      if (!drag?.moved && Math.abs(e.clientY - st.y) < 6) return;
+      if (!drag?.moved) setDrag({ id: st.id, siblings: st.siblings, moved: true });
+      const over = rowAt(e.clientX, e.clientY);
+      setDragOver(over && st.siblings.includes(over) ? over : null);
+      e.preventDefault();
+    };
+    const onUp = (e: PointerEvent) => {
+      const st = dragStart.current;
+      dragStart.current = null;
+      if (st && drag?.moved) {
+        const over = rowAt(e.clientX, e.clientY);
+        if (over && st.siblings.includes(over)) moveTopic(st.siblings, st.id, over);
+        // the release must not also open the topic it was dropped on
+        const stop = (ev: MouseEvent) => {
+          ev.stopPropagation();
+          ev.preventDefault();
+        };
+        window.addEventListener('click', stop, { capture: true, once: true });
+        setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 50);
+      }
+      setDrag(null);
+      setDragOver(null);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+  });
   const dragProps = (topicId: string, siblings: string[]) =>
     canAddTopics && siblings.length > 1
       ? {
-          draggable: true,
-          onDragStart: (e: React.DragEvent) => {
-            e.stopPropagation();
-            e.dataTransfer.effectAllowed = 'move';
-            setDrag({ id: topicId, siblings });
+          'data-drag-topic': topicId,
+          onPointerDown: (e: React.PointerEvent) => {
+            if (e.button !== 0) return;
+            dragStart.current = { id: topicId, siblings, y: e.clientY };
           },
-          onDragOver: (e: React.DragEvent) => {
-            if (!drag || drag.siblings !== siblings || !siblings.includes(drag.id)) return;
-            e.preventDefault();
-            e.stopPropagation();
-            setDragOver(topicId);
-          },
-          onDrop: (e: React.DragEvent) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (drag && siblings.includes(drag.id)) moveTopic(siblings, drag.id, topicId);
-            setDrag(null);
-            setDragOver(null);
-          },
-          onDragEnd: () => {
-            setDrag(null);
-            setDragOver(null);
-          },
-          className: `${drag?.id === topicId ? 'opacity-40' : ''} ${dragOver === topicId && drag?.id !== topicId ? 'ring-1 ring-amber-500 rounded-lg' : ''}`,
+          className: `${drag?.moved && drag.id === topicId ? 'opacity-40' : ''} ${
+            dragOver === topicId && drag?.id !== topicId ? 'ring-1 ring-amber-500 rounded-lg' : ''
+          } ${drag?.moved ? 'select-none cursor-grabbing' : ''}`,
         }
       : { className: '' };
   const renderRowTools = (topicId: string, withAdd: boolean, category: string) =>
