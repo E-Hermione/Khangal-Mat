@@ -192,6 +192,26 @@ export function proportion(terms: string[], tex: (s: string) => string): string 
   );
 }
 
+/**
+ * Opening a bracket the way it is taught: \expandbr{4}{x}{+}{3} is drawn as 4(x + 3) with a red
+ * line from the factor to the first term and a blue line, above it, to the second term, the
+ * terms coloured to match, so each multiplication of the factor is seen.
+ */
+export function expandBracket(args: string[], tex: (s: string) => string): string {
+  const [f, a, op, b] = args;
+  const cell = (cls: string, html: string) => `<span class="eb-c ${cls}">${html}</span>`;
+  return (
+    `<span class="expand-op" title="Хаалтны гаднах гишүүнээр хаалтан доторх гишүүн бүрийг үржүүлнэ">` +
+    cell('eb-s1 eb-s2', tex(f)) +
+    cell('eb-m1 eb-m2 eb-br', tex('(')) +
+    cell('eb-e1 eb-m2 eb-one', tex(a)) +
+    cell('eb-m2 eb-op', tex(op)) +
+    cell('eb-e2 eb-two', tex(b)) +
+    cell('eb-br', tex(')')) +
+    `</span>`
+  );
+}
+
 /** The four {…} arguments of a \proportion, braces inside them kept (\frac{1}{2} and the like). */
 export function braceArgs(s: string, count: number): { args: string[]; end: number } | null {
   const args: string[] = [];

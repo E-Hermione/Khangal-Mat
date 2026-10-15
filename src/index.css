@@ -348,3 +348,32 @@ body.copy-protected *:not(input):not(textarea) {
   border-right: 2px solid #2563eb;
   border-bottom-right-radius: 0.4em;
 }
+
+/* Opening a bracket: \expandbr{4}{x}{+}{3} — a red line from the factor to the first term,
+   a blue one above it to the second term */
+.expand-row {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.15em;
+}
+.expand-op {
+  display: inline-flex;
+  align-items: baseline;
+  padding-top: 1.45em;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.expand-op .eb-c { position: relative; padding: 0 0.12em; }
+.expand-op .eb-one { color: #dc2626; }
+.expand-op .eb-two { color: #2563eb; }
+.expand-op .eb-s1::before, .expand-op .eb-m1::before, .expand-op .eb-e1::before {
+  content: ''; position: absolute; top: -0.6em; height: 0.55em; left: 0; right: 0; border-top: 2px solid #dc2626;
+}
+.expand-op .eb-s1::before { left: 50%; border-left: 2px solid #dc2626; border-top-left-radius: 0.35em; }
+.expand-op .eb-e1::before { right: 50%; border-right: 2px solid #dc2626; border-top-right-radius: 0.35em; }
+.expand-op .eb-s2::after, .expand-op .eb-m2::after, .expand-op .eb-e2::after {
+  content: ''; position: absolute; top: -1.25em; height: 1.2em; left: 0; right: 0; border-top: 2px solid #2563eb;
+}
+.expand-op .eb-s2::after { left: 50%; border-left: 2px solid #2563eb; border-top-left-radius: 0.35em; }
+.expand-op .eb-e2::after { right: 50%; border-right: 2px solid #2563eb; border-top-right-radius: 0.35em; }

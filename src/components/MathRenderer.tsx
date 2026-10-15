@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import katex from 'katex';
-import { braceArgs, colDiv, colMul, proportion } from './columnOps';
+import { braceArgs, colDiv, colMul, expandBracket, proportion } from './columnOps';
 
 interface MathRendererProps {
   content: string;
@@ -19,7 +19,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     if (!content) return '';
 
     // If block is explicitly requested and content does not already have delimiters
-    const hasLongDiv = /\\(longdiv|colmul|coldiv|proportion)\{/.test(content);
+    const hasLongDiv = /\\(longdiv|colmul|coldiv|proportion|expandbr)\{/.test(content);
     if (block && !content.includes('$') && !hasLongDiv) {
       const columns = columnSums(content);
       if (columns) return columns;
@@ -83,6 +83,11 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
           return whole;
         }
       }
+    );
+    // Opening a bracket, drawn with coloured lines from the factor to each term: \expandbr{4}{x}{+}{3}.
+    // The rest of the same formula is set around it.
+    processed0 = replaceExpandBrackets(processed0, (html, display) =>
+      keep(display ? `<div class="my-2 flex justify-center">${html}</div>` : html)
     );
     // A proportion with its outer and middle terms joined by coloured lines: \proportion{x}{12}{5}{4}
     processed0 = replaceProportions(processed0, (html, display) =>
@@ -149,6 +154,33 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
 };
 
 /** Swaps each \proportion{a}{b}{c}{d} (with the $$ or $ around it, if any) for its drawing. */
+function replaceExpandBrackets(text: string, put: (html: string, display: boolean) => string): string {
+  return text.replace(/\$\$([\s\S]+?)\$\$|\$([^$]+?)\$/g, (whole, block, inline) => {
+    const math: string = block ?? inline;
+    if (!math.includes('\\expandbr{')) return whole;
+    const display = block !== undefined;
+    // A piece cut at a drawn bracket keeps its + and − as operations ({} on the open side)
+    const tex = (s: string) => {
+      let t = s.trim();
+      if (!t) return '';
+      if (/^[+\-=]/.test(t)) t = '{}' + t;
+      if (/[+\-=]$/.test(t)) t += '{}';
+      return katex.renderToString((display ? '\\displaystyle ' : '') + t, { throwOnError: false, macros: INLINE_MACROS });
+    };
+    let html = '';
+    let rest = math;
+    for (;;) {
+      const at = rest.indexOf('\\expandbr{');
+      if (at < 0) break;
+      const parsed = braceArgs(rest.slice(at + '\\expandbr'.length), 4);
+      if (!parsed) return whole;
+      html += tex(rest.slice(0, at)) + expandBracket(parsed.args, tex);
+      rest = rest.slice(at + '\\expandbr'.length + parsed.end);
+    }
+    return put(`<span class="expand-row">${html + tex(rest)}</span>`, display);
+  });
+}
+
 function replaceProportions(text: string, put: (html: string, display: boolean) => string): string {
   let out = '';
   let rest = text;
