@@ -337,7 +337,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             dragStart.current = { id: topicId, siblings, y: e.clientY };
           },
           className: `${drag?.moved && drag.id === topicId ? 'opacity-40' : ''} ${
-            dragOver === topicId && drag?.id !== topicId ? 'ring-1 ring-amber-500 rounded-lg' : ''
+            // a green line where the topic will land: above the topic when moving up, below it when moving down
+            dragOver === topicId && drag && drag.id !== topicId
+              ? siblings.indexOf(topicId) < siblings.indexOf(drag.id)
+                ? 'shadow-[0_-3px_0_0_#10b981] rounded-none'
+                : 'shadow-[0_3px_0_0_#10b981] rounded-none'
+              : ''
           } ${drag?.moved ? 'select-none cursor-grabbing' : ''}`,
         }
       : { className: '' };
