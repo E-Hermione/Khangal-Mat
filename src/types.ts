@@ -20,6 +20,8 @@ export interface TheoryRule {
   blocks?: TheoryBlock[];
   // A sub-part of the item above it: numbered 1.1, 1.2, …
   sub?: boolean;
+  // A sub-part shown as a card, two to a row with the sub-parts next to it
+  cards?: boolean;
 }
 
 export interface WorkedExample {

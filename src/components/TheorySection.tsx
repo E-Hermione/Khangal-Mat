@@ -24,6 +24,89 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
 }) => {
   // 1, 2, … for main topics and 1.1, 1.2, … for their sub-topics, in order
   const numbers = theoryNumbers(theory || []);
+  // One theory item: its numbered title and its content; `card` lays it out as a framed card
+  const renderRule = (rule: TheoryRule, idx: number, card: boolean) => (
+              <div>
+                {/* Header Box */}
+                <div className={`flex items-start justify-between gap-2 ${card ? 'px-4 py-3 border-b border-stone-200' : 'mb-2.5'}`}>
+                  <h3 className={`flex items-center gap-2.5 font-bold leading-snug text-[#3D0C02] ${rule.sub ? 'text-[16px]' : 'text-[18px]'}`}>
+                    <span
+                      className={`inline-flex shrink-0 items-center justify-center rounded-md font-bold tabular-nums print:border print:border-[#3D0C02] ${
+                        rule.sub
+                          ? 'h-6 min-w-[2.25rem] px-1.5 text-[12px] bg-[#3D0C02] text-white print:bg-white print:text-[#3D0C02]'
+                          : 'h-7 min-w-[1.75rem] px-1.5 text-[13px] bg-[#3D0C02] text-white print:bg-white print:text-[#3D0C02]'
+                      }`}
+                    >
+                      {numbers[idx]}
+                    </span>
+                    <span>{rule.title.includes("$") ? <MathRenderer content={rule.title} className="inline" /> : rule.title}</span>
+                  </h3>
+
+                  {/* Edit/Delete controls for editable mode */}
+                  {isEditable && (
+                    <div className="no-print flex items-center space-x-1 shrink-0">
+                      {onEditRule && (
+                        <button
+                          type="button"
+                          onClick={() => onEditRule(rule)}
+                          title="Онол засах"
+                          className="p-1 text-stone-500 hover:text-amber-800 hover:bg-stone-100 rounded cursor-pointer transition-colors"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {onDeleteRule && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`«${rule.title}» дүрмийг устгах уу?`)) {
+                              onDeleteRule(rule.id);
+                            }
+                          }}
+                          title="Онол устгах"
+                          className="p-1 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Content in reading order: text, centred formulas, notes */}
+                <div className={card ? 'px-4 py-3' : ''}>
+                {theoryBlocks(rule).map((block, bIdx) =>
+                  block.type === 'formula' ? (
+                    <div key={bIdx} className="my-3 text-center overflow-x-auto overflow-y-hidden scrollbar-none">
+                      <MathRenderer content={`$$${block.value}$$`} block />
+                    </div>
+                  ) : block.type === 'note' ? (
+                    <div key={bIdx} className="mt-2 text-[13px] text-stone-500 leading-relaxed print:text-stone-800">
+                      <MathRenderer content={block.value} className="inline" />
+                    </div>
+                  ) : (
+                    <div key={bIdx}>
+                      {theoryParts(block.value).map((part, pIdx) =>
+                        part.kind === 'formula' ? (
+                          <div key={pIdx} className="my-2 text-center overflow-x-auto overflow-y-hidden scrollbar-none">
+                            <MathRenderer content={`$$${part.value}$$`} />
+                          </div>
+                        ) : part.kind === 'rule' ? (
+                          <div key={pIdx} className="my-1.5 text-[15px] text-stone-700 print:text-black leading-relaxed">
+                            <MathRenderer content={part.value} />
+                          </div>
+                        ) : (
+                          <div key={pIdx} className="my-1.5 text-[15px] text-stone-700 print:text-black leading-relaxed">
+                            <MathRenderer content={part.value} />
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )
+                )}
+              </div>
+              </div>
+  );
   return (
     <section className="mb-12 print:mb-6" id="section-theory">
       <LessonSectionHeader
@@ -66,91 +149,30 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
         </div>
       ) : (
         <div className="divide-y divide-stone-200 print:divide-y-0 print:space-y-4">
-          {theory.map((rule, idx) => (
-            <div
-              key={rule.id || idx}
-              className={`avoid-break py-7 first:pt-0 last:pb-0 relative group print:py-0 ${rule.sub ? 'pl-6 md:pl-10 print:pl-8' : ''}`}
-            >
-              <div>
-                {/* Header Box */}
-                <div className="flex items-start justify-between gap-2 mb-2.5">
-                  <h3 className={`flex items-center gap-2.5 font-bold leading-snug text-[#3D0C02] ${rule.sub ? 'text-[16px]' : 'text-[18px]'}`}>
-                    <span
-                      className={`inline-flex shrink-0 items-center justify-center rounded-md font-bold tabular-nums print:border print:border-[#3D0C02] ${
-                        rule.sub
-                          ? 'h-6 min-w-[2.25rem] px-1.5 text-[12px] bg-[#3D0C02] text-white print:bg-white print:text-[#3D0C02]'
-                          : 'h-7 min-w-[1.75rem] px-1.5 text-[13px] bg-[#3D0C02] text-white print:bg-white print:text-[#3D0C02]'
-                      }`}
-                    >
-                      {numbers[idx]}
-                    </span>
-                    <span>{rule.title}</span>
-                  </h3>
-
-                  {/* Edit/Delete controls for editable mode */}
-                  {isEditable && (
-                    <div className="no-print flex items-center space-x-1 shrink-0">
-                      {onEditRule && (
-                        <button
-                          type="button"
-                          onClick={() => onEditRule(rule)}
-                          title="Онол засах"
-                          className="p-1 text-stone-500 hover:text-amber-800 hover:bg-stone-100 rounded cursor-pointer transition-colors"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      {onDeleteRule && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm(`«${rule.title}» дүрмийг устгах уу?`)) {
-                              onDeleteRule(rule.id);
-                            }
-                          }}
-                          title="Онол устгах"
-                          className="p-1 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Content in reading order: text, centred formulas, notes */}
-                {theoryBlocks(rule).map((block, bIdx) =>
-                  block.type === 'formula' ? (
-                    <div key={bIdx} className="my-3 text-center overflow-x-auto overflow-y-hidden scrollbar-none">
-                      <MathRenderer content={`$$${block.value}$$`} block />
-                    </div>
-                  ) : block.type === 'note' ? (
-                    <div key={bIdx} className="mt-2 text-[13px] text-stone-500 leading-relaxed print:text-stone-800">
-                      <MathRenderer content={block.value} className="inline" />
-                    </div>
-                  ) : (
-                    <div key={bIdx}>
-                      {theoryParts(block.value).map((part, pIdx) =>
-                        part.kind === 'formula' ? (
-                          <div key={pIdx} className="my-2 text-center overflow-x-auto overflow-y-hidden scrollbar-none">
-                            <MathRenderer content={`$$${part.value}$$`} />
-                          </div>
-                        ) : part.kind === 'rule' ? (
-                          <div key={pIdx} className="my-1.5 text-[15px] text-stone-700 print:text-black leading-relaxed">
-                            <MathRenderer content={part.value} />
-                          </div>
-                        ) : (
-                          <div key={pIdx} className="my-1.5 text-[15px] text-stone-700 print:text-black leading-relaxed">
-                            <MathRenderer content={part.value} />
-                          </div>
-                        )
-                      )}
-                    </div>
-                  )
-                )}
+          {theoryGroups(theory).map((g) =>
+            g.cards ? (
+              <div
+                key={g.items[0].rule.id || g.items[0].idx}
+                className="py-7 first:pt-0 last:pb-0 pl-6 md:pl-10 print:pl-8 grid gap-4 md:grid-cols-2"
+              >
+                {g.items.map(({ rule, idx }, k) => (
+                  <div
+                    key={rule.id || idx}
+                    className={`avoid-break relative group rounded-xl border border-stone-200 bg-white shadow-xs ${g.items.length % 2 === 1 && k === g.items.length - 1 ? 'md:col-span-2 md:w-[calc(50%-0.5rem)] md:mx-auto' : ''}`}
+                  >
+                    {renderRule(rule, idx, true)}
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
+            ) : (
+              <div
+                key={g.items[0].rule.id || g.items[0].idx}
+                className={`avoid-break py-7 first:pt-0 last:pb-0 relative group print:py-0 ${g.items[0].rule.sub ? 'pl-6 md:pl-10 print:pl-8' : ''}`}
+              >
+                {renderRule(g.items[0].rule, g.items[0].idx, false)}
+              </div>
+            )
+          )}
         </div>
       )}
 
@@ -170,3 +192,18 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
     </section>
   );
 };
+
+/**
+ * Theory items in display groups: a run of sub-parts marked `cards` is shown as cards two to a
+ * row (an odd last one centred on its own row); every other item stands alone.
+ */
+function theoryGroups(theory: TheoryRule[]): { cards: boolean; items: { rule: TheoryRule; idx: number }[] }[] {
+  const groups: { cards: boolean; items: { rule: TheoryRule; idx: number }[] }[] = [];
+  theory.forEach((rule, idx) => {
+    const card = !!(rule.sub && rule.cards);
+    const last = groups[groups.length - 1];
+    if (card && last?.cards) last.items.push({ rule, idx });
+    else groups.push({ cards: card, items: [{ rule, idx }] });
+  });
+  return groups;
+}
