@@ -219,3 +219,14 @@ function theoryGroups(theory: TheoryRule[]): { cards: boolean; items: { rule: Th
 function cardOrder<T>(items: T[]): (T & { wide: boolean })[] {
   return items.map((x, i) => ({ ...x, wide: items.length % 2 === 1 && i === items.length - 1 }));
 }
+
+/**
+ * A formula row of several formulas set apart with \qquad, one formula a line, so it fits in a
+ * half-width card. Left whole when a piece would cut through braces or an environment.
+ */
+function formulaLines(f: string): string[] {
+  if (!f.includes('\\qquad') || f.includes('\\begin')) return [f];
+  const pieces = f.split(/\s*(?:\\qquad\s*)+/).map((x) => x.replace(/[,;]\s*$/, '').trim()).filter(Boolean);
+  const balanced = (x: string) => [...x].reduce((d, c) => (d < 0 ? d : c === '{' ? d + 1 : c === '}' ? d - 1 : d), 0) === 0;
+  return pieces.length > 1 && pieces.every(balanced) ? pieces : [f];
+}
