@@ -155,10 +155,10 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
                 key={g.items[0].rule.id || g.items[0].idx}
                 className="py-7 first:pt-0 last:pb-0 pl-6 md:pl-10 print:pl-8 grid gap-4 md:grid-cols-2"
               >
-                {g.items.map(({ rule, idx }, k) => (
+                {cardOrder(g.items).map(({ rule, idx, wide }) => (
                   <div
                     key={rule.id || idx}
-                    className={`avoid-break relative group rounded-xl border border-stone-200 bg-white shadow-xs ${g.items.length % 2 === 1 && k === g.items.length - 1 ? 'md:col-span-2 md:w-[calc(50%-0.5rem)] md:mx-auto' : ''}`}
+                    className={`avoid-break relative group rounded-xl border border-stone-200 bg-white shadow-xs ${wide ? 'md:col-span-2' : ''}`}
                   >
                     {renderRule(rule, idx, true)}
                   </div>
@@ -195,7 +195,7 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
 
 /**
  * Theory items in display groups: a run of sub-parts marked `cards` is shown as cards two to a
- * row (an odd last one centred on its own row); every other item stands alone.
+ * row; every other item stands alone.
  */
 function theoryGroups(theory: TheoryRule[]): { cards: boolean; items: { rule: TheoryRule; idx: number }[] }[] {
   const groups: { cards: boolean; items: { rule: TheoryRule; idx: number }[] }[] = [];
@@ -206,4 +206,19 @@ function theoryGroups(theory: TheoryRule[]): { cards: boolean; items: { rule: Th
     else groups.push({ cards: card, items: [{ rule, idx }] });
   });
   return groups;
+}
+
+/**
+ * Cards in the order they are laid out two to a row. With an odd number the middle one takes a
+ * whole row of its own, set between the pairs; the others keep their order in pairs:
+ * 7 cards → 1.1 1.2 / 1.3 1.5 / 1.4 (whole row) / 1.6 1.7.
+ */
+function cardOrder<T>(items: T[]): (T & { wide: boolean })[] {
+  const all = items.map((x) => ({ ...x, wide: false }));
+  if (all.length % 2 === 0) return all;
+  const mid = (all.length - 1) / 2;
+  const middle = { ...all[mid], wide: true };
+  const rest = all.filter((_, i) => i !== mid);
+  const at = Math.ceil(rest.length / 2 / 2) * 2;
+  return [...rest.slice(0, at), middle, ...rest.slice(at)];
 }
