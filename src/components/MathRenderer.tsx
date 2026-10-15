@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import katex from 'katex';
-import { braceArgs, colDiv, colMul, expandBracket, numberLine, placeTable, proportion } from './columnOps';
+import { braceArgs, colDiv, colMul, expandBracket, numberLine, partLine, placeTable, proportion } from './columnOps';
 
 interface MathRendererProps {
   content: string;
@@ -19,7 +19,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     if (!content) return '';
 
     // If block is explicitly requested and content does not already have delimiters
-    const hasLongDiv = /\\(longdiv|colmul|coldiv|proportion|expandbr|placetable|numline)\{/.test(content);
+    const hasLongDiv = /\\(longdiv|colmul|coldiv|proportion|expandbr|placetable|numline|partline)\{/.test(content);
     if (block && !content.includes('$') && !hasLongDiv) {
       const columns = columnSums(content);
       if (columns) return columns;
@@ -90,10 +90,11 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     processed0 = replaceExpandBrackets(processed0, (html, display) =>
       keep(display ? `<div class="my-2 flex justify-center">${html}</div>` : html)
     );
-    // A number line with the distance of each point from 0: $$\numline{-4}{4}{-2;3}$$
-    processed0 = processed0.replace(/(\$\$|\$)\s*\\numline([^$]*?)\s*(\$\$|\$)/g, (whole, open, body) => {
+    // Number lines: the distance of each point from 0, $$\numline{-4}{4}{-2;3}$$, or a number's
+    // whole and fractional part, $$\partline{-4}{4}{-3,4;1,23}$$
+    processed0 = processed0.replace(/(\$\$|\$)\s*\\(numline|partline)([^$]*?)\s*(\$\$|\$)/g, (whole, open, kind, body) => {
       const parsed = braceArgs(body, 3);
-      const html = parsed && numberLine(parsed.args);
+      const html = parsed && (kind === 'numline' ? numberLine(parsed.args) : partLine(parsed.args));
       if (!html) return whole;
       return keep(open === '$$' ? `<div class="my-2 overflow-x-auto scrollbar-none"><div class="w-max mx-auto">${html}</div></div>` : html);
     });

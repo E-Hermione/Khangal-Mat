@@ -256,6 +256,41 @@ export function numberLine(args: string[]): string {
   return `<svg class="number-line" width="${w}" height="${y + 28}" viewBox="0 0 ${w} ${y + 28}" role="img" aria-label="Тоон шулуун">${svg}</svg>`;
 }
 
+/**
+ * A number line showing a number's whole part and fractional part: \partline{-4}{4}{-3,4;1,23}
+ * marks each number (red), its whole part [x] (black, the nearest whole number to its left) and
+ * the yellow stretch between them, which is the fractional part {x}.
+ */
+export function partLine(args: string[]): string {
+  const min = Math.round(Number(args[0]));
+  const max = Math.round(Number(args[1]));
+  const points = args[2].split(';').map((x) => Number(x.trim().replace(',', '.'))).filter((x) => !Number.isNaN(x));
+  if (!(max > min) || max - min > 24) return '';
+  const step = 46;
+  const pad = 26;
+  const w = (max - min) * step + pad * 2;
+  const x = (v: number) => pad + (v - min) * step;
+  const y = 50;
+  const num = (v: number) => String(Math.round(v * 1000) / 1000).replace('.', ',').replace('-', '−');
+  let svg = `<line x1="${pad - 12}" y1="${y}" x2="${w - pad + 12}" y2="${y}" stroke="#44403c" stroke-width="1.5"/>`;
+  svg += `<path d="M${w - pad + 12} ${y} l-7 -4 v8 z" fill="#44403c"/>`;
+  for (let v = min; v <= max; v++) {
+    svg += `<line x1="${x(v)}" y1="${y - 5}" x2="${x(v)}" y2="${y + 5}" stroke="#44403c" stroke-width="1.2"/>`;
+    svg += `<text x="${x(v)}" y="${y + 20}" font-size="13" text-anchor="middle" fill="#292524">${num(v)}</text>`;
+  }
+  points.forEach((p, i) => {
+    const f = Math.floor(p);
+    const level = i % 2 ? y - 34 : y - 16;
+    svg += `<rect x="${x(f)}" y="${y - 4}" width="${x(p) - x(f)}" height="8" fill="#facc15" opacity="0.55"/>`;
+    svg += `<circle cx="${x(f)}" cy="${y}" r="4.5" fill="#292524"/>`;
+    svg += `<circle cx="${x(p)}" cy="${y}" r="5" fill="#dc2626"/>`;
+    svg += `<text x="${x(p)}" y="${level}" font-size="12.5" text-anchor="middle" fill="#dc2626">${num(p)}</text>`;
+    svg += `<text x="${x(f)}" y="${y + 38 + (i % 2) * 15}" font-size="12" text-anchor="middle" fill="#292524">[${num(p)}] = ${num(f)}</text>`;
+  });
+  const h = y + 42 + (points.length > 1 ? 15 : 0);
+  return `<svg class="number-line" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Тоон шулуун">${svg}</svg>`;
+}
+
 /** The four {…} arguments of a \proportion, braces inside them kept (\frac{1}{2} and the like). */
 export function braceArgs(s: string, count: number): { args: string[]; end: number } | null {
   const args: string[] = [];
