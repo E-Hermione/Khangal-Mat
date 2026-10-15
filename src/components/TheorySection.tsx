@@ -29,7 +29,7 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
               <div>
                 {/* Header Box */}
                 <div className={`flex items-start justify-between gap-2 ${card ? 'px-4 py-3 border-b border-stone-200' : 'mb-2.5'}`}>
-                  <h3 className={`flex items-center gap-2.5 font-bold leading-snug ${rule.sub ? 'text-[16px] text-[#3D0C02]' : 'text-[18px] text-[#3D0C02]'}`}>
+                  <h3 className={`flex items-center gap-2.5 font-bold leading-snug ${rule.sub ? 'text-[16px] text-[#b08878]' : 'text-[18px] text-[#3D0C02]'}`}>
                     <span
                       className={`inline-flex shrink-0 items-center justify-center rounded-md font-bold tabular-nums print:border print:border-[#3D0C02] ${
                         rule.sub
