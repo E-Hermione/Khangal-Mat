@@ -47,3 +47,7 @@
 - In every grade and topic, a solution never stops at the rule: after the bold rule it says how that rule is used
   in this very problem (which numbers, which steps, why this operation), briefly, then the result. A rule followed only by
   a bare formula or answer is not a solution.
+- No problem condition may repeat anywhere on the site (any grade, any topic; theory, examples, practice, tests).
+  A test question must not copy an example or practice problem. A problem with a different condition and a
+  different answer is fine. Check the whole site for duplicates before importing new content.
+- In probability, always write the probability as $P(A)$, naming the event $A$ first.
