@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, BookOpen, ClipboardCheck, Lock, Pencil, Settings, X } from 'lucide-react';
+import { ArrowRight, BookOpen, ClipboardCheck, CreditCard, Lock, Pencil, Settings, X } from 'lucide-react';
 import { AuthUser, GradeNumber } from '../types';
 import {
   GRADES,
@@ -8,7 +8,14 @@ import {
   useLearningPlanVersion,
 } from '../services/learningPlan';
 import { HomeContent, saveHomeContent, useHomeContent } from '../services/homeContent';
+import {
+  EMPTY_PAYMENT_SETTINGS,
+  formatMoney,
+  PaymentSettings,
+  subscribePaymentSettings,
+} from '../services/payments';
 import { PaymentStepContent, PlanSteps } from './LearningPlanView';
+import { PaymentSettingsForm } from './PaymentsTab';
 import { PlacementAdminTab } from './PlacementAdminTab';
 import { ProgressRing } from './ProgressRing';
 
@@ -168,7 +175,7 @@ const Card: React.FC<{
   </div>
 );
 
-type EditTarget = 'intro' | 'lessons' | 'placement' | 'exams' | 'placement-settings' | null;
+type EditTarget = 'intro' | 'lessons' | 'placement' | 'exams' | 'access' | 'payment' | 'placement-settings' | null;
 
 /** The landing page: lessons, placement test and topic tests first, then getting access. */
 export const StudentHome: React.FC<StudentHomeProps> = ({
@@ -184,6 +191,8 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   useLearningPlanVersion();
   const content = useHomeContent();
   const [editing, setEditing] = useState<EditTarget>(null);
+  const [payment, setPayment] = useState<PaymentSettings>(EMPTY_PAYMENT_SETTINGS);
+  useEffect(() => (editable ? subscribePaymentSettings(setPayment) : undefined), [editable]);
 
   const { grade, attempts } = learningPlan.state;
   const needsPlacement = learningPlan.needsPlacement();
@@ -365,6 +374,52 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
         </Card>
       </div>
 
+      {/* Admin: bank account, prices and texts (users pay from the step card above) */}
+      {editable && (
+      <div className="space-y-2" id="home-access">
+        <div className="flex items-center gap-1.5">
+          <h2 className="text-sm font-black text-stone-800 flex items-center gap-1.5 flex-1">
+            <CreditCard className="w-4 h-4 text-amber-600" /> {content.accessTitle}
+          </h2>
+          <EditButton onClick={() => setEditing('payment')} title="Төлбөрийн данс, үнэ засах" />
+        </div>
+        {
+          <div className="p-4 rounded-xl border border-stone-200 bg-white text-sm text-stone-700 space-y-2" data-testid="home-payment-admin">
+            {editing === 'access' ? (
+              <TextEditor
+                fields={[
+                  { key: 'accessTitle', label: 'Гарчиг' },
+                  { key: 'accessText', label: 'Сорил өгөөгүй хэрэглэгчид харагдах бичвэр', multiline: true },
+                ]}
+                content={content}
+                onDone={done}
+              />
+            ) : (
+              <div className="flex items-start gap-2">
+                <p className="flex-1 whitespace-pre-wrap">{content.accessText}</p>
+                <EditButton onClick={() => setEditing('access')} title="Бичвэр засах" />
+              </div>
+            )}
+            <div className="text-xs text-stone-500 border-t border-stone-100 pt-2">
+              {payment.accountNumber ? (
+                <>
+                  {payment.bankName} {payment.accountNumber} {payment.accountName && `(${payment.accountName})`} •{' '}
+                  {payment.options.map((o) => `${o.months} сар ${formatMoney(o.price)}`).join(', ') || 'үнэ оруулаагүй'}
+                </>
+              ) : (
+                'Төлбөрийн данс оруулаагүй байна.'
+              )}
+            </div>
+          </div>
+        }
+      </div>
+      )}
+
+      {editing === 'payment' && (
+        <Modal title="Төлбөрийн данс ба үнэ" onClose={done}>
+          <PaymentSettingsForm onSaved={done} />
+        </Modal>
+      )}
       {editing === 'placement-settings' && (
         <Modal title="Түвшин тогтоох сорилын тохиргоо" onClose={done}>
           <PlacementAdminTab />
