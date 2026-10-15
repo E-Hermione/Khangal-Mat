@@ -53,3 +53,5 @@
 - In probability, always write the probability as $P(A)$, naming the event $A$ first.
 - In example, practice and test solutions, a rule quoted from the theory is written in italic (`__…__`), not bold;
   bold (`**…**`) stays for step labels («1-р үйлдэл.») and single stressed words. The theory itself keeps its rules bold.
+- No colon (:) in lesson prose: write a full sentence instead («Шалгавал …», «Хариу нь …», «… шилжүүлбэл $A = 2{,}2$ болж …»).
+  A colon is fine only inside formulas, where it means division.
