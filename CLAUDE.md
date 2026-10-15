@@ -51,3 +51,5 @@
   A test question must not copy an example or practice problem. A problem with a different condition and a
   different answer is fine. Check the whole site for duplicates before importing new content.
 - In probability, always write the probability as $P(A)$, naming the event $A$ first.
+- In example, practice and test solutions, a rule quoted from the theory is written in italic (`__…__`), not bold;
+  bold (`**…**`) stays for step labels («1-р үйлдэл.») and single stressed words. The theory itself keeps its rules bold.
