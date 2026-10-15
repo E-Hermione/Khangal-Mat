@@ -572,9 +572,8 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           <div className="flex-1 min-w-0">
             <div className="text-sm md:text-base font-black text-white">Сэдвийн шалгалт</div>
             <div className="text-xs text-stone-400 mt-0.5">
-              Анхан, Дунд, Ахисан гэсэн {[topic.test1, topic.test2, topic.test3].filter((t) => t?.questions?.length).length} сорил
-              {topic.test1?.questions?.length ? `, тус бүр ${topic.test1.questions.length} асуулттай` : ''}. Сорил бүрт {PASS_PERCENT}%-иас дээш
-              авбал тэнцэнэ.
+              Сэдвийн үнэлгээг 80-аас дээш дэвшүүлсэн тохиолдолд уг сэдвийг бүрэн эзэмшсэнд тооцогдоно. Өөрийгөө битгий
+              хуураарай. Оролдлого сайт оройд, оролдлого муут ёроолд.
             </div>
           </div>
 
