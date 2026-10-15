@@ -20,6 +20,18 @@ export interface TheoryRule {
   blocks?: TheoryBlock[];
   // A sub-part of the item above it: numbered 1.1, 1.2, …
   sub?: boolean;
+  // Rule and worked example side by side; when set it is shown in place of the text above
+  split?: TheorySplit;
+}
+
+// A theory item laid out in two columns: the rule and its explanation on the left, an example
+// with its calculation as numbered steps and the answer on the right
+export interface TheorySplit {
+  rule: string;
+  explain?: string;
+  example: string;
+  steps?: { label: string; value: string; note?: string }[];
+  answer?: string;
 }
 
 export interface WorkedExample {

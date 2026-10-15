@@ -30,7 +30,7 @@ export function theoryText(rule: TheoryRule): string {
 
 /** The theory item with all its content in one text field. */
 export function withText(rule: TheoryRule, text: string): TheoryRule {
-  return { ...rule, ruleText: text, formula: undefined, note: undefined, blocks: undefined };
+  return { ...rule, ruleText: text, formula: undefined, note: undefined, blocks: undefined, split: undefined };
 }
 
 export type TheoryPart = { kind: 'rule' | 'text' | 'formula'; value: string };
