@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import katex from 'katex';
-import { braceArgs, colDiv, colMul, expandBracket, placeTable, proportion } from './columnOps';
+import { braceArgs, colDiv, colMul, expandBracket, numberLine, placeTable, proportion } from './columnOps';
 
 interface MathRendererProps {
   content: string;
@@ -19,7 +19,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     if (!content) return '';
 
     // If block is explicitly requested and content does not already have delimiters
-    const hasLongDiv = /\\(longdiv|colmul|coldiv|proportion|expandbr|placetable)\{/.test(content);
+    const hasLongDiv = /\\(longdiv|colmul|coldiv|proportion|expandbr|placetable|numline)\{/.test(content);
     if (block && !content.includes('$') && !hasLongDiv) {
       const columns = columnSums(content);
       if (columns) return columns;
@@ -90,6 +90,13 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     processed0 = replaceExpandBrackets(processed0, (html, display) =>
       keep(display ? `<div class="my-2 flex justify-center">${html}</div>` : html)
     );
+    // A number line with the distance of each point from 0: $$\numline{-4}{4}{-2;3}$$
+    processed0 = processed0.replace(/(\$\$|\$)\s*\\numline([^$]*?)\s*(\$\$|\$)/g, (whole, open, body) => {
+      const parsed = braceArgs(body, 3);
+      const html = parsed && numberLine(parsed.args);
+      if (!html) return whole;
+      return keep(open === '$$' ? `<div class="my-2 overflow-x-auto scrollbar-none"><div class="w-max mx-auto">${html}</div></div>` : html);
+    });
     // A table of headings over values in a rounded frame: $$\placetable{Мянгат;Зуут}{2;3}$$
     processed0 = processed0.replace(/(\$\$|\$)\s*\\placetable([^$]*?)\s*(\$\$|\$)/g, (whole, open, body) => {
       const parsed = braceArgs(body, 2);

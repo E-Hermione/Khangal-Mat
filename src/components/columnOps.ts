@@ -224,6 +224,38 @@ export function placeTable(args: string[], tex: (s: string) => string): string {
   return `<span class="place-table"><table><thead>${row(cells(args[0]), 'th')}</thead><tbody>${body}</tbody></table></span>`;
 }
 
+/**
+ * A number line with the distance from 0 to each point drawn as a coloured bar, for the modulus:
+ * \numline{-4}{4}{-2;3} draws −4 … 4, a red bar from 0 to −2 marked |−2| = 2 and a blue bar from 0 to 3.
+ */
+export function numberLine(args: string[]): string {
+  const min = Math.round(Number(args[0]));
+  const max = Math.round(Number(args[1]));
+  const points = args[2].split(';').map((x) => Number(x.trim().replace(',', '.'))).filter((x) => !Number.isNaN(x));
+  if (!(max > min) || max - min > 24) return '';
+  const step = 38;
+  const pad = 22;
+  const w = (max - min) * step + pad * 2;
+  const x = (v: number) => pad + (v - min) * step;
+  const y = 52;
+  const num = (v: number) => String(v).replace('.', ',').replace('-', '−');
+  let svg = `<line x1="${pad - 12}" y1="${y}" x2="${w - pad + 12}" y2="${y}" stroke="#44403c" stroke-width="1.5"/>`;
+  svg += `<path d="M${w - pad + 12} ${y} l-7 -4 v8 z" fill="#44403c"/>`;
+  for (let v = min; v <= max; v++) {
+    svg += `<line x1="${x(v)}" y1="${y - 5}" x2="${x(v)}" y2="${y + 5}" stroke="#44403c" stroke-width="1.2"/>`;
+    svg += `<text x="${x(v)}" y="${y + 20}" font-size="13" text-anchor="middle" fill="#292524">${num(v)}</text>`;
+  }
+  points.forEach((p, i) => {
+    const color = p < 0 ? '#dc2626' : '#2563eb';
+    const level = y - 14 - (i % 2) * 18;
+    svg += `<rect x="${Math.min(x(0), x(p))}" y="${y - 3}" width="${Math.abs(x(p) - x(0))}" height="6" fill="${color}" opacity="0.35"/>`;
+    svg += `<circle cx="${x(p)}" cy="${y}" r="5" fill="${color}"/>`;
+    svg += `<circle cx="${x(0)}" cy="${y}" r="4" fill="#292524"/>`;
+    svg += `<text x="${(x(0) + x(p)) / 2}" y="${level}" font-size="13" text-anchor="middle" fill="${color}" font-style="italic">|${num(p)}| = ${num(Math.abs(p))}</text>`;
+  });
+  return `<svg class="number-line" width="${w}" height="${y + 28}" viewBox="0 0 ${w} ${y + 28}" role="img" aria-label="Тоон шулуун">${svg}</svg>`;
+}
+
 /** The four {…} arguments of a \proportion, braces inside them kept (\frac{1}{2} and the like). */
 export function braceArgs(s: string, count: number): { args: string[]; end: number } | null {
   const args: string[] = [];
