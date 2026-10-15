@@ -90,12 +90,14 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       keep(display ? `<div class="my-2 flex justify-center">${html}</div>` : html)
     );
     // A table of headings over values in a rounded frame: $$\placetable{Мянгат;Зуут}{2;3}$$
-    processed0 = processed0.replace(/(\$\$|\$)\s*\\placetable(\{[^{}]*\}\{[^{}]*\})\s*(\$\$|\$)/g, (whole, open, body) => {
+    processed0 = processed0.replace(/(\$\$|\$)\s*\\placetable([^$]*?)\s*(\$\$|\$)/g, (whole, open, body) => {
       const parsed = braceArgs(body, 2);
       if (!parsed) return whole;
-      const tex = (s: string) => (s ? katex.renderToString(`\\text{${s}}`, { throwOnError: false }) : '');
+      // a cell with words is set as plain text, otherwise as a formula
+      const tex = (s: string) =>
+        !s ? '' : /[А-Яа-яЁёӨөҮү]/.test(s) ? s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!) : katex.renderToString(s, { throwOnError: false });
       const html = placeTable(parsed.args, tex);
-      return keep(open === '$$' ? `<div class="my-2 flex justify-center overflow-x-auto">${html}</div>` : html);
+      return keep(open === '$$' ? `<div class="my-2 overflow-x-auto scrollbar-none"><div class="w-max mx-auto">${html}</div></div>` : html);
     });
     // A proportion with its outer and middle terms joined by coloured lines: \proportion{x}{12}{5}{4}
     processed0 = replaceProportions(processed0, (html, display) =>

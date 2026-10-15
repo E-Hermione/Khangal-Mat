@@ -78,7 +78,9 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
                 {theoryBlocks(rule).map((block, bIdx) =>
                   block.type === 'formula' ? (
                     <div key={bIdx} className="my-3 text-center overflow-x-auto overflow-y-hidden scrollbar-none">
-                      <MathRenderer content={`$$${block.value}$$`} block />
+                      {(card ? formulaLines(block.value) : [block.value]).map((f, fIdx) => (
+                        <MathRenderer key={fIdx} content={`$$${f}$$`} block />
+                      ))}
                     </div>
                   ) : block.type === 'note' ? (
                     <div key={bIdx} className="mt-2 text-[13px] text-stone-500 leading-relaxed print:text-stone-800">
@@ -89,7 +91,9 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
                       {theoryParts(block.value).map((part, pIdx) =>
                         part.kind === 'formula' ? (
                           <div key={pIdx} className="my-2 text-center overflow-x-auto overflow-y-hidden scrollbar-none">
-                            <MathRenderer content={`$$${part.value}$$`} />
+                            {(card ? formulaLines(part.value) : [part.value]).map((f, fIdx) => (
+                              <MathRenderer key={fIdx} content={`$$${f}$$`} />
+                            ))}
                           </div>
                         ) : part.kind === 'rule' ? (
                           <div key={pIdx} className="my-1.5 text-[15px] text-stone-700 print:text-black leading-relaxed">
@@ -194,13 +198,13 @@ export const TheorySection: React.FC<TheorySectionProps> = ({
 };
 
 /**
- * Theory items in display groups: a run of sub-parts marked `cards` is shown as cards two to a
+ * Theory items in display groups: a run of sub-parts is shown as cards two to a
  * row; every other item stands alone.
  */
 function theoryGroups(theory: TheoryRule[]): { cards: boolean; items: { rule: TheoryRule; idx: number }[] }[] {
   const groups: { cards: boolean; items: { rule: TheoryRule; idx: number }[] }[] = [];
   theory.forEach((rule, idx) => {
-    const card = !!(rule.sub && rule.cards);
+    const card = !!rule.sub;
     const last = groups[groups.length - 1];
     if (card && last?.cards) last.items.push({ rule, idx });
     else groups.push({ cards: card, items: [{ rule, idx }] });
@@ -221,4 +225,15 @@ function cardOrder<T>(items: T[]): (T & { wide: boolean })[] {
   const rest = all.filter((_, i) => i !== mid);
   const at = Math.ceil(rest.length / 2 / 2) * 2;
   return [...rest.slice(0, at), middle, ...rest.slice(at)];
+}
+
+/**
+ * A formula row of several formulas set apart with \qquad, one formula a line, so it fits in a
+ * half-width card. Left whole when a piece would cut through braces or an environment.
+ */
+function formulaLines(f: string): string[] {
+  if (!f.includes('\\qquad') || f.includes('\\begin')) return [f];
+  const pieces = f.split(/\s*(?:\\qquad\s*)+/).map((x) => x.replace(/[,;]\s*$/, '').trim()).filter(Boolean);
+  const balanced = (x: string) => [...x].reduce((d, c) => (d < 0 ? d : c === '{' ? d + 1 : c === '}' ? d - 1 : d), 0) === 0;
+  return pieces.length > 1 && pieces.every(balanced) ? pieces : [f];
 }
