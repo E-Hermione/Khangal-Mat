@@ -10,8 +10,6 @@ import {
   BookOpen,
   ChevronRight,
   ChevronDown,
-  ArrowUp,
-  ArrowDown,
   X,
   Sliders,
   LogOut,
@@ -280,17 +278,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (ra >= 0 && rb >= 0) return ra - rb;
     return (a.order ?? 0) - (b.order ?? 0);
   };
-  // Admin: move a topic up or down among the topics next to it
-  const moveTopic = (siblings: string[], id: string, step: -1 | 1) => {
+  // Admin: drag a topic with the mouse and drop it on another topic next to it to move it there
+  const [drag, setDrag] = useState<{ id: string; siblings: string[] } | null>(null);
+  const [dragOver, setDragOver] = useState<string | null>(null);
+  const moveTopic = (siblings: string[], id: string, targetId: string) => {
     const i = siblings.indexOf(id);
-    const j = i + step;
-    if (i < 0 || j < 0 || j >= siblings.length) return;
-    const next = [...siblings];
-    [next[i], next[j]] = [next[j], next[i]];
+    const j = siblings.indexOf(targetId);
+    if (i < 0 || j < 0 || i === j) return;
+    const next = siblings.filter((x) => x !== id);
+    next.splice(j, 0, id);
     const rest = (cloud.getAppSettings().topicOrder || []).filter((x) => !next.includes(x));
     cloud.setAppSettings({ topicOrder: [...rest, ...next] });
   };
-  const renderRowTools = (topicId: string, withAdd: boolean, category: string, siblings?: string[]) =>
+  const dragProps = (topicId: string, siblings: string[]) =>
+    canAddTopics && siblings.length > 1
+      ? {
+          draggable: true,
+          onDragStart: (e: React.DragEvent) => {
+            e.stopPropagation();
+            e.dataTransfer.effectAllowed = 'move';
+            setDrag({ id: topicId, siblings });
+          },
+          onDragOver: (e: React.DragEvent) => {
+            if (!drag || drag.siblings !== siblings || !siblings.includes(drag.id)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            setDragOver(topicId);
+          },
+          onDrop: (e: React.DragEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (drag && siblings.includes(drag.id)) moveTopic(siblings, drag.id, topicId);
+            setDrag(null);
+            setDragOver(null);
+          },
+          onDragEnd: () => {
+            setDrag(null);
+            setDragOver(null);
+          },
+          className: `${drag?.id === topicId ? 'opacity-40' : ''} ${dragOver === topicId && drag?.id !== topicId ? 'ring-1 ring-amber-500 rounded-lg' : ''}`,
+        }
+      : { className: '' };
+  const renderRowTools = (topicId: string, withAdd: boolean, category: string) =>
     confirmDelete === topicId ? (
       <div className="flex items-center gap-1 shrink-0 pl-1" data-testid="confirm-delete">
         <span className="text-[10px] font-bold text-rose-300">Устгах уу?</span>
@@ -311,28 +340,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
     ) : (
       <div className="flex items-center shrink-0">
-        {siblings && siblings.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={() => moveTopic(siblings, topicId, -1)}
-              disabled={siblings[0] === topicId}
-              className="p-0.5 rounded text-stone-500 hover:text-amber-400 hover:bg-stone-800 cursor-pointer disabled:opacity-30 disabled:cursor-default"
-              title="Дээш зөөх"
-            >
-              <ArrowUp className="w-3 h-3" />
-            </button>
-            <button
-              type="button"
-              onClick={() => moveTopic(siblings, topicId, 1)}
-              disabled={siblings[siblings.length - 1] === topicId}
-              className="p-0.5 rounded text-stone-500 hover:text-amber-400 hover:bg-stone-800 cursor-pointer disabled:opacity-30 disabled:cursor-default"
-              title="Доош зөөх"
-            >
-              <ArrowDown className="w-3 h-3" />
-            </button>
-          </>
-        )}
         {withAdd && (
           <button
             type="button"
@@ -918,20 +925,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 const kids = group.topics
                                   .filter((t) => t.parentId === topic.id)
                                   .sort(bySubtopicOrder);
+                                const kidIds = kids.map((x) => x.id);
                                 return (
                                   <div key={topic.id} className="space-y-0.5">
-                                    <div className="flex items-center gap-0.5 group/row">
+                                    {(() => {
+                                      const sib = topLevel.map((t) => t.id);
+                                      const dp = dragProps(topic.id, sib);
+                                      return (
+                                    <div {...dp} className={`flex items-center gap-0.5 group/row ${dp.className}`}>
                                       <div className="flex-1 min-w-0">{renderTopic(topic, false)}</div>
-                                      {canAddTopics && renderRowTools(topic.id, true, group.category, topLevel.map((t) => t.id))}
+                                      {canAddTopics && renderRowTools(topic.id, true, group.category)}
                                     </div>
+                                      );
+                                    })()}
                                     {kids.length > 0 &&
                                       openParents.has(topic.id) &&
-                                      kids.map((k) => (
-                                        <div key={k.id} className="flex items-center gap-0.5">
-                                          <div className="flex-1 min-w-0">{renderTopic(k, true)}</div>
-                                          {canAddTopics && renderRowTools(k.id, false, group.category, kids.map((x) => x.id))}
-                                        </div>
-                                      ))}
+                                      kids.map((k) => {
+                                        const dp = dragProps(k.id, kidIds);
+                                        return (
+                                          <div key={k.id} {...dp} className={`flex items-center gap-0.5 ${dp.className}`}>
+                                            <div className="flex-1 min-w-0">{renderTopic(k, true)}</div>
+                                            {canAddTopics && renderRowTools(k.id, false, group.category)}
+                                          </div>
+                                        );
+                                      })}
                                     {adding && adding.parentId === topic.id && renderAddForm('Дэд сэдвийн нэр')}
                                   </div>
                                 );
