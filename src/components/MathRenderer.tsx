@@ -41,7 +41,8 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       // Contains typical LaTeX commands like \frac, \sqrt, \alpha, \pm, ^, _, \cdot, \begin, etc.
       const looksLikePureFormula = /\\(frac|sqrt|cdot|times|div|pm|mp|in|subset|sum|int|lim|alpha|beta|gamma|theta|pi|le|ge|neq|approx|mathbf|text|vec|angle|sin|cos|tan|cot|log|ln|infty|Delta|to|leftarrow|rightarrow|over|left|right|begin|pmatrix|cases)|[\^_{}]/.test(content);
       
-      if (looksLikePureFormula) {
+      // A line with words (Mongolian letters) is text, even with __italic__ or a _ in it
+      if (looksLikePureFormula && !/[А-Яа-яЁёӨөҮү]/.test(content)) {
         try {
           const html = katex.renderToString(content.trim(), {
             displayMode: block,
