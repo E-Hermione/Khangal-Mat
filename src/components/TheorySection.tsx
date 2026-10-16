@@ -226,6 +226,8 @@ function cardOrder<T>(items: T[]): (T & { wide: boolean })[] {
  */
 function formulaLines(f: string): string[] {
   if (!f.includes('\\qquad') || f.includes('\\begin')) return [f];
+  // Short enough to fit in a card on one line: kept as it is
+  if (f.replace(/\\qquad/g, '').replace(/\\[a-z]+/gi, '').replace(/[{}\s]/g, '').length <= 30) return [f];
   const pieces = f.split(/\s*(?:\\qquad\s*)+/).map((x) => x.replace(/[,;]\s*$/, '').trim()).filter(Boolean);
   const balanced = (x: string) => [...x].reduce((d, c) => (d < 0 ? d : c === '{' ? d + 1 : c === '}' ? d - 1 : d), 0) === 0;
   return pieces.length > 1 && pieces.every(balanced) ? pieces : [f];

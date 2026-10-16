@@ -13,6 +13,9 @@ export interface TopicMaterial {
   size: number;
   chunks: number;
   uploadedAt: number;
+  // Material made by the site: page 1 has room for the title, which is written there from the file's
+  // name when the file is opened (so renaming the file renames the title). Baseline in pt from the top.
+  titleAt?: { x: number; y: number; size: number };
 }
 
 const CHUNK = 900_000;
@@ -55,7 +58,25 @@ export async function materialBlob(m: TopicMaterial): Promise<Blob> {
       return (snap.data().data as Bytes).toUint8Array();
     })
   );
-  return new Blob(parts as BlobPart[], { type: 'application/pdf' });
+  if (!m.titleAt) return new Blob(parts as BlobPart[], { type: 'application/pdf' });
+  return new Blob([(await withTitle(parts, m.name.replace(/\.pdf$/i, ''), m.titleAt)) as BlobPart], { type: 'application/pdf' });
+}
+
+let titleFont: Promise<ArrayBuffer> | null = null;
+async function withTitle(parts: Uint8Array[], title: string, at: NonNullable<TopicMaterial['titleAt']>) {
+  const [{ PDFDocument, rgb }, { default: fontkit }] = await Promise.all([import('pdf-lib'), import('@pdf-lib/fontkit')]);
+  const bytes = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+  parts.reduce((o, p) => (bytes.set(p, o), o + p.length), 0);
+  const pdf = await PDFDocument.load(bytes);
+  pdf.registerFontkit(fontkit);
+  titleFont ??= fetch('/fonts/cmunbx.ttf').then((r) => r.arrayBuffer());
+  const font = await pdf.embedFont(await titleFont, { subset: true });
+  const page = pdf.getPage(0);
+  const { width, height } = page.getSize();
+  // A long name gets smaller so it fits between the margins
+  const size = Math.min(at.size, (at.size * (width - 2 * at.x)) / font.widthOfTextAtSize(title, at.size));
+  page.drawText(title, { x: at.x, y: height - at.y, size, font, color: rgb(0, 0, 0) });
+  return pdf.save();
 }
 
 export async function deleteMaterial(topicId: string, m: TopicMaterial): Promise<void> {
