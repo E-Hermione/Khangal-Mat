@@ -74,7 +74,11 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
               {/* Title & Example Number */}
               <div className="flex items-start justify-between gap-2 mb-3">
                 {/* The number, then the problem itself (no title) */}
-                <div className="flex gap-2 text-stone-900 print:text-black text-[15px] leading-relaxed">
+                <div
+                  className={`flex gap-2 text-stone-900 print:text-black text-[15px] leading-relaxed ${
+                    !isEditable && quotedRules(ex.solution).length ? 'pr-16 sm:pr-40 print:pr-0' : ''
+                  }`}
+                >
                   <span className="font-bold text-[17px] text-stone-950 shrink-0">{ex.number}.</span>
                   <MathRenderer content={ex.problem} />
                 </div>
@@ -110,7 +114,8 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
                 )}
               </div>
 
-              {/* On screen the rules the solution quotes wait behind «Холбогдох онол үзэх»; the editor and print show it all */}
+              {/* On screen the rules the solution quotes wait behind «Холбогдох онол үзэх» in the top right corner;
+                  the editor and print show it all */}
               {!isEditable && <RelatedTheory rules={quotedRules(ex.solution)} />}
 
               {/* The solution; the answer stays hidden behind «Зөв хариу» (printed as is) */}
