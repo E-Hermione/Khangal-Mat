@@ -1,4 +1,4 @@
-import { setExamActive } from '../lib/mobileNav';
+import { EXAM_FOCUS_RULE, EXAM_STOPPED_TEXT, setExamActive, stopWhenHidden } from '../lib/mobileNav';
 import React, { useState } from 'react';
 import { ClipboardCheck, Send } from 'lucide-react';
 import { MathRenderer } from './MathRenderer';
@@ -24,6 +24,19 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
   const [started, setStarted] = useState(false);
   // Going back (button or swipe) asks before leaving the test once it has started
   React.useEffect(() => (started ? setExamActive(() => setStarted(false)) : undefined), [started]);
+  // Another tab or app ends the test at once, counted as not taken: it starts again from the beginning
+  const [stopped, setStopped] = useState(false);
+  React.useEffect(
+    () =>
+      started
+        ? stopWhenHidden(() => {
+            setStarted(false);
+            setAnswers({});
+            setStopped(true);
+          })
+        : undefined,
+    [started]
+  );
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,9 +71,14 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
         <h1 className="text-xl font-black text-stone-900">Түвшин тогтоох шалгалт</h1>
         <p className="text-base font-bold text-stone-700">{test.grade}-р ангийн түвшин тогтоох сорил</p>
         <NoGuessingNotice />
+        {stopped && <p className="text-sm font-bold text-rose-700">{EXAM_STOPPED_TEXT}</p>}
+        <p className="text-sm font-bold text-rose-700">{EXAM_FOCUS_RULE}</p>
         <button
           type="button"
-          onClick={() => setStarted(true)}
+          onClick={() => {
+            setStopped(false);
+            setStarted(true);
+          }}
           className="px-6 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white text-sm font-bold cursor-pointer"
         >
           Шалгалт эхлэх

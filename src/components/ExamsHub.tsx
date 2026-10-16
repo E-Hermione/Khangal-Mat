@@ -1,4 +1,4 @@
-import { setExamActive } from '../lib/mobileNav';
+import { EXAM_FOCUS_RULE, EXAM_STOPPED_TEXT, setExamActive, stopWhenHidden } from '../lib/mobileNav';
 import React, { useState, useMemo } from 'react';
 import { GradeNumber, TopicPackage, TestPackage, TestQuestion } from '../types';
 import { GradeTestTakers } from './GradeTestTakers';
@@ -98,7 +98,14 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
       userPermissionsService.hasAccess(userId, false));
 
   // Active taking exam modal
-  const [activeExam, setActiveExam] = useState<ExamRowItem | null>(null);
+  const [activeExam, setActiveExamRaw] = useState<ExamRowItem | null>(null);
+  // Every exam opens on a warning first; leaving the page during it stops it
+  const [examReady, setExamReady] = useState(false);
+  const [examStopped, setExamStopped] = useState(false);
+  const setActiveExam = (e: ExamRowItem | null) => {
+    setExamReady(false);
+    setActiveExamRaw(e);
+  };
   // View solution modal
   const [viewSolutionExam, setViewSolutionExam] = useState<ExamRowItem | null>(null);
   // View score modal
@@ -500,8 +507,40 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
       )}
 
       {/* --- MODAL 1: TAKE EXAM (Сорил өгөх цонх) --- */}
-      {activeExam && (
+      {activeExam && !examReady && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl text-center" data-testid="exam-warning">
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl font-black">!</div>
+            <h2 className="text-lg font-black text-stone-900">{activeExam.examTitle}</h2>
+            <p className="text-sm font-bold text-rose-700">{EXAM_FOCUS_RULE}</p>
+            <p className="text-xs text-stone-500">Утасны дуудлага, мессеж, бусад аппыг сорилын өмнө хаагаарай.</p>
+            <div className="flex gap-2 justify-center">
+              <button type="button" onClick={() => setActiveExam(null)} className="px-4 py-2 rounded-xl border border-stone-300 text-sm font-bold text-stone-700 cursor-pointer">
+                Болих
+              </button>
+              <button type="button" onClick={() => setExamReady(true)} className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-sm font-bold cursor-pointer">
+                Ойлголоо, эхлэх
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {examStopped && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl text-center" role="alert">
+            <p className="text-sm font-bold text-rose-700">{EXAM_STOPPED_TEXT}</p>
+            <button type="button" onClick={() => setExamStopped(false)} className="px-5 py-2 rounded-xl bg-stone-900 text-white text-sm font-bold cursor-pointer">
+              Ойлголоо
+            </button>
+          </div>
+        </div>
+      )}
+      {activeExam && examReady && (
         <TakeExamModal
+          onLeftPage={() => {
+            setActiveExam(null);
+            setExamStopped(true);
+          }}
           exam={activeExam}
           initialAnswers={attempts[activeExam.id]?.answers || {}}
           onClose={() => setActiveExam(null)}
@@ -575,15 +614,19 @@ function TakeExamModal({
   initialAnswers,
   onClose,
   onFinish,
+  onLeftPage,
 }: {
   exam: ExamRowItem;
   initialAnswers: Record<string, string>;
   onClose: () => void;
   onFinish: (answers: Record<string, string>, score: number) => void;
+  onLeftPage: () => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({ ...initialAnswers });
   // Going back (button or swipe) asks before leaving a running exam
   React.useEffect(() => setExamActive(onClose), []);
+  // Another tab or app ends the exam at once, counted as not taken
+  React.useEffect(() => stopWhenHidden(onLeftPage), []);
   const [timeLeft, setTimeLeft] = useState<number>(() => {
     // 20, 30, or 40 minutes in seconds
     const mins = exam.tier === 1 ? 20 : exam.tier === 2 ? 30 : 40;
