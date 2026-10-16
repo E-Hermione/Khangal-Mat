@@ -88,6 +88,60 @@ export default function App() {
     setActiveView(view);
   };
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // Back navigation: every page change gets a browser history entry, so the browser's back
+  // (and a left-to-right swipe) returns to the previous page inside the site
+  type NavState = { v: typeof activeView; g: GradeNumber; t: string; l: boolean };
+  const navStack = React.useRef<NavState[]>([]);
+  const navCurrent = React.useRef<NavState | null>(null);
+  const navRestoring = React.useRef(false);
+  useEffect(() => {
+    const now: NavState = { v: activeView, g: selectedGrade, t: selectedTopicId, l: lessonChosen };
+    const prev = navCurrent.current;
+    navCurrent.current = now;
+    if (navRestoring.current) { navRestoring.current = false; return; }
+    if (topics.length === 0) return; // still loading: the first screen is not a step to go back to
+    if (!prev || (prev.v === now.v && prev.g === now.g && prev.t === now.t && prev.l === now.l)) return;
+    navStack.current.push(prev);
+    window.history.pushState({ alphaNav: navStack.current.length }, '');
+  }, [activeView, selectedGrade, selectedTopicId, lessonChosen]);
+  useEffect(() => {
+    const onPop = () => {
+      const prev = navStack.current.pop();
+      if (!prev) return;
+      navRestoring.current = true;
+      setMobileSidebarOpen(false);
+      setActiveView(prev.v); setSelectedGrade(prev.g); setSelectedTopicId(prev.t); setLessonChosen(prev.l);
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+  // Left-to-right swipe = back, except while the menu is open or inside a sideways-scrolling block
+  const mobileSidebarOpenRef = React.useRef(false);
+  mobileSidebarOpenRef.current = mobileSidebarOpen;
+  useEffect(() => {
+    let start: { x: number; y: number; t: number } | null = null;
+    const scrollsSideways = (el: Element | null) => {
+      for (; el && el !== document.body; el = el.parentElement)
+        if (el.scrollWidth > el.clientWidth + 2 && /(auto|scroll)/.test(getComputedStyle(el).overflowX)) return true;
+      return false;
+    };
+    const down = (e: TouchEvent) => {
+      const p = e.touches[0];
+      start = e.touches.length === 1 && !mobileSidebarOpenRef.current && !scrollsSideways(e.target as Element) ? { x: p.clientX, y: p.clientY, t: Date.now() } : null;
+    };
+    const up = (e: TouchEvent) => {
+      if (!start) return;
+      const p = e.changedTouches[0]; const dx = p.clientX - start.x; const dy = Math.abs(p.clientY - start.y);
+      const ok = dx > 90 && dy < dx / 2 && Date.now() - start.t < 700 && !mobileSidebarOpenRef.current;
+      start = null;
+      if (ok && navStack.current.length && !window.getSelection()?.toString()) window.history.back();
+    };
+    window.addEventListener('touchstart', down, { passive: true });
+    window.addEventListener('touchend', up, { passive: true });
+    return () => { window.removeEventListener('touchstart', down); window.removeEventListener('touchend', up); };
+  }, []);
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [accessRequestsModalOpen, setAccessRequestsModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
