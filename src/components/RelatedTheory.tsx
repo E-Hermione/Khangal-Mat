@@ -1,38 +1,27 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { BookOpen } from 'lucide-react';
-import { TheoryRule } from '../types';
 import { MathRenderer } from './MathRenderer';
 
-/** Words that say what a text is about: Mongolian words of four letters or more, formulas and numbers left out */
-const words = (t: string) =>
-  new Set(
-    (t.replace(/\$[^$]*\$/g, ' ').toLowerCase().match(/[а-яөүё]{4,}/g) || []).map((w) => w.slice(0, 6)) // the stem: endings differ
-  );
-const ruleText = (r: TheoryRule) => (r.blocks?.length ? r.blocks.map((b) => b.value).join('\n') : [r.ruleText, r.formula, r.note].filter(Boolean).join('\n'));
+const RULE = /__([^_\n]+?)__/g;
 
-/** The theory cards of the topic that best match a problem and its solution (the rules it quotes) */
-function relatedRules(theory: TheoryRule[], text: string): TheoryRule[] {
-  if (theory.length <= 1) return theory;
-  const w = words(text);
-  const scored = theory.map((r) => {
-    const rw = words(`${r.title} ${ruleText(r)}`);
-    let common = 0;
-    rw.forEach((x) => w.has(x) && common++);
-    return { r, score: common / Math.sqrt(rw.size || 1) };
-  });
-  const best = Math.max(...scored.map((s) => s.score));
-  if (best === 0) return theory;
-  return scored.filter((s) => s.score >= best * 0.7).map((s) => s.r).slice(0, 2);
-}
+/** The rules a solution quotes from the theory (written __…__) */
+export const quotedRules = (solution: string) => [...(solution || '').matchAll(RULE)].map((m) => m[1].trim());
+
+/** The solution without its quoted rules; lines left empty go too */
+export const withoutRules = (solution: string) =>
+  (solution || '')
+    .split('\n')
+    .map((l) => l.replace(RULE, '').replace(/^\s+/, '').replace(/\s{2,}/g, ' '))
+    .filter((l) => l.trim())
+    .join('\n');
 
 /**
- * «Холбогдох онол»: a small button on a problem card; it opens the theory the problem uses.
+ * «Холбогдох онол үзэх»: the rules the example's solution uses, hidden behind a small button.
  * It folds away by itself on scrolling, typing or a tap elsewhere.
  */
-export const RelatedTheory: React.FC<{ theory: TheoryRule[]; text: string }> = ({ theory, text }) => {
+export const RelatedTheory: React.FC<{ rules: string[] }> = ({ rules }) => {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
-  const rules = useMemo(() => (open ? relatedRules(theory, text) : []), [open, theory, text]);
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
@@ -48,10 +37,10 @@ export const RelatedTheory: React.FC<{ theory: TheoryRule[]; text: string }> = (
       document.removeEventListener('pointerdown', onDown);
     };
   }, [open]);
-  if (theory.length === 0) return null;
+  if (rules.length === 0) return null;
 
   return (
-    <div ref={box} className="no-print mt-2" data-no-zoom>
+    <div ref={box} className="no-print mb-2" data-no-zoom>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -64,17 +53,9 @@ export const RelatedTheory: React.FC<{ theory: TheoryRule[]; text: string }> = (
         Холбогдох онол үзэх
       </button>
       {open && (
-        <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50/60 p-3 space-y-2.5 text-[14px] text-stone-800 leading-relaxed animate-in fade-in duration-150">
-          {rules.map((r) => (
-            <div key={r.id}>
-              <div className="font-black text-stone-900 mb-1">{r.title}</div>
-              {ruleText(r)
-                .split('\n')
-                .filter((l) => l.trim())
-                .map((l, i) => (
-                  <MathRenderer key={i} content={l} />
-                ))}
-            </div>
+        <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50/60 p-3 space-y-1.5 text-[14px] text-stone-800 leading-relaxed animate-in fade-in duration-150">
+          {rules.map((r, i) => (
+            <MathRenderer key={i} content={`__${r}__`} />
           ))}
         </div>
       )}

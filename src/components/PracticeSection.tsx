@@ -1,5 +1,3 @@
-import { RelatedTheory } from './RelatedTheory';
-import type { TheoryRule } from '../types';
 import React from 'react';
 import { SolutionSteps, solutionLines } from './SolutionSteps';
 import { RevealAnswer } from './RevealAnswer';
@@ -10,8 +8,6 @@ import { PencilLine, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
 import { LessonSectionHeader } from './LessonSectionHeader';
 
 interface PracticeSectionProps {
-  // The topic's theory, behind «Холбогдох онол» on each problem
-  theory?: TheoryRule[];
   practice: PracticeProblem[];
   teacherVersion?: boolean;
   // Students never see practice answers or solutions
@@ -27,7 +23,6 @@ interface PracticeSectionProps {
 }
 
 export const PracticeSection: React.FC<PracticeSectionProps> = ({
-  theory = [],
   practice,
   teacherVersion = false,
   allowSolutions = false,
@@ -165,8 +160,6 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                     <MathRenderer content={item.hint} className="inline" />
                   </div>
                 )}
-
-                {!isEditable && !teacherVersion && <RelatedTheory theory={theory} text={`${item.question}\n${item.solution || ''}`} />}
 
                 {/* Teacher Solution on Screen or in Print: steps like the worked examples */}
                 {showSol && (item.answer || item.solution) && (
