@@ -26,7 +26,18 @@ import {
   Play,
   ArrowRight,
   Unlock,
+  Lightbulb,
+  PencilLine,
+  FileText,
 } from 'lucide-react';
+
+// The lesson tabs on phones: a short name under an icon
+const TAB_LOOK = {
+  theory: { short: 'Дүрэм', Icon: BookOpen },
+  examples: { short: 'Жишээ', Icon: Lightbulb },
+  practice: { short: 'Дасгал', Icon: PencilLine },
+  materials: { short: 'Материал', Icon: FileText },
+} as const;
 
 interface TopicPageProps {
   topic: TopicPackage;
@@ -501,12 +512,13 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           return (
             tabs.length > 0 && (
               <div
-                className="flex gap-1.5 p-1.5 mb-4 rounded-2xl bg-stone-200 no-print"
+                className="flex gap-1 md:gap-1.5 p-1 md:p-1.5 mb-4 rounded-2xl bg-stone-200 no-print"
                 role="tablist"
                 data-testid="lesson-tabs"
               >
                 {tabs.map(([key, label]) => {
                   const on = lessonTab === key;
+                  const { short, Icon } = TAB_LOOK[key];
                   return (
                     <button
                       key={key}
@@ -514,15 +526,14 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       role="tab"
                       aria-selected={on}
                       onClick={() => setLessonTab(key)}
-                      className={`flex-1 py-3 px-2 rounded-lg text-sm md:text-base font-extrabold transition-colors cursor-pointer ${
-                        on ? 'text-amber-600' : 'text-stone-400 hover:text-stone-600'
+                      className={`flex-1 min-w-0 flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-2 py-2 md:py-3 px-1 md:px-2 rounded-xl text-xs md:text-base font-extrabold transition-all cursor-pointer ${
+                        on ? 'bg-white text-amber-600 shadow-sm' : 'text-stone-500 hover:text-stone-700'
                       }`}
                     >
-                      <span className="relative inline-block">
-                        {label}
-                        {/* Under the selected word only, half a centimetre past each end */}
-                        {on && <span className="absolute -bottom-1.5 left-[-0.5cm] right-[-0.5cm] h-[3px] rounded-full bg-stone-900" />}
-                      </span>
+                      <Icon className="w-5 h-5 shrink-0" />
+                      {/* Phones: a short name on one line; wider screens: the full name */}
+                      <span className="md:hidden whitespace-nowrap">{short}</span>
+                      <span className="hidden md:inline">{label}</span>
                     </button>
                   );
                 })}
