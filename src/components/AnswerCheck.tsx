@@ -140,7 +140,7 @@ const NumberPicker: React.FC<{ value: string; numbers: number[]; onPick: (v: str
         <div
           ref={list}
           role="listbox"
-          className="absolute left-0 top-full mt-1 z-30 w-16 max-h-40 overflow-y-auto overscroll-contain rounded-lg border border-stone-200 bg-white shadow-lg py-1"
+          className="absolute left-0 top-full mt-1 z-30 w-16 max-h-40 overflow-y-auto overscroll-contain thin-scroll rounded-lg border border-stone-200 bg-white shadow-lg py-1"
         >
           {numbers.map((n) => {
             const on = String(n) === value;

@@ -452,3 +452,23 @@ html.dark .bg-stone-900 .bg-black {
     filter: none;
   }
 }
+
+/* A thin, quiet scrollbar for small scrolling lists */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d6d3d1 transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: #d6d3d1;
+  border-radius: 9999px;
+}
+.thin-scroll::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+}
