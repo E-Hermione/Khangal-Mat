@@ -35,7 +35,15 @@ export const AnswerCheck: React.FC<{ items: { number: number; answer: string }[]
 
   return (
     <div className="no-print mb-4 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 space-y-2" data-no-zoom data-testid="answer-check">
-      <div className="flex flex-wrap items-center gap-2 text-sm">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => setHelp((h) => !h)}
+          className="flex items-center gap-1 mr-3 text-xs font-semibold text-stone-500 hover:text-stone-700 cursor-pointer"
+        >
+          <Info className="w-3.5 h-3.5" /> Хэрхэн бичих вэ?
+        </button>
         <div className="flex items-stretch gap-1.5">
         <div className="flex items-center rounded-lg border border-stone-300 bg-white focus-within:ring-2 focus-within:ring-amber-300">
           {/* The number is picked from a short scrolling list, so it is always one of the problems */}
@@ -86,14 +94,6 @@ export const AnswerCheck: React.FC<{ items: { number: number; answer: string }[]
             )}
           </button>
         </div>
-        <button
-          type="button"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => setHelp((h) => !h)}
-          className="flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-stone-700 cursor-pointer"
-        >
-          <Info className="w-3.5 h-3.5" /> Хэрхэн бичих вэ?
-        </button>
       </div>
       {help && (
         <div ref={helpRef}>
