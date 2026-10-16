@@ -17,8 +17,8 @@
  * its digit's cell and takes no width. Fractional digits are blue and commas red.
  */
 
-const COMMA = '<span class="co-comma">,</span>';
-const OLD_COMMA = '<span class="co-comma co-old">,</span>';
+const COMMA = '<span class="co-comma">.</span>';
+const OLD_COMMA = '<span class="co-comma co-old">.</span>';
 
 type Cell = { text: string; cls?: string };
 
@@ -238,7 +238,7 @@ export function numberLine(args: string[]): string {
   const w = (max - min) * step + pad * 2;
   const x = (v: number) => pad + (v - min) * step;
   const y = 52;
-  const num = (v: number) => String(v).replace('.', ',').replace('-', '−');
+  const num = (v: number) => String(v).replace('-', '−');
   let svg = `<line x1="${pad - 12}" y1="${y}" x2="${w - pad + 12}" y2="${y}" stroke="#44403c" stroke-width="1.5"/>`;
   svg += `<path d="M${w - pad + 12} ${y} l-7 -4 v8 z" fill="#44403c"/>`;
   for (let v = min; v <= max; v++) {
@@ -271,7 +271,7 @@ export function partLine(args: string[]): string {
   const w = (max - min) * step + pad * 2;
   const x = (v: number) => pad + (v - min) * step;
   const y = 50;
-  const num = (v: number) => String(Math.round(v * 1000) / 1000).replace('.', ',').replace('-', '−');
+  const num = (v: number) => String(Math.round(v * 1000) / 1000).replace('-', '−');
   let svg = `<line x1="${pad - 12}" y1="${y}" x2="${w - pad + 12}" y2="${y}" stroke="#44403c" stroke-width="1.5"/>`;
   svg += `<path d="M${w - pad + 12} ${y} l-7 -4 v8 z" fill="#44403c"/>`;
   for (let v = min; v <= max; v++) {
