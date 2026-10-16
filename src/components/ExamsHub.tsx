@@ -1,3 +1,4 @@
+import { setExamActive } from '../lib/mobileNav';
 import React, { useState, useMemo } from 'react';
 import { GradeNumber, TopicPackage, TestPackage, TestQuestion } from '../types';
 import { GradeTestTakers } from './GradeTestTakers';
@@ -581,6 +582,8 @@ function TakeExamModal({
   onFinish: (answers: Record<string, string>, score: number) => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({ ...initialAnswers });
+  // Going back (button or swipe) asks before leaving a running exam
+  React.useEffect(() => setExamActive(onClose), []);
   const [timeLeft, setTimeLeft] = useState<number>(() => {
     // 20, 30, or 40 minutes in seconds
     const mins = exam.tier === 1 ? 20 : exam.tier === 2 ? 30 : 40;

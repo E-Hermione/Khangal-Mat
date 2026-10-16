@@ -1,3 +1,4 @@
+import { enterScrollPlace, loadJSON, saveJSON, setSwipeHandler } from '../lib/mobileNav';
 import React, { useState, useEffect } from 'react';
 import { GradeNumber, TopicPackage, PrintOptions, TheoryRule, WorkedExample, PracticeProblem } from '../types';
 import { TheorySection } from './TheorySection';
@@ -62,8 +63,28 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   const grantedSolutions = usePracticeSolutions(isAdmin ? undefined : getFirebaseAuth().currentUser?.uid, topic.id);
   const [grantsOpen, setGrantsOpen] = useState(false);
   // The lesson shows one part at a time: theory, examples or exercises (printing shows them all)
-  const [lessonTab, setLessonTab] = useState<'theory' | 'examples' | 'practice' | 'materials'>('theory');
-  useEffect(() => setLessonTab('theory'), [topic.id]);
+  type LessonTab = 'theory' | 'examples' | 'practice' | 'materials';
+  // Each lesson reopens on the tab and at the place the reader left it
+  const [lessonTab, setLessonTab] = useState<LessonTab>(() => loadJSON<LessonTab>(`alpha-tab:${topic.id}`) || 'theory');
+  useEffect(() => setLessonTab(loadJSON<LessonTab>(`alpha-tab:${topic.id}`) || 'theory'), [topic.id]);
+  useEffect(() => {
+    saveJSON(`alpha-tab:${topic.id}`, lessonTab);
+    enterScrollPlace(`lesson:${topic.id}:${lessonTab}`);
+  }, [topic.id, lessonTab]);
+  // Sideways swipes move between the tabs shown
+  const tabOrder = React.useRef<LessonTab[]>([]);
+  const lessonTabRef = React.useRef(lessonTab);
+  lessonTabRef.current = lessonTab;
+  useEffect(() => {
+    setSwipeHandler((dir) => {
+      const order = tabOrder.current; const i = order.indexOf(lessonTabRef.current);
+      const j = dir === 'next' ? i + 1 : i - 1;
+      if (i < 0 || j < 0 || j >= order.length) return false;
+      setLessonTab(order[j]);
+      return true;
+    });
+    return () => setSwipeHandler(null);
+  }, []);
   const [grantCount, setGrantCount] = useState<number | null>(null);
   useEffect(() => {
     setGrantCount(null);
@@ -480,6 +501,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
               ['materials', 'Нэмэлт материал', 0, isAdmin],
             ] as const
           ).filter(([, , , shown]) => shown);
+          tabOrder.current = tabs.map(([key]) => key);
           if (tabs.length > 0 && !tabs.some(([key]) => key === lessonTab)) setTimeout(() => setLessonTab(tabs[0][0]));
           return (
             tabs.length > 0 && (

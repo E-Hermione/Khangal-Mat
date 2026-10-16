@@ -1,4 +1,6 @@
+import { EXAM_LEAVE_TEXT, enterScrollPlace, handleSwipe, isExamActive, leaveExam, loadJSON, saveJSON } from './lib/mobileNav';
 import React, { useState, useEffect, useMemo } from 'react';
+import { MobileExtras, useDarkMode } from './components/MobileExtras';
 import { AlphaLogo } from './components/AlphaLogo';
 import { GradeNumber, TopicPackage } from './types';
 import { storageService } from './services/storageService';
@@ -41,6 +43,8 @@ import {
 import { userPermissionsService } from './services/userPermissionsService';
 import {
   Menu,
+  Moon,
+  Sun,
   Printer,
   ChevronDown,
   X,
@@ -57,6 +61,7 @@ import {
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [dark, toggleDark] = useDarkMode(!!currentUser);
   const [authLoading, setAuthLoading] = useState(isFirebaseConfigured);
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
@@ -99,25 +104,57 @@ export default function App() {
     const now: NavState = { v: activeView, g: selectedGrade, t: selectedTopicId, l: lessonChosen };
     const prev = navCurrent.current;
     navCurrent.current = now;
-    if (navRestoring.current) { navRestoring.current = false; return; }
+    // the lesson remembers its own tab and scroll; other pages remember their scroll here
+    if (!(activeView === 'topics' && lessonChosen)) enterScrollPlace(`${activeView}:${selectedGrade}:${activeView === 'exams' ? selectedTopicId : ''}`);
     if (topics.length === 0) return; // still loading: the first screen is not a step to go back to
+    const uid = getFirebaseAuth().currentUser?.uid;
+    if (uid) saveJSON(`alpha-nav:${uid}`, now);
+    if (navRestoring.current) { navRestoring.current = false; return; }
     if (!prev || (prev.v === now.v && prev.g === now.g && prev.t === now.t && prev.l === now.l)) return;
     navStack.current.push(prev);
     window.history.pushState({ alphaNav: navStack.current.length }, '');
   }, [activeView, selectedGrade, selectedTopicId, lessonChosen]);
+  // A running exam gets its own history entry: going back asks before leaving it
+  const examEntry = React.useRef(false);
+  const ignorePop = React.useRef(false);
   useEffect(() => {
+    const onExam = () => {
+      if (isExamActive() && !examEntry.current) {
+        examEntry.current = true;
+        window.history.pushState({ alphaExam: true }, '');
+      } else if (!isExamActive() && examEntry.current) {
+        // the exam closed by itself: drop its history entry quietly
+        examEntry.current = false;
+        ignorePop.current = true;
+        window.history.back();
+      }
+    };
     const onPop = () => {
+      if (ignorePop.current) { ignorePop.current = false; return; }
+      if (examEntry.current) {
+        examEntry.current = false;
+        if (window.confirm(EXAM_LEAVE_TEXT)) leaveExam();
+        else { examEntry.current = true; window.history.pushState({ alphaExam: true }, ''); }
+        return;
+      }
       const prev = navStack.current.pop();
       if (!prev) return;
       navRestoring.current = true;
       setMobileSidebarOpen(false);
       setActiveView(prev.v); setSelectedGrade(prev.g); setSelectedTopicId(prev.t); setLessonChosen(prev.l);
-      window.scrollTo(0, 0);
     };
+    const onUnload = (e: BeforeUnloadEvent) => { if (isExamActive()) { e.preventDefault(); e.returnValue = EXAM_LEAVE_TEXT; } };
+    window.addEventListener('alpha-exam-change', onExam);
     window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
+    window.addEventListener('beforeunload', onUnload);
+    return () => {
+      window.removeEventListener('alpha-exam-change', onExam);
+      window.removeEventListener('popstate', onPop);
+      window.removeEventListener('beforeunload', onUnload);
+    };
   }, []);
-  // Left-to-right swipe = back, except while the menu is open or inside a sideways-scrolling block
+  // Sideways swipes: inside a lesson they move between its tabs; left-to-right otherwise goes back.
+  // Not while the menu is open or inside a sideways-scrolling block
   const mobileSidebarOpenRef = React.useRef(false);
   mobileSidebarOpenRef.current = mobileSidebarOpen;
   useEffect(() => {
@@ -134,9 +171,11 @@ export default function App() {
     const up = (e: TouchEvent) => {
       if (!start) return;
       const p = e.changedTouches[0]; const dx = p.clientX - start.x; const dy = Math.abs(p.clientY - start.y);
-      const ok = dx > 90 && dy < dx / 2 && Date.now() - start.t < 700 && !mobileSidebarOpenRef.current;
+      const ok = Math.abs(dx) > 90 && dy < Math.abs(dx) / 2 && Date.now() - start.t < 700 && !mobileSidebarOpenRef.current && !window.getSelection()?.toString();
       start = null;
-      if (ok && navStack.current.length && !window.getSelection()?.toString()) window.history.back();
+      if (!ok || document.querySelector('.fixed.inset-0')) return; // a dialog is open
+      if (dx < 0) handleSwipe('next');
+      else if (!handleSwipe('prev') && navStack.current.length) window.history.back();
     };
     window.addEventListener('touchstart', down, { passive: true });
     window.addEventListener('touchend', up, { passive: true });
@@ -212,6 +251,13 @@ export default function App() {
         stopLearningPlan();
       }
       setActiveView('home');
+      // Open the page the user was on last time
+      const last = loadJSON<{ v: typeof activeView; g: GradeNumber; t: string; l: boolean }>(`alpha-nav:${fbUser.uid}`);
+      if (last && (last.v === 'topics' || last.v === 'exams' || last.v === 'home')) {
+        try {
+          if (topicMeta(last.t).title !== last.t) { setSelectedGrade(last.g); setSelectedTopicId(last.t); setLessonChosen(last.l); setActiveView(last.v); }
+        } catch { /* the topic is gone */ }
+      }
 
       // Device tracking must never block sign-in (e.g. before the rules are deployed)
       const device = await registerCurrentDevice(fbUser.uid).catch((err) => {
@@ -596,6 +642,7 @@ export default function App() {
     <div
       className="min-h-screen flex flex-col font-sans text-stone-900 bg-stone-900 print:bg-white overflow-x-clip pt-14 print:pt-0"
     >
+      <MobileExtras menuOpen={mobileSidebarOpen} />
       {printSelection.pageHeaders && <div className="hidden print-page-title">{document.title}</div>}
       {/* The admin edits content, so copying stays allowed for them */}
       <CopyProtection enabled={appSettings.copyProtection && currentUser.role !== 'admin'} />
@@ -632,6 +679,15 @@ export default function App() {
 
           {/* Action buttons */}
           <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
+            <button
+              type="button"
+              onClick={toggleDark}
+              className="p-1.5 rounded-lg text-stone-300 hover:bg-stone-800 cursor-pointer"
+              aria-label={dark ? 'Гэрэлтэй горим' : 'Харанхуй горим'}
+              title={dark ? 'Гэрэлтэй горим' : 'Харанхуй горим'}
+            >
+              {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
             {currentUser.role !== 'admin' && getFirebaseAuth().currentUser && (
               <AnnouncementsBell uid={getFirebaseAuth().currentUser!.uid} />
             )}

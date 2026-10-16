@@ -1,3 +1,4 @@
+import { setExamActive } from '../lib/mobileNav';
 import React, { useState } from 'react';
 import { ClipboardCheck, Send } from 'lucide-react';
 import { MathRenderer } from './MathRenderer';
@@ -21,6 +22,8 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
   // Drawn once when the page opens
   const [test] = useState(() => buildPlacementTest(grade));
   const [started, setStarted] = useState(false);
+  // Going back (button or swipe) asks before leaving the test once it has started
+  React.useEffect(() => (started ? setExamActive(() => setStarted(false)) : undefined), [started]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

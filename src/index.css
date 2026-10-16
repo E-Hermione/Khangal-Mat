@@ -415,3 +415,40 @@ body.copy-protected *:not(input):not(textarea) {
   border-radius: 0.65rem;
   overflow-x: auto;
 }
+
+/* ---------- phone helpers ---------- */
+header.screen-header {
+  transition: transform 0.2s ease;
+}
+@media (max-width: 1023px) {
+  html.hdr-hidden header.screen-header {
+    transform: translateY(-100%);
+  }
+}
+
+/* ---------- dark mode: the light page turned dark; dark bars and pictures keep their colours ---------- */
+html.dark {
+  background: #fff;
+  filter: invert(0.92) hue-rotate(180deg);
+}
+html.dark img,
+html.dark video,
+html.dark canvas,
+html.dark iframe,
+html.dark .bg-stone-900,
+html.dark .bg-stone-950,
+html.dark .bg-black {
+  filter: invert(1) hue-rotate(180deg);
+}
+html.dark .bg-stone-900 img,
+html.dark .bg-stone-900 .bg-stone-900,
+html.dark .bg-stone-950 .bg-stone-900,
+html.dark .bg-stone-900 .bg-stone-950,
+html.dark .bg-stone-900 .bg-black {
+  filter: none;
+}
+@media print {
+  html.dark {
+    filter: none;
+  }
+}

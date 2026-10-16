@@ -238,7 +238,7 @@ function replaceProportions(text: string, put: (html: string, display: boolean) 
 const INLINE_MACROS = { '\\frac': '\\dfrac' };
 
 // Working in columns always stands centred on its own line; the words after it start a new line
-const centred = (html: string) => `<div class="my-2 flex justify-center">${html}</div>`;
+const centred = (html: string) => `<div class="co-wrap my-2 flex justify-center">${html}</div>`;
 // Marks a placeholder as a centred working (see the clean up around it)
 const BLOCK = '\u0001';
 
