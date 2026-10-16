@@ -267,7 +267,7 @@ export function partLine(args: string[]): string {
   const points = args[2].split(';').map((x) => Number(x.trim().replace(',', '.'))).filter((x) => !Number.isNaN(x));
   if (!(max > min) || max - min > 24) return '';
   const step = 46;
-  const pad = 26;
+  const pad = 56; // room for the «[−3,4] = −4» labels under the ends of the line
   const w = (max - min) * step + pad * 2;
   const x = (v: number) => pad + (v - min) * step;
   const y = 50;
