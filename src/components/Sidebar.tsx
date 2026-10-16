@@ -31,6 +31,8 @@ import { ExamFilter, HomePanel } from './SidebarPanels';
 import { getFirebaseAuth } from '../services/firebase';
 
 interface SidebarProps {
+  // General view: topics marked «Шалгасан» show their names in green
+  showChecked?: boolean;
   selectedGrade: GradeNumber;
   onSelectGrade: (grade: GradeNumber) => void;
   selectedTopicId: string;
@@ -55,6 +57,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
+  showChecked = false,
   selectedGrade,
   onSelectGrade,
   selectedTopicId,
@@ -75,6 +78,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onExamFilter,
   onOpenPlan,
 }) => {
+  // Topics whose every part is marked looked over (the «Шалгаж дууссан» button)
+  const readChecked = () => {
+    const c = cloud.getAppSettings().contentChecks || {};
+    return new Set(Object.keys(c).filter((id) => ['theory', 'examples', 'practice', 'test1', 'test2', 'test3'].every((p) => (c[id] || []).includes(p))));
+  };
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(readChecked);
+  useEffect(() => {
+    const refresh = () => setCheckedIds(readChecked());
+    window.addEventListener('app-settings-updated', refresh);
+    return () => window.removeEventListener('app-settings-updated', refresh);
+  }, []);
   const showLessonNav = !onSelectView || activeView === 'topics';
   const showExamNav = !!onSelectView && (activeView === 'exams' || activeView === 'mistakes');
   // Lessons can be listed by grade (all topics) or as the user's plan (plan topics of every grade)
@@ -889,7 +903,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     }`}
                                   />
                                 )}
-                                <span className="truncate">{topic.title}</span>
+                                <span className={`truncate ${showChecked && checkedIds.has(topic.id) ? 'text-emerald-400' : ''}`}>{topic.title}</span>
                               </div>
 
                               <div className="flex items-center space-x-1 shrink-0 ml-1">

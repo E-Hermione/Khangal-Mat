@@ -926,6 +926,7 @@ export default function App() {
       <div className="flex-1 flex w-full max-w-[1600px] mx-auto items-start bg-stone-100 print:bg-white">
         {/* Left Sidebar */}
         <Sidebar
+          showChecked={currentUser?.role === 'admin' && generalView && !previewAsUser}
           selectedGrade={selectedGrade}
           onSelectGrade={(g) => {
             setSelectedGrade(g);
