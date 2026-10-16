@@ -27,10 +27,12 @@ export const MaterialsSection: React.FC<{ topicId: string }> = ({ topicId }) => 
   useEffect(() => () => blobs.current.forEach((url) => URL.revokeObjectURL(url)), []);
 
   const urlOf = async (m: TopicMaterial) => {
-    let url = blobs.current.get(m.id);
+    // Kept per name too: the title on page 1 is written from the name, so a renamed file is built again
+    const key = `${m.id}:${m.name}`;
+    let url = blobs.current.get(key);
     if (!url) {
       url = URL.createObjectURL(await materialBlob(m));
-      blobs.current.set(m.id, url);
+      blobs.current.set(key, url);
     }
     return url;
   };
