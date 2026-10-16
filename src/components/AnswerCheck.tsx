@@ -1,51 +1,83 @@
 import React, { useState } from 'react';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, Info, XCircle } from 'lucide-react';
 import { checkAnswer } from '../utils/answerCheck';
 
-/** The student types an answer and sees at once whether it is right */
-export const AnswerCheck: React.FC<{ answer: string; onResult?: (right: boolean) => void }> = ({ answer, onResult }) => {
+/** One small checker for a whole list of problems: the student types the problem number and the answer */
+export const AnswerCheck: React.FC<{ items: { number: number; answer: string }[] }> = ({ items }) => {
+  const [num, setNum] = useState('');
   const [typed, setTyped] = useState('');
-  const [result, setResult] = useState<boolean | null>(null);
+  const [result, setResult] = useState<{ n: number; ok: boolean } | 'nonum' | null>(null);
+  const [help, setHelp] = useState(false);
   const check = () => {
-    const r = checkAnswer(typed, answer);
-    if (r === null) return;
-    setResult(r);
-    onResult?.(r);
+    const n = parseInt(num, 10);
+    const item = items.find((x) => x.number === n);
+    if (!item) return setResult('nonum');
+    const r = checkAnswer(typed, item.answer);
+    if (r !== null) setResult({ n, ok: r });
   };
+  const reset = () => setResult(null);
+
   return (
-    <div className="no-print mt-2 flex flex-wrap items-center justify-end gap-x-2 gap-y-1" data-no-zoom>
-      {result === true && (
-        <span className="flex items-center gap-1 text-xs font-bold text-emerald-700">
-          <CheckCircle2 className="w-3.5 h-3.5" /> Зөв
-        </span>
-      )}
-      {result === false && (
-        <span className="flex items-center gap-1 text-xs font-bold text-rose-700">
-          <XCircle className="w-3.5 h-3.5" /> Буруу, дахин бодоорой
-        </span>
-      )}
-      <div className="flex items-center rounded-lg border border-stone-300 overflow-hidden focus-within:ring-2 focus-within:ring-amber-300">
-        <input
-          value={typed}
-          onChange={(e) => {
-            setTyped(e.target.value);
-            setResult(null);
-          }}
-          onKeyDown={(e) => e.key === 'Enter' && check()}
-          inputMode="text"
-          placeholder="Хариу"
-          title="Жишээ нь 2 1/3, 0.5, -4"
-          className={`w-28 px-2.5 py-1 text-sm focus:outline-none ${result === true ? 'bg-emerald-50' : result === false ? 'bg-rose-50' : 'bg-white'}`}
-        />
+    <div className="no-print mb-4 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 space-y-2" data-no-zoom data-testid="answer-check">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="font-bold text-stone-700">Хариугаа шалгах</span>
+        <div className="flex items-center rounded-lg border border-stone-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-amber-300">
+          <input
+            value={num}
+            onChange={(e) => {
+              setNum(e.target.value.replace(/\D/g, ''));
+              reset();
+            }}
+            inputMode="numeric"
+            placeholder="№"
+            aria-label="Бодлогын дугаар"
+            className="w-11 px-2 py-1 text-center border-r border-stone-200 focus:outline-none"
+          />
+          <input
+            value={typed}
+            onChange={(e) => {
+              setTyped(e.target.value);
+              reset();
+            }}
+            onKeyDown={(e) => e.key === 'Enter' && check()}
+            placeholder="Хариу"
+            aria-label="Хариу"
+            className="w-28 px-2 py-1 focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={check}
+            disabled={!num || !typed.trim()}
+            className="px-2.5 py-1 bg-stone-900 hover:bg-black disabled:opacity-40 text-white text-xs font-bold cursor-pointer"
+          >
+            Шалгах
+          </button>
+        </div>
         <button
           type="button"
-          onClick={check}
-          disabled={!typed.trim()}
-          className="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 disabled:opacity-50 border-l border-stone-300 text-stone-700 text-xs font-bold cursor-pointer"
+          onClick={() => setHelp((h) => !h)}
+          className="flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-stone-700 cursor-pointer"
         >
-          Шалгах
+          <Info className="w-3.5 h-3.5" /> Хэрхэн бичих вэ?
         </button>
+        {result === 'nonum' && <span className="text-xs font-bold text-rose-700">Ийм дугаартай бодлого алга.</span>}
+        {result && result !== 'nonum' && (
+          <span className={`flex items-center gap-1 text-xs font-bold ${result.ok ? 'text-emerald-700' : 'text-rose-700'}`}>
+            {result.ok ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+            {result.n}-р бодлого {result.ok ? 'зөв' : 'буруу, дахин бодоорой'}
+          </span>
+        )}
       </div>
+      {help && (
+        <ul className="text-xs text-stone-600 leading-relaxed list-none space-y-0.5">
+          <li>Энгийн бутархай: <b>3/4</b></li>
+          <li>Холимог бутархай: бүхэл хэсэг, зай, дараа нь бутархай хэсэг. Жишээ нь <b>2 1/3</b></li>
+          <li>Аравтын бутархай: цэгээр. Жишээ нь <b>0.5</b></li>
+          <li>Сөрөг тоо: <b>-4</b></li>
+          <li>Хэд хэдэн хариутай бол таслалаар зааглана. Жишээ нь <b>3, -3</b></li>
+          <li>Нэгж (см, кг, төгрөг) бичихгүй байж болно. Ижил утгатай бол <b>1/2</b> ба <b>0.5</b> аль аль нь зөв.</li>
+        </ul>
+      )}
     </div>
   );
 };

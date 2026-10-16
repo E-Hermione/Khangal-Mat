@@ -102,7 +102,11 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
           const showSol = allowSolutions && (teacherVersion || showSolutionsOnScreen);
           // Solutions open: cards like the worked examples (two columns unless turned off)
           const cards = showSol;
+          // Students check their answers in one box while the solutions are closed
+          const checkable = !showSol && !isEditable && !teacherVersion ? practice.filter((p) => p.answer) : [];
           return (
+          <>
+          {checkable.length > 0 && <AnswerCheck items={checkable.map((p) => ({ number: p.number, answer: p.answer }))} />}
         <div
           className={
             cards
@@ -173,9 +177,6 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                   </div>
                 )}
 
-                {/* Students: type the answer and check it before looking at the solution */}
-                {!isEditable && !teacherVersion && item.answer && <AnswerCheck answer={item.answer} />}
-
                 {/* Teacher Solution on Screen or in Print: steps like the worked examples */}
                 {showSol && (item.answer || item.solution) && (
                   <div className="mt-3">
@@ -193,6 +194,7 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
             );
           })}
         </div>
+          </>
           );
         })()
       )}
