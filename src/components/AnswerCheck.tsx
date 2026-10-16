@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, Info, XCircle } from 'lucide-react';
+import { CheckCircle2, ChevronDown, Info, XCircle } from 'lucide-react';
 import { checkAnswer } from '../utils/answerCheck';
 
 /** One small checker for a whole list of problems: the student types the problem number and the answer */
@@ -37,27 +37,17 @@ export const AnswerCheck: React.FC<{ items: { number: number; answer: string }[]
     <div className="no-print mb-4 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 space-y-2" data-no-zoom data-testid="answer-check">
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <div className="flex items-stretch gap-1.5">
-        <div className="flex items-center rounded-lg border border-stone-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-amber-300">
-          {/* The number is picked from the list, so it is always one of the problems */}
-          <select
+        <div className="flex items-center rounded-lg border border-stone-300 bg-white focus-within:ring-2 focus-within:ring-amber-300">
+          {/* The number is picked from a short scrolling list, so it is always one of the problems */}
+          <NumberPicker
             value={num}
-            onChange={(e) => {
-              setNum(e.target.value);
+            numbers={items.map((x) => x.number)}
+            onPick={(v) => {
+              setNum(v);
               reset();
               setHelp(false);
             }}
-            aria-label="Бодлогын дугаар"
-            className={`px-1.5 py-1 border-r border-stone-200 bg-white focus:outline-none cursor-pointer ${num ? 'text-stone-900' : 'text-stone-400'}`}
-          >
-            <option value="" disabled>
-              №
-            </option>
-            {items.map((x) => (
-              <option key={x.number} value={x.number}>
-                {x.number}
-              </option>
-            ))}
-          </select>
+          />
           <input
             value={typed}
             onChange={(e) => {
@@ -67,7 +57,7 @@ export const AnswerCheck: React.FC<{ items: { number: number; answer: string }[]
             onKeyDown={(e) => e.key === 'Enter' && check()}
             placeholder="Хариугаа энд бичнэ үү"
             aria-label="Хариу"
-            className="w-44 px-2 py-1 focus:outline-none"
+            className="w-44 px-2 py-1 rounded-r-lg focus:outline-none"
           />
         </div>
           <button
@@ -115,6 +105,62 @@ export const AnswerCheck: React.FC<{ items: { number: number; answer: string }[]
           <li>Хэд хэдэн хариутай бол таслалаар зааглана. Жишээ нь <b>3, -3</b></li>
           <li>Нэгж (см, кг, төгрөг) бичихгүй байж болно. Ижил утгатай бол <b>1/2</b> ба <b>0.5</b> аль аль нь зөв.</li>
         </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** A small number button; its list opens below, a few rows high, and scrolls inside itself */
+const NumberPicker: React.FC<{ value: string; numbers: number[]; onPick: (v: string) => void }> = ({ value, numbers, onPick }) => {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
+    document.addEventListener('pointerdown', onDown);
+    // The chosen number in view
+    list.current?.querySelector('[data-on="1"]')?.scrollIntoView({ block: 'nearest' });
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [open]);
+  return (
+    <div ref={box} className="relative border-r border-stone-200 self-stretch flex">
+      <button
+        type="button"
+        aria-label="Бодлогын дугаар"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className={`flex items-center gap-0.5 pl-2 pr-1 cursor-pointer ${value ? 'text-stone-900 font-bold' : 'text-stone-400'}`}
+      >
+        {value || '№'}
+        <ChevronDown className={`w-3.5 h-3.5 text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div
+          ref={list}
+          role="listbox"
+          className="absolute left-0 top-full mt-1 z-30 w-16 max-h-40 overflow-y-auto overscroll-contain rounded-lg border border-stone-200 bg-white shadow-lg py-1"
+        >
+          {numbers.map((n) => {
+            const on = String(n) === value;
+            return (
+              <button
+                key={n}
+                type="button"
+                role="option"
+                aria-selected={on}
+                data-on={on ? '1' : undefined}
+                onClick={() => {
+                  onPick(String(n));
+                  setOpen(false);
+                }}
+                className={`block w-full px-2 py-1 text-center text-sm cursor-pointer ${on ? 'bg-amber-100 text-amber-900 font-bold' : 'text-stone-700 hover:bg-stone-100'}`}
+              >
+                {n}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
