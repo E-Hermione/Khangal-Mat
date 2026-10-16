@@ -1,4 +1,4 @@
-import { EXAM_FOCUS_RULE, EXAM_STOPPED_TEXT, setExamActive, stopWhenHidden } from '../lib/mobileNav';
+import { EXAM_STOPPED_TEXT, setExamActive, stopWhenHidden } from '../lib/mobileNav';
 import React, { useState } from 'react';
 import { ClipboardCheck, Send } from 'lucide-react';
 import { MathRenderer } from './MathRenderer';
@@ -72,7 +72,6 @@ export const PlacementTestView: React.FC<{ uid: string; grade: GradeNumber }> = 
         <p className="text-base font-bold text-stone-700">{test.grade}-р ангийн түвшин тогтоох сорил</p>
         <NoGuessingNotice />
         {stopped && <p className="text-sm font-bold text-rose-700">{EXAM_STOPPED_TEXT}</p>}
-        <p className="text-sm font-bold text-rose-700">{EXAM_FOCUS_RULE}</p>
         <button
           type="button"
           onClick={() => {
