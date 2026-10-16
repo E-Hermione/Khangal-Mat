@@ -19,7 +19,7 @@ import { catalogTopics, isGroupTopic, learningPlan, startLearningPlan, stopLearn
 import { AuthUser } from './types';
 import { clearStoredAuth, saveStoredAuth } from './utils/deviceManager';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { clearLocalData, getFirebaseAuth, isFirebaseConfigured } from './services/firebase';
+import { getFirebaseAuth, isFirebaseConfigured } from './services/firebase';
 import { loadSession, signOutUser, isRegistering, isGeneralLogin } from './services/authService';
 import { startCloudSync, stopCloudSync, cloud } from './services/cloud';
 import { seedCloudFromLegacyData } from './services/migration';
@@ -155,6 +155,8 @@ export default function App() {
   // Not while the menu is open or inside a sideways-scrolling block
   const mobileSidebarOpenRef = React.useRef(false);
   mobileSidebarOpenRef.current = mobileSidebarOpen;
+  const lessonOpenRef = React.useRef(false);
+  lessonOpenRef.current = activeView === 'topics' && lessonChosen;
   useEffect(() => {
     let start: { x: number; y: number; t: number } | null = null;
     const scrollsSideways = (el: Element | null) => {
@@ -164,16 +166,25 @@ export default function App() {
     };
     const down = (e: TouchEvent) => {
       const p = e.touches[0];
-      start = e.touches.length === 1 && !mobileSidebarOpenRef.current && !scrollsSideways(e.target as Element) ? { x: p.clientX, y: p.clientY, t: Date.now() } : null;
+      start = e.touches.length === 1 && !scrollsSideways(e.target as Element) ? { x: p.clientX, y: p.clientY, t: Date.now() } : null;
     };
     const up = (e: TouchEvent) => {
       if (!start) return;
       const p = e.changedTouches[0]; const dx = p.clientX - start.x; const dy = Math.abs(p.clientY - start.y);
-      const ok = Math.abs(dx) > 90 && dy < Math.abs(dx) / 2 && Date.now() - start.t < 700 && !mobileSidebarOpenRef.current && !window.getSelection()?.toString();
+      const ok = Math.abs(dx) > 90 && dy < Math.abs(dx) / 2 && Date.now() - start.t < 700 && !window.getSelection()?.toString();
       start = null;
-      if (!ok || document.querySelector('.fixed.inset-0')) return; // a dialog is open
+      if (!ok) return;
+      // The open menu closes with a right-to-left swipe
+      if (mobileSidebarOpenRef.current) {
+        if (dx < 0) setMobileSidebarOpen(false);
+        return;
+      }
+      if (document.querySelector('.fixed.inset-0')) return; // a dialog is open
       if (dx < 0) handleSwipe('next');
-      else if (!handleSwipe('prev') && navStack.current.length) window.history.back();
+      else if (handleSwipe('prev')) return;
+      // On the lesson's first tab a left-to-right swipe opens the menu (where the menu slides in)
+      else if (lessonOpenRef.current && window.innerWidth < 1024) setMobileSidebarOpen(true);
+      else if (navStack.current.length) window.history.back();
     };
     window.addEventListener('touchstart', down, { passive: true });
     window.addEventListener('touchend', up, { passive: true });
@@ -211,9 +222,8 @@ export default function App() {
     const uid = getFirebaseAuth().currentUser?.uid;
     if (uid) await forgetCurrentDevice(uid);
     await signOutUser().catch((err) => console.error('Sign out failed', err));
-    // The stored lessons go too; a fresh page starts with a clean connection
+    // A fresh page starts with a clean connection (signing out removed the stored lessons)
     stopCloudSync();
-    await clearLocalData();
     window.location.reload();
   };
 

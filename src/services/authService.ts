@@ -10,7 +10,7 @@ import {
   User,
 } from 'firebase/auth';
 import { doc, getDoc, writeBatch } from 'firebase/firestore';
-import { getFirebaseAuth, getDb } from './firebase';
+import { clearLocalData, getFirebaseAuth, getDb } from './firebase';
 import { AuthUser, GradeNumber, UserProfile } from '../types';
 import { getOrCreateDeviceId } from '../utils/deviceManager';
 
@@ -294,9 +294,11 @@ export async function loadSession(fbUser: User): Promise<SessionResult> {
   };
 }
 
-export function signOutUser(): Promise<void> {
+/** Every sign-out, asked for or forced (device limit, blocked account), also removes the lessons kept on the device */
+export async function signOutUser(): Promise<void> {
   setGeneralLogin(false);
-  return signOut(getFirebaseAuth());
+  await signOut(getFirebaseAuth());
+  await clearLocalData();
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
