@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useDragRows, moveItem } from './useDragRows';
 import { useCtrlS } from '../utils/useCtrlS';
 import { WorkedExamplesSection } from './WorkedExamplesSection';
 import { PracticeSection } from './PracticeSection';
@@ -20,8 +21,6 @@ import {
   PencilLine,
   Award,
   Upload,
-  ArrowUp,
-  ArrowDown,
   History,
   ChevronDown,
   Check,
@@ -85,6 +84,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   const savedTimer = React.useRef<number | undefined>(undefined);
   // Theory tab: the one theory item being edited
   const [theoryIdx, setTheoryIdx] = useState(0);
+  const dragRow = useDragRows();
   // Examples tab: the one example being edited
   const [exampleIdx, setExampleIdx] = useState(0);
   // Practice tab: the one exercise being edited
@@ -484,18 +484,14 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                   {(() => {
                     const numbers = theoryNumbers(topic.theory || []);
                     const list = topic.theory || [];
-                    const move = (idx: number, step: -1 | 1) => {
-                      const j = idx + step;
-                      if (j < 0 || j >= list.length) return;
-                      const updated = [...list];
-                      [updated[idx], updated[j]] = [updated[j], updated[idx]];
-                      setTopic({ ...topic, theory: updated });
-                      setTheoryIdx(j);
+                    const move = (from: number, to: number) => {
+                      setTopic({ ...topic, theory: moveItem(list, from, to) });
+                      setTheoryIdx(to);
                     };
                     return list.map((rule, idx) => {
                       const on = idx === Math.min(theoryIdx, list.length - 1);
                       return (
-                        <div key={rule.id || idx} className={`flex items-center rounded-lg ${on ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}>
+                        <div key={rule.id || idx} {...(({ dragClass, ...r }) => r)(dragRow('theory', idx, move))} className={`flex items-center rounded-lg ${dragRow('theory', idx, move).dragClass} ${on ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}>
                           <button
                             type="button"
                             onClick={() => setTheoryIdx(idx)}
@@ -503,13 +499,6 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                             title={rule.title}
                           >
                             <span className="font-bold">{numbers[idx]}.</span> {rule.title}
-                          </button>
-                          {/* Move this item up or down */}
-                          <button type="button" onClick={() => move(idx, -1)} disabled={idx === 0} title="Дээш зөөх" className="p-0.5 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
-                            <ArrowUp className="w-3 h-3" />
-                          </button>
-                          <button type="button" onClick={() => move(idx, 1)} disabled={idx === list.length - 1} title="Доош зөөх" className="p-0.5 pr-1 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
-                            <ArrowDown className="w-3 h-3" />
                           </button>
                         </div>
                       );
@@ -601,13 +590,9 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
               setTopic({ ...topic, examples: next.map((x, i) => ({ ...x, number: i + 1 })) });
             const update = (i: number, patch: Partial<WorkedExample>) =>
               setList(list.map((x, j) => (j === i ? { ...x, ...patch } : x)));
-            const move = (i: number, step: -1 | 1) => {
-              const j = i + step;
-              if (j < 0 || j >= list.length) return;
-              const next = [...list];
-              [next[i], next[j]] = [next[j], next[i]];
-              setList(next);
-              setExampleIdx(j);
+            const move = (from: number, to: number) => {
+              setList(moveItem(list, from, to));
+              setExampleIdx(to);
             };
             return (
             <div className="space-y-4">
@@ -638,19 +623,13 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                   {list.map((ex, idx) => {
                     const on = idx === sel;
                     return (
-                      <div key={ex.id || idx} className={`flex items-center rounded-lg ${on ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}>
+                      <div key={ex.id || idx} {...(({ dragClass, ...r }) => r)(dragRow('examples', idx, move))} className={`flex items-center rounded-lg ${dragRow('examples', idx, move).dragClass} ${on ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}>
                         <button
                           type="button"
                           onClick={() => setExampleIdx(idx)}
                           className={`flex-1 min-w-0 text-left px-2 py-1.5 text-xs cursor-pointer truncate ${on ? 'font-bold' : ''}`}
                         >
                           Жишээ {idx + 1}
-                        </button>
-                        <button type="button" onClick={() => move(idx, -1)} disabled={idx === 0} title="Дээш зөөх" className="p-0.5 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
-                          <ArrowUp className="w-3 h-3" />
-                        </button>
-                        <button type="button" onClick={() => move(idx, 1)} disabled={idx === list.length - 1} title="Доош зөөх" className="p-0.5 pr-1 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
-                          <ArrowDown className="w-3 h-3" />
                         </button>
                       </div>
                     );
@@ -737,13 +716,9 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                   setTopic({ ...topic, practice: next.map((x, i) => ({ ...x, number: i + 1 })) });
                 const update = (i: number, patch: Partial<PracticeProblem>) =>
                   setList(list.map((x, j) => (j === i ? { ...x, ...patch } : x)));
-                const move = (i: number, step: -1 | 1) => {
-                  const j = i + step;
-                  if (j < 0 || j >= list.length) return;
-                  const next = [...list];
-                  [next[i], next[j]] = [next[j], next[i]];
-                  setList(next);
-                  setPracticeIdx(j);
+                const move = (from: number, to: number) => {
+                  setList(moveItem(list, from, to));
+                  setPracticeIdx(to);
                 };
                 const item = sel >= 0 ? list[sel] : undefined;
                 return (
@@ -753,19 +728,13 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
                       {list.map((p, idx) => {
                         const on = idx === sel;
                         return (
-                          <div key={p.id || idx} className={`flex items-center rounded-lg ${on ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}>
+                          <div key={p.id || idx} {...(({ dragClass, ...r }) => r)(dragRow('practice', idx, move))} className={`flex items-center rounded-lg ${dragRow('practice', idx, move).dragClass} ${on ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'}`}>
                             <button
                               type="button"
                               onClick={() => setPracticeIdx(idx)}
                               className={`flex-1 min-w-0 text-left px-2 py-1.5 text-xs cursor-pointer truncate ${on ? 'font-bold' : ''}`}
                             >
                               Дасгал {idx + 1}
-                            </button>
-                            <button type="button" onClick={() => move(idx, -1)} disabled={idx === 0} title="Дээш зөөх" className="p-0.5 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
-                              <ArrowUp className="w-3 h-3" />
-                            </button>
-                            <button type="button" onClick={() => move(idx, 1)} disabled={idx === list.length - 1} title="Доош зөөх" className="p-0.5 pr-1 opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer">
-                              <ArrowDown className="w-3 h-3" />
                             </button>
                           </div>
                         );
