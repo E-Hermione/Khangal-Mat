@@ -1,4 +1,4 @@
-import { enterScrollPlace, loadJSON, saveJSON, setSwipeHandler } from '../lib/mobileNav';
+import { setSwipeHandler } from '../lib/mobileNav';
 import React, { useState, useEffect } from 'react';
 import { GradeNumber, TopicPackage, PrintOptions, TheoryRule, WorkedExample, PracticeProblem } from '../types';
 import { TheorySection } from './TheorySection';
@@ -64,13 +64,8 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   const [grantsOpen, setGrantsOpen] = useState(false);
   // The lesson shows one part at a time: theory, examples or exercises (printing shows them all)
   type LessonTab = 'theory' | 'examples' | 'practice' | 'materials';
-  // Each lesson reopens on the tab and at the place the reader left it
-  const [lessonTab, setLessonTab] = useState<LessonTab>(() => loadJSON<LessonTab>(`alpha-tab:${topic.id}`) || 'theory');
-  useEffect(() => setLessonTab(loadJSON<LessonTab>(`alpha-tab:${topic.id}`) || 'theory'), [topic.id]);
-  useEffect(() => {
-    saveJSON(`alpha-tab:${topic.id}`, lessonTab);
-    enterScrollPlace(`lesson:${topic.id}:${lessonTab}`);
-  }, [topic.id, lessonTab]);
+  const [lessonTab, setLessonTab] = useState<LessonTab>('theory');
+  useEffect(() => setLessonTab('theory'), [topic.id]);
   // Sideways swipes move between the tabs shown
   const tabOrder = React.useRef<LessonTab[]>([]);
   const lessonTabRef = React.useRef(lessonTab);

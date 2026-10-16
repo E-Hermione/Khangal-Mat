@@ -1,4 +1,4 @@
-import { EXAM_LEAVE_TEXT, enterScrollPlace, handleSwipe, isExamActive, leaveExam, loadJSON, saveJSON } from './lib/mobileNav';
+import { EXAM_LEAVE_TEXT, handleSwipe, isExamActive, leaveExam } from './lib/mobileNav';
 import React, { useState, useEffect, useMemo } from 'react';
 import { MobileExtras, useDarkMode } from './components/MobileExtras';
 import { AlphaLogo } from './components/AlphaLogo';
@@ -104,11 +104,7 @@ export default function App() {
     const now: NavState = { v: activeView, g: selectedGrade, t: selectedTopicId, l: lessonChosen };
     const prev = navCurrent.current;
     navCurrent.current = now;
-    // the lesson remembers its own tab and scroll; other pages remember their scroll here
-    if (!(activeView === 'topics' && lessonChosen)) enterScrollPlace(`${activeView}:${selectedGrade}:${activeView === 'exams' ? selectedTopicId : ''}`);
     if (topics.length === 0) return; // still loading: the first screen is not a step to go back to
-    const uid = getFirebaseAuth().currentUser?.uid;
-    if (uid) saveJSON(`alpha-nav:${uid}`, now);
     if (navRestoring.current) { navRestoring.current = false; return; }
     if (!prev || (prev.v === now.v && prev.g === now.g && prev.t === now.t && prev.l === now.l)) return;
     navStack.current.push(prev);
@@ -142,6 +138,7 @@ export default function App() {
       navRestoring.current = true;
       setMobileSidebarOpen(false);
       setActiveView(prev.v); setSelectedGrade(prev.g); setSelectedTopicId(prev.t); setLessonChosen(prev.l);
+      window.scrollTo(0, 0);
     };
     const onUnload = (e: BeforeUnloadEvent) => { if (isExamActive()) { e.preventDefault(); e.returnValue = EXAM_LEAVE_TEXT; } };
     window.addEventListener('alpha-exam-change', onExam);
@@ -251,14 +248,6 @@ export default function App() {
         stopLearningPlan();
       }
       setActiveView('home');
-      // Open the page the user was on last time
-      const last = loadJSON<{ v: typeof activeView; g: GradeNumber; t: string; l: boolean }>(`alpha-nav:${fbUser.uid}`);
-      if (last && (last.v === 'topics' || last.v === 'exams' || last.v === 'home')) {
-        try {
-          if (topicMeta(last.t).title !== last.t) { setSelectedGrade(last.g); setSelectedTopicId(last.t); setLessonChosen(last.l); setActiveView(last.v); }
-        } catch { /* the topic is gone */ }
-      }
-
       // Device tracking must never block sign-in (e.g. before the rules are deployed)
       const device = await registerCurrentDevice(fbUser.uid).catch((err) => {
         console.error('Device registration failed', err);

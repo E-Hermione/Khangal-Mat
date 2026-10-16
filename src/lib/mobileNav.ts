@@ -2,7 +2,6 @@
  * Small shared state for phone-friendly navigation:
  * - a running exam asks before the student leaves it (back button, swipe, closing the page)
  * - the open lesson can take sideways swipes to move between its tabs
- * - scroll positions are remembered per page
  */
 
 // ---------- running exam ----------
@@ -32,46 +31,3 @@ export function setSwipeHandler(h: SwipeHandler | null) {
   swipeHandler = h;
 }
 export const handleSwipe = (dir: 'prev' | 'next') => (swipeHandler ? swipeHandler(dir) : false);
-
-// ---------- remembered places ----------
-const safe = <T,>(f: () => T, fallback: T): T => {
-  try {
-    return f();
-  } catch {
-    return fallback;
-  }
-};
-export const loadJSON = <T,>(key: string): T | null => safe(() => JSON.parse(localStorage.getItem(key) || 'null') as T | null, null);
-export const saveJSON = (key: string, v: unknown) => safe(() => localStorage.setItem(key, JSON.stringify(v)), undefined);
-
-const scrollKey = (place: string) => `alpha-scroll:${place}`;
-let scrollPlace = '';
-let scrollTimer: number | undefined;
-/** Remember the scroll position for `place`, and go back to where the reader was in it */
-export function enterScrollPlace(place: string) {
-  if (place === scrollPlace) return;
-  scrollPlace = place;
-  const y = loadJSON<number>(scrollKey(place)) ?? 0;
-  // wait for the page to render before scrolling
-  let tries = 0;
-  const go = () => {
-    if (scrollPlace !== place) return;
-    if (document.documentElement.scrollHeight - window.innerHeight >= y || tries > 20) window.scrollTo(0, y);
-    else {
-      tries++;
-      window.setTimeout(go, 100);
-    }
-  };
-  window.setTimeout(go, 50);
-}
-if (typeof window !== 'undefined') {
-  window.addEventListener(
-    'scroll',
-    () => {
-      window.clearTimeout(scrollTimer);
-      const place = scrollPlace;
-      scrollTimer = window.setTimeout(() => place && place === scrollPlace && saveJSON(scrollKey(place), Math.round(window.scrollY)), 250);
-    },
-    { passive: true }
-  );
-}
