@@ -16,18 +16,12 @@ export const AnswerCheck: React.FC<{ items: { number: number; answer: string }[]
     if (r !== null) setResult({ n, ok: r });
   };
   const reset = () => setResult(null);
+  const ok = result && result !== 'nonum' ? result.ok : null;
 
   return (
     <div className="no-print mb-4 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 space-y-2" data-no-zoom data-testid="answer-check">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="flex items-center gap-1.5 font-bold text-stone-700">
-          {/* The result as a mark only: a green tick or a red cross before the words */}
-          {result && result !== 'nonum' &&
-            (result.ok ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" aria-label="Зөв" />
-            ) : (
-              <XCircle className="w-5 h-5 text-rose-600" aria-label="Буруу" />
-            ))}
+        <span className="font-bold text-stone-700">
           Хариугаа шалгах
         </span>
         <div className="flex items-center rounded-lg border border-stone-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-amber-300">
@@ -57,9 +51,22 @@ export const AnswerCheck: React.FC<{ items: { number: number; answer: string }[]
             type="button"
             onClick={check}
             disabled={!num || !typed.trim()}
-            className="px-2.5 py-1 bg-stone-900 hover:bg-black disabled:opacity-40 text-white text-xs font-bold cursor-pointer"
+            className={`px-2.5 py-1 min-w-[4.5rem] flex items-center justify-center gap-1 disabled:opacity-40 text-white text-xs font-bold cursor-pointer transition-colors ${
+              ok === true ? 'bg-emerald-600' : ok === false ? 'bg-rose-600' : 'bg-stone-900 hover:bg-black'
+            }`}
           >
-            Шалгах
+            {/* The button itself shows the result: green «Зөв» or red «Буруу» */}
+            {ok === true ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5" /> Зөв
+              </>
+            ) : ok === false ? (
+              <>
+                <XCircle className="w-3.5 h-3.5" /> Буруу
+              </>
+            ) : (
+              'Шалгах'
+            )}
           </button>
         </div>
         <button
