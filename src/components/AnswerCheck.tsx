@@ -21,9 +21,7 @@ export const AnswerCheck: React.FC<{ items: { number: number; answer: string }[]
   return (
     <div className="no-print mb-4 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 space-y-2" data-no-zoom data-testid="answer-check">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="font-bold text-stone-700">
-          Хариугаа шалгах
-        </span>
+        <div className="flex items-stretch gap-1.5">
         <div className="flex items-center rounded-lg border border-stone-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-amber-300">
           <input
             value={num}
@@ -43,16 +41,21 @@ export const AnswerCheck: React.FC<{ items: { number: number; answer: string }[]
               reset();
             }}
             onKeyDown={(e) => e.key === 'Enter' && check()}
-            placeholder="Хариу"
+            placeholder="Хариугаа энд бичнэ үү"
             aria-label="Хариу"
-            className="w-28 px-2 py-1 focus:outline-none"
+            className="w-44 px-2 py-1 focus:outline-none"
           />
+        </div>
           <button
             type="button"
             onClick={check}
             disabled={!num || !typed.trim()}
-            className={`px-2.5 py-1 min-w-[4.5rem] flex items-center justify-center gap-1 disabled:opacity-40 text-white text-xs font-bold cursor-pointer transition-colors ${
-              ok === true ? 'bg-emerald-600' : ok === false ? 'bg-rose-600' : 'bg-stone-900 hover:bg-black'
+            className={`px-3 py-1 min-w-[4.5rem] flex items-center justify-center gap-1 rounded-lg border text-xs font-bold cursor-pointer transition-colors disabled:cursor-default ${
+              ok === true
+                ? 'bg-emerald-600 border-emerald-700 text-white'
+                : ok === false
+                ? 'bg-rose-600 border-rose-700 text-white'
+                : 'bg-white border-stone-400 text-stone-800 hover:bg-stone-100 disabled:text-stone-400 disabled:border-stone-300'
             }`}
           >
             {/* The button itself shows the result: green «Зөв» or red «Буруу» */}
