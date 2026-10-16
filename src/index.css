@@ -27,6 +27,9 @@
   }
 }
 
+/* the top bar is fixed: keep scrolled-to anchors below it */
+html { scroll-padding-top: 4rem; }
+
 /* Print specific styles */
 @media print {
   html, body {

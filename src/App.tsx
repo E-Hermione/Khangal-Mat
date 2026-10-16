@@ -540,7 +540,7 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen flex flex-col font-sans text-stone-900 bg-stone-900 print:bg-white overflow-x-clip"
+      className="min-h-screen flex flex-col font-sans text-stone-900 bg-stone-900 print:bg-white overflow-x-clip pt-14 print:pt-0"
     >
       {printSelection.pageHeaders && <div className="hidden print-page-title">{document.title}</div>}
       {/* The admin edits content, so copying stays allowed for them */}
@@ -550,7 +550,7 @@ export default function App() {
         watermark={[currentUser.userId, currentUser.phoneNumber].filter(Boolean).join(' • ')}
       />
       {/* Top Navigation Bar on Screen */}
-      <header className="screen-header bg-stone-900 border-b border-stone-800 sticky top-0 z-40 h-14 px-4 flex items-center shadow-2xs no-print">
+      <header className="screen-header bg-stone-900 border-b border-stone-800 fixed top-0 inset-x-0 z-40 h-14 px-4 flex items-center shadow-2xs no-print">
         <div className="w-full max-w-[1600px] mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
             <button
