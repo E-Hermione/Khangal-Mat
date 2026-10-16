@@ -1,4 +1,4 @@
-import { EXAM_STOPPED_TEXT, setExamActive, stopWhenHidden } from '../lib/mobileNav';
+import { setExamActive } from '../lib/mobileNav';
 import React, { useState, useMemo } from 'react';
 import { GradeNumber, TopicPackage, TestPackage, TestQuestion } from '../types';
 import { GradeTestTakers } from './GradeTestTakers';
@@ -99,8 +99,6 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
 
   // Active taking exam modal
   const [activeExam, setActiveExam] = useState<ExamRowItem | null>(null);
-  // Leaving the page during an exam stops it
-  const [examStopped, setExamStopped] = useState(false);
   // View solution modal
   const [viewSolutionExam, setViewSolutionExam] = useState<ExamRowItem | null>(null);
   // View score modal
@@ -502,22 +500,8 @@ export const ExamsHub: React.FC<ExamsHubProps> = ({
       )}
 
       {/* --- MODAL 1: TAKE EXAM (Сорил өгөх цонх) --- */}
-      {examStopped && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl text-center" role="alert">
-            <p className="text-sm font-bold text-rose-700">{EXAM_STOPPED_TEXT}</p>
-            <button type="button" onClick={() => setExamStopped(false)} className="px-5 py-2 rounded-xl bg-stone-900 text-white text-sm font-bold cursor-pointer">
-              Ойлголоо
-            </button>
-          </div>
-        </div>
-      )}
       {activeExam && (
         <TakeExamModal
-          onLeftPage={() => {
-            setActiveExam(null);
-            setExamStopped(true);
-          }}
           exam={activeExam}
           initialAnswers={attempts[activeExam.id]?.answers || {}}
           onClose={() => setActiveExam(null)}
@@ -591,19 +575,15 @@ function TakeExamModal({
   initialAnswers,
   onClose,
   onFinish,
-  onLeftPage,
 }: {
   exam: ExamRowItem;
   initialAnswers: Record<string, string>;
   onClose: () => void;
   onFinish: (answers: Record<string, string>, score: number) => void;
-  onLeftPage: () => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({ ...initialAnswers });
   // Going back (button or swipe) asks before leaving a running exam
   React.useEffect(() => setExamActive(onClose), []);
-  // Another tab or app ends the exam at once, counted as not taken
-  React.useEffect(() => stopWhenHidden(onLeftPage), []);
   const [timeLeft, setTimeLeft] = useState<number>(() => {
     // 20, 30, or 40 minutes in seconds
     const mins = exam.tier === 1 ? 20 : exam.tier === 2 ? 30 : 40;
