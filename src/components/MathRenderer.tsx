@@ -295,7 +295,7 @@ function columnSum(a: string, op: string, b: string, r: string): string {
 
 // **word** in the plain text is shown bold, __word__ italic
 function bold(html: string): string {
-  return html.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>').replace(/__([^_\n]+?)__/g, '<em>$1</em>');
+  return html.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>').replace(/__([^_\n]+?)__/g, '<em class="font-semibold">$1</em>');
 }
 
 function escapeHtml(text: string): string {
