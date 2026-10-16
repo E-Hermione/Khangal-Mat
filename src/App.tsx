@@ -198,7 +198,8 @@ export default function App() {
       saveStoredAuth(session.user);
       setLoginNotice(null);
       setCurrentUser(session.user);
-      setGeneralView(session.isAdmin && isGeneralLogin());
+      // An admin always starts in the general view (its home is the topic check list)
+      setGeneralView(session.isAdmin);
       setPreviewAsUser(false);
     } catch (err) {
       console.error('Failed to open session', err);
