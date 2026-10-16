@@ -20,7 +20,16 @@ export const AnswerCheck: React.FC<{ items: { number: number; answer: string }[]
   return (
     <div className="no-print mb-4 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 space-y-2" data-no-zoom data-testid="answer-check">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="font-bold text-stone-700">Хариугаа шалгах</span>
+        <span className="flex items-center gap-1.5 font-bold text-stone-700">
+          {/* The result as a mark only: a green tick or a red cross before the words */}
+          {result && result !== 'nonum' &&
+            (result.ok ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" aria-label="Зөв" />
+            ) : (
+              <XCircle className="w-5 h-5 text-rose-600" aria-label="Буруу" />
+            ))}
+          Хариугаа шалгах
+        </span>
         <div className="flex items-center rounded-lg border border-stone-300 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-amber-300">
           <input
             value={num}
@@ -61,12 +70,6 @@ export const AnswerCheck: React.FC<{ items: { number: number; answer: string }[]
           <Info className="w-3.5 h-3.5" /> Хэрхэн бичих вэ?
         </button>
         {result === 'nonum' && <span className="text-xs font-bold text-rose-700">Ийм дугаартай бодлого алга.</span>}
-        {result && result !== 'nonum' && (
-          <span className={`flex items-center gap-1 text-xs font-bold ${result.ok ? 'text-emerald-700' : 'text-rose-700'}`}>
-            {result.ok ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
-            {result.n}-р бодлого {result.ok ? 'зөв' : 'буруу, дахин бодоорой'}
-          </span>
-        )}
       </div>
       {help && (
         <ul className="text-xs text-stone-600 leading-relaxed list-none space-y-0.5">
