@@ -1,6 +1,6 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, Auth } from 'firebase/auth';
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator, Firestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, terminate, clearIndexedDbPersistence, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator, Firestore } from 'firebase/firestore';
 
 // Firebase web config comes from VITE_FIREBASE_* variables (see .env.example).
 // These values are public identifiers, not secrets.
@@ -59,4 +59,16 @@ export function getDb(): Firestore {
     if (emulatorHost) connectFirestoreEmulator(db, ...splitHost(emulatorHost));
   }
   return db;
+}
+
+/** Signing out: remove the lessons kept on this device, so the next person on it cannot read them */
+export async function clearLocalData(): Promise<void> {
+  if (!db) return;
+  try {
+    await terminate(db);
+    await clearIndexedDbPersistence(db);
+  } catch (err) {
+    console.error('Clearing the local copy failed', err);
+  }
+  db = null;
 }

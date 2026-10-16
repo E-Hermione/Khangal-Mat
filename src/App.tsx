@@ -19,7 +19,7 @@ import { catalogTopics, isGroupTopic, learningPlan, startLearningPlan, stopLearn
 import { AuthUser } from './types';
 import { clearStoredAuth, saveStoredAuth } from './utils/deviceManager';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { getFirebaseAuth, isFirebaseConfigured } from './services/firebase';
+import { clearLocalData, getFirebaseAuth, isFirebaseConfigured } from './services/firebase';
 import { loadSession, signOutUser, isRegistering, isGeneralLogin } from './services/authService';
 import { startCloudSync, stopCloudSync, cloud } from './services/cloud';
 import { seedCloudFromLegacyData } from './services/migration';
@@ -210,7 +210,11 @@ export default function App() {
     clearStoredAuth();
     const uid = getFirebaseAuth().currentUser?.uid;
     if (uid) await forgetCurrentDevice(uid);
-    signOutUser().catch((err) => console.error('Sign out failed', err));
+    await signOutUser().catch((err) => console.error('Sign out failed', err));
+    // The stored lessons go too; a fresh page starts with a clean connection
+    stopCloudSync();
+    await clearLocalData();
+    window.location.reload();
   };
 
   // Turns a Firebase sign-in into the app's user and loads the data they may see
