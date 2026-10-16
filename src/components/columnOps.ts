@@ -310,3 +310,21 @@ export function braceArgs(s: string, count: number): { args: string[]; end: numb
   }
   return { args, end: i };
 }
+
+/**
+ * Two equations solved side by side, each in a small card: \eqpair{x + 7 = 10; x = 10 - 7; x = 3}{3 + x = 8; x = 8 - 3; x = 5}.
+ * The lines line up at their "=" and the last line's answer is boxed.
+ */
+export function eqPair(args: string[], tex: (s: string) => string): string {
+  const card = (arg: string) => {
+    const lines = arg.split(';').map((l) => l.trim()).filter(Boolean);
+    const rows = lines.map((l, i) => {
+      const k = l.indexOf('=');
+      if (k < 0) return l;
+      const rhs = l.slice(k + 1).trim();
+      return `${l.slice(0, k).trim()} &= ${i === lines.length - 1 ? `\\boxed{${rhs}}` : rhs}`;
+    });
+    return `<div class="eq-card">${tex(`\\begin{aligned}${rows.join(' \\\\ ')}\\end{aligned}`)}</div>`;
+  };
+  return `<div class="eq-pair">${args.map(card).join('')}</div>`;
+}

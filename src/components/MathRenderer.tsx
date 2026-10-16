@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import katex from 'katex';
-import { braceArgs, colDiv, colMul, expandBracket, numberLine, partLine, placeTable, proportion } from './columnOps';
+import { braceArgs, colDiv, colMul, eqPair, expandBracket, numberLine, partLine, placeTable, proportion } from './columnOps';
 
 interface MathRendererProps {
   content: string;
@@ -19,7 +19,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     if (!content) return '';
 
     // If block is explicitly requested and content does not already have delimiters
-    const hasLongDiv = /\\(longdiv|colmul|coldiv|proportion|expandbr|placetable|numline|partline)\{/.test(content);
+    const hasLongDiv = /\\(longdiv|colmul|coldiv|proportion|expandbr|placetable|numline|partline|eqpair)\{/.test(content);
     if (block && !content.includes('$') && !hasLongDiv) {
       const columns = columnSums(content);
       if (columns) return columns;
@@ -107,6 +107,12 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
         !s ? '' : /[А-Яа-яЁёӨөҮү]/.test(s) ? s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!) : katex.renderToString(s, { throwOnError: false });
       const html = placeTable(parsed.args, tex);
       return keep(open === '$$' ? `<div class="my-2 overflow-x-auto scrollbar-none"><div class="w-max mx-auto">${html}</div></div>` : html);
+    });
+    // Two equations solved side by side in small cards: $$\eqpair{x + 7 = 10; …}{3 + x = 8; …}$$
+    processed0 = processed0.replace(/(\$\$|\$)\s*\\eqpair([^$]*?)\s*(\$\$|\$)/g, (whole, _open, body) => {
+      const parsed = braceArgs(body, 2);
+      if (!parsed) return whole;
+      return keep(eqPair(parsed.args, (m) => katex.renderToString(m, { throwOnError: false })));
     });
     // A proportion with its outer and middle terms joined by coloured lines: \proportion{x}{12}{5}{4}
     processed0 = replaceProportions(processed0, (html, display) =>
