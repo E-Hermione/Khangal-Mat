@@ -70,7 +70,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     //    or a lone leftover $ pair would turn the placeholder into a red KaTeX error.
     let processed0 = content.replace(/(\$\$|\$)?\s*\\longdiv\{\s*(\d+)\s*\}\{\s*(\d+)\s*\}\s*(\$\$|\$)?/g, (whole, open, a, b) =>
       Number(b) > 0
-        ? keep(centred(longDivision(Number(a), Number(b))))
+        ? keep(centred(longDivision(Number(a), Number(b)))) + BLOCK
         : whole
     );
     // Decimal multiplication and division in columns: \colmul{57,46}{24}, \coldiv{1,3}{2,5}
@@ -79,7 +79,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       (whole, open, op, a, b) => {
         try {
           const html = op === 'colmul' ? colMul(a, b) : colDiv(a, b);
-          return keep(centred(html));
+          return keep(centred(html)) + BLOCK;
         } catch {
           return whole;
         }
@@ -116,9 +116,14 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       /\$\s*(\d+)\s*(?::|\\div)\s*(\d+)\s*=\s*(\d+)\s*\$\s*,?\s*\(?\s*үлдэгдэл\s*\$\s*(\d+)\s*\$\s*\)?\.?/g,
       (whole, a, b, q, r) => {
         const [A, B, Q, R] = [a, b, q, r].map(Number);
-        return B > 0 && Q === Math.floor(A / B) && R === A % B ? keep(centred(longDivision(A, B))) : whole;
+        return B > 0 && Q === Math.floor(A / B) && R === A % B ? keep(centred(longDivision(A, B))) + BLOCK : whole;
       }
     );
+    // Around a centred working: no space or line break before it, and the words after it start their
+    // own line without a leading space or comma, with a capital letter
+    processed0 = processed0
+      .replace(/[ \t]*\n?[ \t]*(\u0000\d+\u0000\u0001)/g, '$1')
+      .replace(/\u0001(?:[ \t]*\n)?[ \t]*(?:[,;.:][ \t]*)?(\S?)/g, (_, c: string) => c.toUpperCase());
 
     // 1. Replace $$...$$ block math
     let processed = processed0.replace(/\$\$([\s\S]+?)\$\$/g, (whole, math) => {
@@ -228,6 +233,8 @@ const INLINE_MACROS = { '\\frac': '\\dfrac' };
 
 // Working in columns always stands centred on its own line; the words after it start a new line
 const centred = (html: string) => `<div class="my-2 flex justify-center">${html}</div>`;
+// Marks a placeholder as a centred working (see the clean up around it)
+const BLOCK = '\u0001';
 
 /**
  * Division in columns, as taught in school:
