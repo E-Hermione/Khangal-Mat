@@ -333,6 +333,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
               {((isAdmin && selection.examples) || (!isAdmin && isExamplesAllowed)) && (
                 <div className={lessonTab === 'examples' ? '' : 'hidden print:block'}>
                 <WorkedExamplesSection
+                  theory={isAdmin || isTheoryAllowed ? t.theory : []}
                   examples={t.examples}
                   twoColumns={t.examplesTwoColumns !== false}
                   isEditable={isAdmin && isEditMode}
@@ -347,6 +348,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
               {((isAdmin && selection.practice) || (!isAdmin && isPracticeAllowed)) && (
                 <div className={lessonTab === 'practice' ? '' : 'hidden print:block'}>
                 <PracticeSection
+                  theory={isAdmin || isTheoryAllowed ? t.theory : []}
                   practice={
                     grantedSolutions
                       ? (t.practice || []).map((p) => (grantedSolutions[p.id] ? { ...p, ...grantedSolutions[p.id] } : p))

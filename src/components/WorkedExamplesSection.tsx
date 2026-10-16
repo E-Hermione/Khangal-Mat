@@ -1,3 +1,5 @@
+import type { TheoryRule } from '../types';
+import { RelatedTheory } from './RelatedTheory';
 import React from 'react';
 import { WorkedExample } from '../types';
 import { MathRenderer } from './MathRenderer';
@@ -7,6 +9,8 @@ import { Lightbulb, Plus, Edit2, Trash2 } from 'lucide-react';
 import { LessonSectionHeader } from './LessonSectionHeader';
 
 interface WorkedExamplesSectionProps {
+  // The topic's theory, behind «Холбогдох онол» on each card
+  theory?: TheoryRule[];
   examples: WorkedExample[];
   isEditable?: boolean;
   onEditExample?: (example: WorkedExample) => void;
@@ -17,6 +21,7 @@ interface WorkedExamplesSectionProps {
 }
 
 export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
+  theory = [],
   examples,
   isEditable = false,
   onEditExample,
@@ -108,6 +113,8 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
                   </div>
                 )}
               </div>
+
+              {!isEditable && <RelatedTheory theory={theory} text={`${ex.problem}\n${ex.solution || ''}`} />}
 
               {/* The solution; the answer stays hidden behind «Зөв хариу» (printed as is) */}
               <SolutionSteps steps={solutionLines(ex.solution)} tail={ex.answer ? <RevealAnswer answer={ex.answer} /> : null} />
