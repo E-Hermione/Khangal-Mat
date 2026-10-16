@@ -120,10 +120,10 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       }
     );
     // Around a centred working: no space or line break before it, and the words after it start their
-    // own line without a leading space or comma, with a capital letter
+    // own line without a leading space, comma or $\\qquad$ gap, with a capital letter
     processed0 = processed0
       .replace(/[ \t]*\n?[ \t]*(\u0000\d+\u0000\u0001)/g, '$1')
-      .replace(/\u0001(?:[ \t]*\n)?[ \t]*(?:[,;.:][ \t]*)?(\S?)/g, (_, c: string) => c.toUpperCase());
+      .replace(/\u0001(?:[ \t]*\n)?[ \t]*(?:[,;.:][ \t]*)?(?:\$\s*(?:\\q?quad\s*)+\$[ \t]*)?(\S?)/g, (_, c: string) => c.toUpperCase());
 
     // 1. Replace $$...$$ block math
     let processed = processed0.replace(/\$\$([\s\S]+?)\$\$/g, (whole, math) => {
