@@ -6,6 +6,20 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      rollupOptions: {
+        output: {
+          // Libraries in their own files: they change rarely, so browsers keep them cached across updates
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return undefined;
+            if (id.includes('firebase')) return 'firebase';
+            if (id.includes('katex')) return 'katex';
+            if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react';
+            return undefined;
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

@@ -1,6 +1,6 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, Auth } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator, Firestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator, Firestore } from 'firebase/firestore';
 
 // Firebase web config comes from VITE_FIREBASE_* variables (see .env.example).
 // These values are public identifiers, not secrets.
@@ -45,7 +45,16 @@ export function getFirebaseAuth(): Auth {
 
 export function getDb(): Firestore {
   if (!db) {
-    db = getFirestore(getFirebaseApp());
+    const app = getFirebaseApp();
+    const emulatorHost0 = import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST;
+    // Lessons kept on the device: opening the site again shows them at once, and only changes download
+    try {
+      db = emulatorHost0
+        ? getFirestore(app)
+        : initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+    } catch {
+      db = getFirestore(app);
+    }
     const emulatorHost = import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST;
     if (emulatorHost) connectFirestoreEmulator(db, ...splitHost(emulatorHost));
   }

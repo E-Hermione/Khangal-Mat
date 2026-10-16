@@ -1,6 +1,7 @@
 import React from 'react';
 import { SolutionSteps, solutionLines } from './SolutionSteps';
 import { RevealAnswer } from './RevealAnswer';
+import { AnswerCheck } from './AnswerCheck';
 import { PracticeProblem } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { PencilLine, Eye, EyeOff, Plus, Edit2, Trash2 } from 'lucide-react';
@@ -171,6 +172,9 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
                     <MathRenderer content={item.hint} className="inline" />
                   </div>
                 )}
+
+                {/* Students: type the answer and check it before looking at the solution */}
+                {!isEditable && !teacherVersion && item.answer && <AnswerCheck answer={item.answer} />}
 
                 {/* Teacher Solution on Screen or in Print: steps like the worked examples */}
                 {showSol && (item.answer || item.solution) && (

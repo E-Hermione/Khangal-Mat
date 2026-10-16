@@ -7,19 +7,12 @@ import { storageService } from './services/storageService';
 import { GRADE_TOPICS_CATALOG } from './data/initialData';
 import { Sidebar } from './components/Sidebar';
 import { TopicPage } from './components/TopicPage';
-import { AdminEditorModal } from './components/AdminEditorModal';
-import { AccessRequestsModal } from './components/AccessRequestsModal';
 import { LoginView } from './components/LoginView';
 import { VerifyEmailView } from './components/VerifyEmailView';
 import { ScreenProtection } from './components/ScreenProtection';
 import { AnnouncementsBell } from './components/AnnouncementsBell';
 import { CopyProtection } from './components/CopyProtection';
-import { SettingsModal } from './components/SettingsModal';
-import { ExamsHub } from './components/ExamsHub';
-import { MistakesView } from './components/MistakesView';
 import { usePrintSelection } from './services/printSelection';
-import { PlacementTestView } from './components/PlacementTestView';
-import { LearningPlanView } from './components/LearningPlanView';
 import { StudentHome } from './components/StudentHome';
 import type { ExamFilter } from './components/SidebarPanels';
 import { catalogTopics, isGroupTopic, learningPlan, startLearningPlan, stopLearningPlan, topicMeta, useLearningPlanVersion } from './services/learningPlan';
@@ -29,7 +22,6 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { getFirebaseAuth, isFirebaseConfigured } from './services/firebase';
 import { loadSession, signOutUser, isRegistering, isGeneralLogin } from './services/authService';
 import { startCloudSync, stopCloudSync, cloud } from './services/cloud';
-import ContentStatus from './components/ContentStatus';
 import { seedCloudFromLegacyData } from './services/migration';
 import {
   registerCurrentDevice,
@@ -58,6 +50,15 @@ import {
   LogIn,
   Smartphone,
 } from 'lucide-react';
+// Parts opened only sometimes load when first needed, so the first page comes up faster
+const AdminEditorModal = React.lazy(() => import('./components/AdminEditorModal').then((m) => ({ default: m.AdminEditorModal })));
+const AccessRequestsModal = React.lazy(() => import('./components/AccessRequestsModal').then((m) => ({ default: m.AccessRequestsModal })));
+const SettingsModal = React.lazy(() => import('./components/SettingsModal').then((m) => ({ default: m.SettingsModal })));
+const ExamsHub = React.lazy(() => import('./components/ExamsHub').then((m) => ({ default: m.ExamsHub })));
+const MistakesView = React.lazy(() => import('./components/MistakesView').then((m) => ({ default: m.MistakesView })));
+const PlacementTestView = React.lazy(() => import('./components/PlacementTestView').then((m) => ({ default: m.PlacementTestView })));
+const LearningPlanView = React.lazy(() => import('./components/LearningPlanView').then((m) => ({ default: m.LearningPlanView })));
+const ContentStatus = React.lazy(() => import('./components/ContentStatus'));
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -941,6 +942,7 @@ export default function App() {
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 md:p-6 lg:p-8 min-w-0">
+          <React.Suspense fallback={<div className="text-center py-20 text-sm text-stone-500">Ачаалж байна...</div>}>
           {previewAsUser === 'expired' && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800 font-medium">
               Таны хичээл үзэх эрхийн хугацаа {new Date(Date.now() - 86400000).toLocaleDateString()}-нд дууссан байна.
@@ -1082,11 +1084,13 @@ export default function App() {
               Сэдэв сонгоно уу.
             </div>
           )}
+          </React.Suspense>
         </main>
       </div>
 
+      <React.Suspense fallback={null}>
       {/* Admin Material Editor Modal */}
-      <AdminEditorModal
+      {adminModalOpen && <AdminEditorModal
         isOpen={adminModalOpen}
         onClose={() => setAdminModalOpen(false)}
         activeTopic={currentTopic}
@@ -1095,16 +1099,16 @@ export default function App() {
         }}
         onRefreshAllTopics={refreshTopics}
         onLogout={handleLogout}
-      />
+      />}
 
       {/* Access Requests Management Modal */}
-      <AccessRequestsModal
+      {accessRequestsModalOpen && <AccessRequestsModal
         isOpen={accessRequestsModalOpen}
         onClose={() => setAccessRequestsModalOpen(false)}
-      />
+      />}
 
       {/* Settings Modal (Phone-style cascading settings: profile, phone, email, password, preferences) */}
-      <SettingsModal
+      {settingsModalOpen && <SettingsModal
         isOpen={settingsModalOpen}
         onClose={() => setSettingsModalOpen(false)}
         currentUser={currentUser}
@@ -1117,7 +1121,8 @@ export default function App() {
         copyProtectionEnabled={appSettings.copyProtection}
         onToggleCopyProtection={handleToggleCopyProtection}
         isAdmin={currentUser?.role === 'admin'}
-      />
+      />}
+      </React.Suspense>
 
       {viewHint && (
         <div
