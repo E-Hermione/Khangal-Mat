@@ -31,7 +31,7 @@ import {
   FileText,
 } from 'lucide-react';
 
-// The lesson tabs on phones: a short name under an icon
+// The lesson tabs: a short name under an icon
 const TAB_LOOK = {
   theory: { short: 'Дүрэм', Icon: BookOpen },
   examples: { short: 'Жишээ', Icon: Lightbulb },
@@ -526,14 +526,12 @@ export const TopicPage: React.FC<TopicPageProps> = ({
                       role="tab"
                       aria-selected={on}
                       onClick={() => setLessonTab(key)}
-                      className={`flex-1 min-w-0 flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-2 py-2 md:py-3 px-1 md:px-2 rounded-xl text-xs md:text-base font-extrabold transition-all cursor-pointer ${
+                      className={`flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 md:gap-1 py-2 md:py-2.5 px-1 rounded-xl text-xs md:text-sm font-extrabold transition-all cursor-pointer ${
                         on ? 'bg-white text-amber-600 shadow-sm' : 'text-stone-500 hover:text-stone-700'
                       }`}
                     >
                       <Icon className="w-5 h-5 shrink-0" />
-                      {/* Phones: a short name on one line; wider screens: the full name */}
-                      <span className="md:hidden whitespace-nowrap">{short}</span>
-                      <span className="hidden md:inline">{label}</span>
+                      <span className="whitespace-nowrap" title={label}>{short}</span>
                     </button>
                   );
                 })}
