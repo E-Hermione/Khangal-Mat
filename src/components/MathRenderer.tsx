@@ -66,11 +66,11 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
 
     // 0. Division with a remainder, written out in columns: \longdiv{23}{5}, and the older
     //    "$23 : 5 = 4$, үлдэгдэл $3$" sentences (only when the numbers add up)
-    //    Wrapped in $$…$$ it stands centred on its own line; the dollars are taken with it either way,
+    //    It always stands centred on its own line; the dollars around it are taken with it,
     //    or a lone leftover $ pair would turn the placeholder into a red KaTeX error.
     let processed0 = content.replace(/(\$\$|\$)?\s*\\longdiv\{\s*(\d+)\s*\}\{\s*(\d+)\s*\}\s*(\$\$|\$)?/g, (whole, open, a, b) =>
       Number(b) > 0
-        ? keep(open === '$$' ? `<div class="my-2 flex justify-center">${longDivision(Number(a), Number(b))}</div>` : longDivision(Number(a), Number(b)))
+        ? keep(centred(longDivision(Number(a), Number(b))))
         : whole
     );
     // Decimal multiplication and division in columns: \colmul{57,46}{24}, \coldiv{1,3}{2,5}
@@ -79,7 +79,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       (whole, open, op, a, b) => {
         try {
           const html = op === 'colmul' ? colMul(a, b) : colDiv(a, b);
-          return keep(open === '$$' ? `<div class="my-2 flex justify-center">${html}</div>` : html);
+          return keep(centred(html));
         } catch {
           return whole;
         }
@@ -116,7 +116,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       /\$\s*(\d+)\s*(?::|\\div)\s*(\d+)\s*=\s*(\d+)\s*\$\s*,?\s*\(?\s*үлдэгдэл\s*\$\s*(\d+)\s*\$\s*\)?\.?/g,
       (whole, a, b, q, r) => {
         const [A, B, Q, R] = [a, b, q, r].map(Number);
-        return B > 0 && Q === Math.floor(A / B) && R === A % B ? keep(longDivision(A, B)) : whole;
+        return B > 0 && Q === Math.floor(A / B) && R === A % B ? keep(centred(longDivision(A, B))) : whole;
       }
     );
 
@@ -225,6 +225,9 @@ function replaceProportions(text: string, put: (html: string, display: boolean) 
 // Fractions inside a line of text are drawn full height (\dfrac) with slightly smaller digits
 // (see .inline-math in index.css), so 4/7 reads clearly instead of as tiny stacked digits
 const INLINE_MACROS = { '\\frac': '\\dfrac' };
+
+// Working in columns always stands centred on its own line; the words after it start a new line
+const centred = (html: string) => `<div class="my-2 flex justify-center">${html}</div>`;
 
 /**
  * Division in columns, as taught in school:
