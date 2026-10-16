@@ -60,3 +60,6 @@
 - Decimals are written with a point, never a comma: $12.25$, not $12{,}25$ (also in the extra material PDFs).
   Between two formulas a sentence never ends with a full stop: «$12.25 = \frac{1225}{100}$, $35^2 = 1225$», not «…$. $…»,
   since the stop reads like a decimal point.
+- Within a topic's worked examples, each kind of problem is explained once. Two examples with the same form and the
+  same steps (only the numbers differ, like $\frac{2}{9} + \frac{5}{9}$ and $\frac{4}{13} + \frac{7}{13}$) must not both stay;
+  a new example has to show a case the others do not.
