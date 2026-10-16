@@ -960,6 +960,7 @@ export default function App() {
                 window.scrollTo({ top: 0 });
               }}
               isAdmin={currentUser?.role === 'admin' && !previewAsUser}
+              showCheck={currentUser?.role === 'admin' && generalView && !previewAsUser}
               currentUser={currentUser}
               onUpdateTopic={(updated) => {
                 storageService.saveTopic(updated);

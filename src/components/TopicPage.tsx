@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GradeNumber, TopicPackage, PrintOptions, TheoryRule, WorkedExample, PracticeProblem } from '../types';
 import { TheorySection } from './TheorySection';
+import { TopicCheckButton } from './TopicCheckButton';
 import { WorkedExamplesSection } from './WorkedExamplesSection';
 import { PracticeSection } from './PracticeSection';
 import { MaterialsSection } from './MaterialsSection';
@@ -40,6 +41,8 @@ interface TopicPageProps {
   viewGrade?: number;
   // Opens another lesson (the previous and next lesson buttons)
   onOpenTopic?: (topicId: string) => void;
+  // General view: the button that marks the topic as looked over
+  showCheck?: boolean;
 }
 
 export const TopicPage: React.FC<TopicPageProps> = ({
@@ -48,6 +51,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   currentUser,
   onUpdateTopic,
   onOpenAdmin,
+  showCheck,
   onOpenExamsHub,
   onOpenPlan,
   viewGrade,
@@ -377,6 +381,7 @@ export const TopicPage: React.FC<TopicPageProps> = ({
           <h1 className="text-2xl md:text-3xl font-bold text-stone-950 tracking-tight">
             {topic.title}
           </h1>
+          {showCheck && <TopicCheckButton topicId={topic.id} />}
 
           {isAdmin && onOpenAdmin && (
             // Stays at the bottom right of the screen while scrolling
