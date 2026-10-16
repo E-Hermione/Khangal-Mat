@@ -11,7 +11,7 @@
   `--patch` (a list of `{ id, field, from, to }`) changes a field only while it still reads `from`.
 - Solutions are written with the subject's terms: «$\frac{9}{8}$ бутархайн хувьд $9 > 8$ буюу хүртвэр нь
   хуваариасаа их», never «$\frac{9}{8}: 9>8$» or «зураасны доорх тоо». Each solution states its rule in bold.
-  A sentence never ends in a formula followed by «:» («… $7{,}2 = 7{,}20$:»); it ends in words («… гэж бичээд хасна.»).
+  A sentence never ends in a formula followed by «:» («… $7.2 = 7.20$:»); it ends in words («… гэж бичээд хасна.»).
   A label before its content («Зууны орон: $0 + 5 = 5$») is fine.
 - Every topic has at least 10 worked examples (all different, solutions explained in detail), 15 practice
   problems and 15 questions in each test. The general view's home page shows which topics fall short.
@@ -36,9 +36,9 @@
 - A solution explains this problem's own steps in words (which numbers, why, what comes out), not just the
   rule followed by a bare chain of numbers. A whole number in a product or quotient is first written as
   $\frac{n}{1}$ right after the equals sign ($3 \cdot \frac{2}{7} = \frac{3}{\textcolor{#dc2626}{1}} \cdot \frac{2}{7}$).
-- Decimal multiplication is written in a column, downwards (`$$\colmul{57,46}{24}$$`), and division as a long
+- Decimal multiplication is written in a column, downwards (`$$\colmul{57.46}{24}$$`), and division as a long
   division in steps. For a decimal divisor first write the original a : b, say by what both are multiplied
-  ($1{,}3 \cdot 10 = 13$, $2{,}5 \cdot 10 = 25$), then divide the new numbers (`$$\coldiv{13}{25}$$`, never the old commas),
+  ($1.3 \cdot 10 = 13$, $2.5 \cdot 10 = 25$), then divide the new numbers (`$$\coldiv{13}{25}$$`, never the old commas),
   with the textbook rule «Аравтын бутархайг аравтын бутархайд хуваахдаа хуваагчийг бүхэл тоо болтол нь хуваагдагч
   ба хуваагч бутархайн таслалыг ижил орноор шилжүүлж, үйлдлийг гүйцэтгэнэ.» Both are drawn by `columnOps.ts`.
 - A part the owner ticked as checked on the home page (`settings/app.contentChecks[topicId]`) keeps its content:
@@ -53,7 +53,10 @@
 - In probability, always write the probability as $P(A)$, naming the event $A$ first.
 - In example, practice and test solutions, a rule quoted from the theory is written in italic (`__…__`), not bold;
   bold (`**…**`) stays for step labels («1-р үйлдэл.») and single stressed words. The theory itself keeps its rules bold.
-- No colon (:) in lesson prose: write a full sentence instead («Шалгавал …», «Хариу нь …», «… шилжүүлбэл $A = 2{,}2$ болж …»).
+- No colon (:) in lesson prose: write a full sentence instead («Шалгавал …», «Хариу нь …», «… шилжүүлбэл $A = 2.2$ болж …»).
   A colon is fine only inside formulas, where it means division.
 - Extra material PDFs (topicMaterials) hold only the topic name as the title and the exercises: no section
   headings, no site name line, no answer page. «Alpha сургалтын сан» is repeated faintly across the page background.
+- Decimals are written with a point, never a comma: $12.25$, not $12{,}25$ (also in the extra material PDFs).
+  Between two formulas a sentence never ends with a full stop: «$12.25 = \frac{1225}{100}$, $35^2 = 1225$», not «…$. $…»,
+  since the stop reads like a decimal point.

@@ -70,6 +70,18 @@ service cloud.firestore {
       return override.get('answers', v.get('defaultSections', {}).get('answers', false)) == true;
     }
 
+    // Practice drills (topicDrills/{topicId}__{part}): only members with paid access to that topic
+    function drillTopic(docId) {
+      return docId.split('__')[0];
+    }
+    match /topicDrills/{docId} {
+      allow read: if isAdmin()
+        || (isMember() && paidAccess()
+          && exists(/databases/$(database)/documents/topicIndex/$(drillTopic(docId)))
+          && inMyGrade(drillTopic(docId)));
+      allow write: if isAdmin();
+    }
+
     // Answers and solutions: the admin, or members once the admin shows that topic's answers
     match /topicAnswers/{topicId} {
       allow read: if isAdmin() || (isMember()
