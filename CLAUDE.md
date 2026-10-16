@@ -55,3 +55,5 @@
   bold (`**…**`) stays for step labels («1-р үйлдэл.») and single stressed words. The theory itself keeps its rules bold.
 - No colon (:) in lesson prose: write a full sentence instead («Шалгавал …», «Хариу нь …», «… шилжүүлбэл $A = 2{,}2$ болж …»).
   A colon is fine only inside formulas, where it means division.
+- Extra material PDFs (topicMaterials) hold only the topic name as the title and the exercises: no section
+  headings, no site name line, no answer page. «Alpha сургалтын сан» is repeated faintly across the page background.
