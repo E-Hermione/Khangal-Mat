@@ -856,6 +856,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <div className="p-1 space-y-0.5 border-t border-stone-800/60 bg-stone-900/60">
                         {(() => {
                           // One topic row; `sub` rows are subtopics, indented under their topic
+                          // A topic with subtopics counts as checked (pink) once every subtopic under it is
+                          const allChecked = (id: string): boolean => {
+                            const ks = group.topics.filter((t) => t.parentId === id);
+                            return ks.length ? ks.every((k) => allChecked(k.id)) : checkedIds.has(id);
+                          };
                           const renderTopic = (topic: (typeof group.topics)[number], sub: boolean) => {
                             const kids = group.topics
                               .filter((t) => t.parentId === topic.id)
@@ -903,7 +908,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     }`}
                                   />
                                 )}
-                                <span className={`truncate ${showChecked && checkedIds.has(topic.id) ? 'text-emerald-400' : ''}`}>{topic.title}</span>
+                                <span
+                                  className={`truncate ${
+                                    !showChecked
+                                      ? ''
+                                      : kids.length > 0
+                                      ? allChecked(topic.id)
+                                        ? 'text-pink-300'
+                                        : ''
+                                      : checkedIds.has(topic.id)
+                                      ? 'text-emerald-400'
+                                      : ''
+                                  }`}
+                                >
+                                  {topic.title}
+                                </span>
                               </div>
 
                               <div className="flex items-center space-x-1 shrink-0 ml-1">
