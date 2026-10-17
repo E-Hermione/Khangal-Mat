@@ -14,6 +14,7 @@ import {
   Sliders,
   LogOut,
   UserCheck,
+  Eye,
   EyeOff,
   Lock,
   Folder,
@@ -84,6 +85,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return new Set(Object.keys(c).filter((id) => ['theory', 'examples', 'practice', 'test1', 'test2', 'test3'].every((p) => (c[id] || []).includes(p))));
   };
   const [checkedIds, setCheckedIds] = useState<Set<string>>(readChecked);
+  // Finished (checked) topics can be hidden from the list; the choice is remembered on this device
+  const [hideDone, setHideDone] = useState(() => {
+    try {
+      return localStorage.getItem('alpha-hide-done') !== '0';
+    } catch {
+      return true;
+    }
+  });
+  const toggleHideDone = () =>
+    setHideDone((h) => {
+      try {
+        localStorage.setItem('alpha-hide-done', h ? '0' : '1');
+      } catch {
+        /* storage blocked */
+      }
+      return !h;
+    });
   useEffect(() => {
     const refresh = () => setCheckedIds(readChecked());
     window.addEventListener('app-settings-updated', refresh);
@@ -914,7 +932,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                       ? ''
                                       : kids.length > 0
                                       ? allChecked(topic.id)
-                                        ? 'text-[#6B7FF0]'
+                                        ? 'text-[#C25A1E]'
                                         : ''
                                       : checkedIds.has(topic.id)
                                       ? 'text-emerald-400'
@@ -976,14 +994,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             </button>
                           );
                           };
-                          const topLevel = group.topics.filter(
+                          const isDoneTopic = (id: string) =>
+                            group.topics.some((t) => t.parentId === id) ? allChecked(id) : checkedIds.has(id);
+                          const hiding = showChecked && hideDone;
+                          const allTop = group.topics.filter(
                             (t) => !t.parentId || !group.topics.some((x) => x.id === t.parentId)
                           );
+                          const topLevel = hiding ? allTop.filter((t) => !isDoneTopic(t.id)) : allTop;
+                          const doneCount = showChecked ? group.topics.filter((t) => isDoneTopic(t.id)).length : 0;
                           return (
                             <>
+                              {showChecked && doneCount > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={toggleHideDone}
+                                  className="w-full text-left pl-4 pr-2.5 py-1 rounded-lg text-[10px] font-bold text-stone-500 hover:text-amber-400 hover:bg-stone-800/60 flex items-center gap-1.5 cursor-pointer"
+                                  title={hideDone ? 'Шалгагдсан сэдвүүдийг харуулах' : 'Шалгагдсан сэдвүүдийг нуух'}
+                                >
+                                  {hideDone ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                                  {hideDone ? `Бүгдийг харах (${doneCount} болсон нуугдсан)` : 'Болсон сэдвүүдийг нуух'}
+                                </button>
+                              )}
                               {topLevel.map((topic) => {
                                 const kids = group.topics
-                                  .filter((t) => t.parentId === topic.id)
+                                  .filter((t) => t.parentId === topic.id && !(hiding && isDoneTopic(t.id)))
                                   .sort(bySubtopicOrder);
                                 const kidIds = kids.map((x) => x.id);
                                 return (
