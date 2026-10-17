@@ -615,9 +615,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Grade's content: all topics / tests, or the user's plan topics as a flat list */}
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
-          <div className="px-1 mb-1 text-[11px] font-bold text-stone-400 uppercase tracking-wider">
-            {selectedGrade}-р ангийн {showExamNav ? 'сорил' : 'агуулга'}
-          </div>
+          {showChecked && !showExamNav ? (
+            // Clicking the heading hides the checked topics or shows them all again
+            <button
+              type="button"
+              onClick={toggleHideDone}
+              className="px-1 mb-1 text-[11px] font-bold text-stone-400 hover:text-stone-200 uppercase tracking-wider cursor-pointer"
+              title={hideDone ? 'Шалгагдсан сэдвүүдийг харуулах' : 'Шалгагдсан сэдвүүдийг нуух'}
+            >
+              {selectedGrade}-р ангийн {hideDone ? 'үлдсэн агуулга' : 'бүх агуулга'}
+            </button>
+          ) : (
+            <div className="px-1 mb-1 text-[11px] font-bold text-stone-400 uppercase tracking-wider">
+              {selectedGrade}-р ангийн {showExamNav ? 'сорил' : 'агуулга'}
+            </div>
+          )}
         {canPlanView && (
           <div>
             <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-stone-950 border border-stone-800 mb-1" data-testid="lesson-mode">
@@ -1001,22 +1013,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             (t) => !t.parentId || !group.topics.some((x) => x.id === t.parentId)
                           );
                           const topLevel = hiding ? allTop.filter((t) => !isDoneTopic(t.id)) : allTop;
-                          const doneCount = showChecked ? group.topics.filter((t) => isDoneTopic(t.id)).length : 0;
                           return (
                             <>
-                              {showChecked && doneCount > 0 && (
-                                <div className="flex justify-end pr-2">
-                                  <button
-                                    type="button"
-                                    onClick={toggleHideDone}
-                                    className="text-[9px] text-stone-600 hover:text-stone-300 flex items-center gap-1 cursor-pointer"
-                                    title={hideDone ? `Шалгагдсан ${doneCount} сэдвийг харуулах` : 'Шалгагдсан сэдвүүдийг нуух'}
-                                  >
-                                    {hideDone ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                                    {hideDone ? doneCount : null}
-                                  </button>
-                                </div>
-                              )}
                               {topLevel.map((topic) => {
                                 const kids = group.topics
                                   .filter((t) => t.parentId === topic.id && !(hiding && isDoneTopic(t.id)))
