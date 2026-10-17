@@ -289,7 +289,7 @@ function chainParts(math: string): string[] | null {
 const INLINE_MACROS = { '\\frac': '\\dfrac' };
 // Thin lines drawn with CSS (see .fk and .xm in index.css), so they are all equally thick and meet in one point:
 // \fk is the half triangle under a denominator split into factors, \xm{3} the multiplier written over a fraction
-const DRAW_MACROS = { '\\fk': '\\htmlClass{fk}{\\rule{0pt}{0.45em}}', '\\xm': '\\htmlClass{xm}{#1}' };
+const DRAW_MACROS = { '\\fk': '\\htmlClass{fk}{\\rule{0pt}{0.45em}}', '\\xm': '\\htmlClass{xm}{#1}', '\\rnd': '\\htmlClass{rnd}{#1}' };
 const drawTrust = (c: { command: string }) => c.command === '\\htmlClass';
 
 // Working in columns always stands centred on its own line; the words after it start a new line
