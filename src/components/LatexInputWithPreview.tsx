@@ -26,7 +26,7 @@ const PAREN = '<paren>';
 const BOLD = '<bold>';
 const ITALIC = '<italic>';
 const WRAPS: Record<string, [string, string]> = { [WRAP]: ['$', '$'], [PAREN]: ['(', ')'], [BOLD]: ['**', '**'], [ITALIC]: ['__', '__'] };
-// Takes the $ or $$ marks off the formula the cursor is in (or off the selection)
+// Takes the ** (bold) marks off the bold text the cursor is in (or off the selection)
 const UNWRAP = '<unwrap>';
 
 const MATH_SNIPPETS = [
@@ -47,7 +47,7 @@ const MATH_SNIPPETS = [
   { label: 'a|b', snippet: '\\longdiv{23}{5}', desc: 'Баганаар хуваах (үлдэгдэлтэй): тоонуудыг сольж бичнэ' },
   { label: 'Таб', snippet: '\\qquad ', desc: 'Таб шиг зай авах' },
   { label: '$', snippet: WRAP, desc: 'Сонгосон хэсгийг $...$ дотор оруулах' },
-  { label: '$⌫', snippet: UNWRAP, desc: 'Курсор байгаа томьёоны $ эсвэл $$ тэмдгийг арилгах' },
+  { label: 'B⌫', snippet: UNWRAP, desc: 'Тод (bold) бичгийн ** тэмдгийг арилгах: **үг** → үг' },
   { label: '\\', snippet: '\\', desc: 'Ташуу зураас (LaTeX командын эхлэл)' },
   { label: '( )', snippet: PAREN, desc: 'Сонгосон хэсгийг (...) дугуй хаалтад оруулах' },
   { label: 'B', snippet: BOLD, desc: 'Сонгосон үгийг тод (bold) болгох: **үг**' },
@@ -153,17 +153,17 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
     if (snippet === UNWRAP) {
       let a = start, b = end;
       if (a === b) {
-        // the $…$ or $$…$$ around the cursor
-        const re = /\$\$[\s\S]*?\$\$|\$[^$]*\$/g;
+        // the **…** around the cursor
+        const re = /\*\*[\s\S]*?\*\*/g;
         let m: RegExpExecArray | null;
         while ((m = re.exec(value))) if (m.index <= start && start <= m.index + m[0].length) { a = m.index; b = m.index + m[0].length; break; }
         if (a === b) return;
       } else {
-        // a selection may leave its dollars just outside it
-        while (a > 0 && value[a - 1] === '$') a--;
-        while (b < value.length && value[b] === '$') b++;
+        // a selection may leave its stars just outside it
+        while (a > 0 && value[a - 1] === '*') a--;
+        while (b < value.length && value[b] === '*') b++;
       }
-      const inner = value.substring(a, b).replace(/\$/g, '').replace(/^\s+|\s+$/g, '');
+      const inner = value.substring(a, b).replace(/\*\*/g, '');
       change(value.substring(0, a) + inner + value.substring(b), false);
       setTimeout(() => {
         input.focus();
