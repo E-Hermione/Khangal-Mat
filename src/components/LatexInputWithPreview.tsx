@@ -26,7 +26,6 @@ const PAREN = '<paren>';
 const BOLD = '<bold>';
 const ITALIC = '<italic>';
 const WRAPS: Record<string, [string, string]> = { [WRAP]: ['$', '$'], [PAREN]: ['(', ')'], [BOLD]: ['**', '**'], [ITALIC]: ['__', '__'] };
-const CENTRED = '\n$$ x $$\n';
 // Takes the $ or $$ marks off the formula the cursor is in (or off the selection)
 const UNWRAP = '<unwrap>';
 
@@ -61,9 +60,8 @@ const MATH_SNIPPETS = [
 let activeField: ((snippet: string) => void) | null = null;
 
 /** The LaTeX buttons; with no `onInsert` they write into the field focused last. */
-export const LatexToolbar: React.FC<{ onInsert?: (snippet: string) => void; centred?: boolean; className?: string }> = ({
+export const LatexToolbar: React.FC<{ onInsert?: (snippet: string) => void; className?: string }> = ({
   onInsert,
-  centred = false,
   className = '',
 }) => {
   const insert = (snippet: string) => (onInsert ? onInsert(snippet) : activeField?.(snippet));
@@ -87,17 +85,6 @@ export const LatexToolbar: React.FC<{ onInsert?: (snippet: string) => void; cent
           {item.label}
         </button>
       ))}
-      {centred && (
-        <button
-          type="button"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => insert(CENTRED)}
-          title="Мөрийн голд томьёо оруулах"
-          className={`${btn} bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-300`}
-        >
-          Голд томьёо
-        </button>
-      )}
     </div>
   );
 };
@@ -225,7 +212,7 @@ export const LatexInputWithPreview: React.FC<LatexInputWithPreviewProps> = ({
       )}
 
       {/* LaTeX buttons, unless the editor shows one shared toolbar */}
-      {!hideToolbar && <LatexToolbar onInsert={insertSnippet} centred={multiline} />}
+      {!hideToolbar && <LatexToolbar onInsert={insertSnippet} />}
 
       {/* Input or Textarea */}
       {multiline ? (
