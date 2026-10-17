@@ -63,3 +63,9 @@
 - Within a topic's worked examples, each kind of problem is explained once. Two examples with the same form and the
   same steps (only the numbers differ, like $\frac{2}{9} + \frac{5}{9}$ and $\frac{4}{13} + \frac{7}{13}$) must not both stay;
   a new example has to show a case the others do not.
+- Bringing fractions to a common denominator never uses the LCM (ХБЕХ). Each denominator is split under itself with
+  the half triangle `\fk` (drawn in CSS), the factor both share in pale red, the others pale blue and pale green;
+  the other denominator's leftover factor is written over each fraction with `\xm{3}`, in the strong colour, and the
+  sign between the fractions is kept centred with `\hphantom{}` of the first mark. Example:
+  $$\frac{1}{\kern-5pt\begin{array}{c} 6 \\[-6pt] \fk \\[-4pt] \scriptstyle \textcolor{#7aa7f5}{2} \cdot \textcolor{#ef8a8a}{3} \end{array}\kern-5pt}^{\textcolor{#16a34a}{\xm{3}}} + \hphantom{{}^{\textcolor{#16a34a}{\xm{3}}}}\frac{1}{\kern-5pt\begin{array}{c} 9 \\[-6pt] \fk \\[-4pt] \scriptstyle \textcolor{#6cc58d}{3} \cdot \textcolor{#ef8a8a}{3} \end{array}\kern-5pt}^{\textcolor{#2563eb}{\xm{2}}}$$
+  then $\frac{1 \cdot 3}{6 \cdot 3} + \frac{1 \cdot 2}{9 \cdot 2}$ with the multipliers coloured the same way.
