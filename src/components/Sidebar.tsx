@@ -15,6 +15,7 @@ import {
   LogOut,
   UserCheck,
   Eye,
+  GraduationCap,
   EyeOff,
   Lock,
   Folder,
@@ -378,6 +379,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
           } ${drag?.moved ? 'select-none cursor-grabbing' : ''}`,
         }
       : { className: '' };
+  // A topic group (a topic with its subtopics) can be shown in other grades too, all of it at once
+  const [gradeMenuFor, setGradeMenuFor] = useState<string | null>(null);
+  const groupIds = (rootId: string): string[] => {
+    const all = allTopicsForGrade;
+    const out = [rootId];
+    for (let i = 0; i < out.length; i++) all.filter((t) => t.parentId === out[i]).forEach((t) => out.push(t.id));
+    return out;
+  };
+  const groupGrades = (rootId: string): GradeNumber[] => {
+    const t = storageService.getTopicById(rootId);
+    return Array.from(new Set([t?.grade ?? selectedGrade, ...(t?.visibleGrades || [])])) as GradeNumber[];
+  };
+  const toggleGroupGrade = (rootId: string, g: GradeNumber) => {
+    const on = !groupGrades(rootId).includes(g);
+    for (const id of groupIds(rootId)) {
+      const info = allTopicsForGrade.find((x) => x.id === id);
+      const saved =
+        storageService.getTopicById(id) ||
+        newTopic({ id, grade: selectedGrade, category: info?.category || '', title: info?.title || '', parentId: info?.parentId });
+      if (saved.grade === g) continue; // its own grade always shows it
+      const vis = new Set([...(saved.visibleGrades || []), saved.grade]);
+      if (on) vis.add(g);
+      else vis.delete(g);
+      storageService.saveTopic({ ...saved, visibleGrades: Array.from(vis) as GradeNumber[] });
+    }
+    setTrigger((x) => x + 1);
+  };
+  const renderGradeMenu = (rootId: string) => (
+    <div className="flex flex-wrap items-center gap-1 pl-6 pr-2 py-1" data-testid={`grade-menu-${rootId}`}>
+      <span className="text-[10px] text-stone-500 mr-1">Харагдах анги</span>
+      {([6, 7, 8, 9, 10, 11, 12] as GradeNumber[]).map((g) => {
+        const own = storageService.getTopicById(rootId)?.grade === g;
+        const on = groupGrades(rootId).includes(g);
+        return (
+          <button
+            key={g}
+            type="button"
+            disabled={own}
+            onClick={() => toggleGroupGrade(rootId, g)}
+            className={`px-1.5 py-0.5 rounded text-[10px] font-bold border cursor-pointer disabled:cursor-default ${
+              on ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'border-stone-700 text-stone-500 hover:text-stone-300'
+            }`}
+            title={own ? 'Үндсэн анги' : on ? `${g}-р ангиас хасах` : `${g}-р ангид харуулах`}
+          >
+            {g}
+          </button>
+        );
+      })}
+    </div>
+  );
   const renderRowTools = (topicId: string, withAdd: boolean, category: string) =>
     confirmDelete === topicId ? (
       <div className="flex items-center gap-1 shrink-0 pl-1" data-testid="confirm-delete">
@@ -408,6 +459,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             data-testid={`add-subtopic-${topicId}`}
           >
             <Plus className="w-3.5 h-3.5" />
+          </button>
+        )}
+        {withAdd && (
+          <button
+            type="button"
+            onClick={() => setGradeMenuFor((x) => (x === topicId ? null : topicId))}
+            className={`p-1 rounded hover:bg-stone-800 cursor-pointer ${gradeMenuFor === topicId ? 'text-amber-400' : 'text-stone-500 hover:text-amber-400'}`}
+            title="Өөр ангид харуулах (дэд сэдвүүдтэй нь хамт)"
+            data-testid={`grades-${topicId}`}
+          >
+            <GraduationCap className="w-3.5 h-3.5" />
           </button>
         )}
         <button
@@ -1032,6 +1094,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     </div>
                                       );
                                     })()}
+                                    {canAddTopics && gradeMenuFor === topic.id && renderGradeMenu(topic.id)}
                                     {kids.length > 0 &&
                                       openParents.has(topic.id) &&
                                       kids.map((k) => {
