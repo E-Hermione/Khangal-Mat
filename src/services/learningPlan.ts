@@ -54,6 +54,7 @@ export interface TopicMeta {
   title: string;
   grade: GradeNumber;
   category: string;
+  visibleGrades?: GradeNumber[];
 }
 
 /** A grade's built-in topics, without the ones the admin deleted. */
@@ -258,7 +259,7 @@ export function mistakes(attempts: AttemptMap, grade: number | null): Mistake[] 
 function questionPool(t: TopicMeta, grade: GradeNumber): TestQuestion[] {
   return topicTests(t)
     .flatMap((test) => test?.questions || [])
-    .filter((q) => (q.prerequisiteGrade ?? t.grade) <= grade)
+    .filter((q) => (q.prerequisiteGrade ?? Math.min(t.grade, ...(t.visibleGrades || []))) <= grade)
     .filter((q) => !hasMadeUpOptions(q));
 }
 

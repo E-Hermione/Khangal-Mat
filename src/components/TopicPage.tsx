@@ -302,7 +302,9 @@ export const TopicPage: React.FC<TopicPageProps> = ({
   // A topic can span grades: each part is marked with its grade. Parts above the viewer's grade are hidden;
   // the rest reads as one lesson from the lowest grade up (exercises also from easy to hard).
   const viewerGrade = viewGrade ?? topic.grade;
-  const partGrade = (x: { prerequisiteGrade?: number }) => x.prerequisiteGrade ?? topic.grade;
+  // An unmarked part belongs to every grade the topic is shown in (the lowest of them)
+  const baseGrade = Math.min(topic.grade, ...(topic.visibleGrades || []));
+  const partGrade = (x: { prerequisiteGrade?: number }) => x.prerequisiteGrade ?? baseGrade;
   const upTo = <T extends { prerequisiteGrade?: number }>(list: T[] = []) =>
     list.filter((x) => partGrade(x) <= viewerGrade).sort((x, y) => partGrade(x) - partGrade(y));
   const mainTopic: TopicPackage = {

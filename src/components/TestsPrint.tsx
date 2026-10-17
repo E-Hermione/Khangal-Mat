@@ -21,7 +21,7 @@ export const TestsPrint: React.FC<{ topic: TopicPackage; selection: PrintSection
     .map((n) => topic[`test${n}`])
     .filter((t) => t && t.questions?.length);
   if (!tests.length) return null;
-  const shown = (q: TestQuestion) => (q.prerequisiteGrade ?? topic.grade) <= viewerGrade;
+  const shown = (q: TestQuestion) => (q.prerequisiteGrade ?? Math.min(topic.grade, ...(topic.visibleGrades || []))) <= viewerGrade;
 
   return (
     <div className="hidden print:block" data-testid="tests-print">
