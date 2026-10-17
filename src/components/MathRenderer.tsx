@@ -27,6 +27,8 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
         return katex.renderToString(content.trim(), {
           displayMode: true,
           throwOnError: false,
+          macros: { ...DRAW_MACROS },
+          trust: drawTrust, strict: 'ignore' as const,
         });
       } catch {
         return escapeHtml(content);
@@ -47,7 +49,8 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
           const html = katex.renderToString(content.trim(), {
             displayMode: block,
             throwOnError: false,
-            macros: block ? undefined : INLINE_MACROS,
+            macros: block ? { ...DRAW_MACROS } : { ...INLINE_MACROS, ...DRAW_MACROS },
+            trust: drawTrust, strict: 'ignore' as const,
           });
           return block ? html : `<span class="inline-math">${html}</span>`;
         } catch {
@@ -62,7 +65,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     const rendered: string[] = [];
     const keep = (html: string) => `\u0000${rendered.push(html) - 1}\u0000`;
     const render = (math: string, displayMode: boolean) =>
-      katex.renderToString(math.trim(), { displayMode, throwOnError: false, macros: displayMode ? undefined : INLINE_MACROS });
+      katex.renderToString(math.trim(), { displayMode, throwOnError: false, macros: displayMode ? { ...DRAW_MACROS } : { ...INLINE_MACROS, ...DRAW_MACROS }, trust: drawTrust, strict: 'ignore' as const });
 
     // 0. Division with a remainder, written out in columns: \longdiv{23}{5}, and the older
     //    "$23 : 5 = 4$, үлдэгдэл $3$" sentences (only when the numbers add up)
@@ -195,7 +198,7 @@ function replaceExpandBrackets(text: string, put: (html: string, display: boolea
       if (!t) return '';
       if (/^[+\-=]/.test(t)) t = '{}' + t;
       if (/[+\-=]$/.test(t)) t += '{}';
-      return katex.renderToString((display ? '\\displaystyle ' : '') + t, { throwOnError: false, macros: INLINE_MACROS });
+      return katex.renderToString((display ? '\\displaystyle ' : '') + t, { throwOnError: false, macros: { ...INLINE_MACROS, ...DRAW_MACROS }, trust: drawTrust, strict: 'ignore' as const });
     };
     let html = '';
     let rest = math;
@@ -236,6 +239,10 @@ function replaceProportions(text: string, put: (html: string, display: boolean) 
 // Fractions inside a line of text are drawn full height (\dfrac) with slightly smaller digits
 // (see .inline-math in index.css), so 4/7 reads clearly instead of as tiny stacked digits
 const INLINE_MACROS = { '\\frac': '\\dfrac' };
+// Thin lines drawn with CSS (see .fk and .xm in index.css), so they are all equally thick and meet in one point:
+// \fk is the half triangle under a denominator split into factors, \xm{3} the multiplier written over a fraction
+const DRAW_MACROS = { '\\fk': '\\htmlClass{fk}{\\rule{0pt}{0.45em}}', '\\xm': '\\htmlClass{xm}{#1}' };
+const drawTrust = (c: { command: string }) => c.command === '\\htmlClass';
 
 // Working in columns always stands centred on its own line; the words after it start a new line
 const centred = (html: string) => `<div class="co-wrap my-2 flex justify-center">${html}</div>`;
