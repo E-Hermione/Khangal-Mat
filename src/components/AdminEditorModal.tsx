@@ -7,6 +7,7 @@ import { CheckOption } from './CheckOption';
 import { theoryNumbers } from '../utils/theoryBlocks';
 import { TheoryBlocksEditor } from './TheoryBlocksEditor';
 import { TopicPackage, GradeNumber, TheoryRule, WorkedExample, PracticeProblem, TestQuestion } from '../types';
+import { copyTopicGroup } from '../services/topicCopy';
 import { storageService } from '../services/storageService';
 import { SolutionSteps, solutionLines } from './SolutionSteps';
 import { MathRenderer } from './MathRenderer';
@@ -80,6 +81,7 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
   const [activeTab, setActiveTab] = useState<'info' | 'theory' | 'examples' | 'practice' | 'tests'>('theory');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   // The save button itself turns green for a moment after a save
+  const [copyNote, setCopyNote] = useState('');
   const [justSaved, setJustSaved] = useState(false);
   const savedTimer = React.useRef<number | undefined>(undefined);
   // Theory tab: the one theory item being edited
@@ -962,77 +964,48 @@ export const AdminEditorModal: React.FC<AdminEditorModalProps> = ({
           {activeTab === 'info' && (
             <div className="space-y-4 max-w-2xl">
               <div>
-                <label className="text-xs font-bold text-stone-700 block mb-1">
-                  Энэ сэдвийг харуулах ангиуд (Олон анги сонгох боломжтой):
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2.5 bg-stone-50 rounded-xl border border-stone-200">
-                  {([6, 7, 8, 9, 10, 11, 12] as GradeNumber[]).map((g) => {
-                    // It's checked if it's primary grade or in visibleGrades
-                    const isPrimary = topic.grade === g;
-                    const isVisible = isPrimary || (topic.visibleGrades || []).includes(g);
-
-                    return (
-                      <label
-                        key={g}
-                        className={`flex items-center space-x-2 p-2 rounded-lg border text-xs cursor-pointer select-none transition-colors ${
-                          isVisible
-                            ? 'bg-amber-100/70 border-amber-400 text-stone-950 font-bold'
-                            : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-100'
-                        }`}
-                        onClick={() => {
-                          const currentGrades = topic.visibleGrades || [topic.grade];
-                          let nextGrades: GradeNumber[];
-
-                          if (isVisible) {
-                            // If primary and other grades exist, switch primary to next
-                            nextGrades = currentGrades.filter((item) => item !== g);
-                            if (isPrimary && nextGrades.length > 0) {
-                              setTopic({
-                                ...topic,
-                                grade: nextGrades[0],
-                                visibleGrades: nextGrades,
-                              });
-                              return;
-                            }
-                          } else {
-                            nextGrades = [...currentGrades, g];
-                          }
-
-                          if (nextGrades.length === 0) {
-                            nextGrades = [g]; // Keep at least one
-                          }
-
-                          setTopic({
-                            ...topic,
-                            visibleGrades: nextGrades,
-                          });
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isVisible}
-                          readOnly
-                          className="rounded text-amber-600 focus:ring-amber-500"
-                        />
-                        <span>{g}-р анги {isPrimary && <span className="text-[10px] text-amber-800 font-normal">(үндсэн)</span>}</span>
-                      </label>
-                    );
-                  })}
+                <label className="text-xs font-bold text-stone-700 block mb-1">Өөр ангид хуулах:</label>
+                <div className="flex flex-wrap gap-2 p-2.5 bg-stone-50 rounded-xl border border-stone-200">
+                  {([6, 7, 8, 9, 10, 11, 12] as GradeNumber[]).map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      disabled={g === topic.grade || !!copyNote}
+                      onClick={async () => {
+                        // the topic and its subtopics become new, separate topics of that grade
+                        const all = storageService.getTopics();
+                        const ids = [topic.id];
+                        for (let i = 0; i < ids.length; i++) all.filter((t) => t.parentId === ids[i]).forEach((t) => ids.push(t.id));
+                        setCopyNote('Хуулж байна…');
+                        try {
+                          await copyTopicGroup(ids, g, (t) => setCopyNote(`Хуулж байна: ${t}`));
+                          setCopyNote(`${g}-р ангид тусдаа хуулбар үүслээ`);
+                        } catch (e) {
+                          console.error(e);
+                          setCopyNote('Хуулж чадсангүй');
+                        }
+                        setTimeout(() => setCopyNote(''), 2500);
+                      }}
+                      className="px-3 py-1.5 rounded-lg border text-xs font-bold bg-white border-stone-300 text-stone-700 hover:bg-amber-50 hover:border-amber-400 cursor-pointer disabled:opacity-40 disabled:cursor-default"
+                    >
+                      {g}-р анги
+                    </button>
+                  ))}
                 </div>
                 <p className="text-[11px] text-stone-500 mt-1">
-                  Энэ сэдэв сонгогдсон бүх ангийн зүүн цэсэнд автоматаар харагдана.
+                  {copyNote || 'Сэдэв (дэд сэдвүүдтэйгээ) сонгосон ангид тусдаа хуулбар болж хадгалагдана. Нэгийг засахад нөгөөд нь нөлөөлөхгүй.'}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-stone-700 block mb-1">Үндсэн анги:</label>
+                  <label className="text-xs font-bold text-stone-700 block mb-1">Анги:</label>
                   <select
                     value={topic.grade}
                     onChange={(e) => {
                       const newG = Number(e.target.value) as GradeNumber;
-                      const vis = Array.from(new Set([...(topic.visibleGrades || []), newG]));
-                      setTopic({ ...topic, grade: newG, visibleGrades: vis });
+                      // moving the topic to another grade (a copy for another grade is made above)
+                      setTopic({ ...topic, grade: newG, visibleGrades: [newG] });
                     }}
                     className="w-full text-xs p-2 rounded-lg border border-stone-300 font-medium bg-white"
                   >
