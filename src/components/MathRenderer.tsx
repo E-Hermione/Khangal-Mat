@@ -139,6 +139,15 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
       const columns = columnSums(math);
       if (columns) return keep(`<div class="my-2 flex justify-center">${columns}</div>`);
       try {
+        // A chain of equalities may break onto the next line at its = signs when it is too wide
+        const parts = chainParts(math);
+        if (parts) {
+          const piece = (t: string) =>
+            katex.renderToString('\\displaystyle ' + t, { throwOnError: false, macros: { ...DRAW_MACROS }, trust: drawTrust, strict: 'ignore' as const });
+          return keep(
+            `<div class="my-2 flex flex-wrap justify-center items-baseline gap-y-1 print:flex-nowrap">${parts.map((t) => `<span class="max-w-full">${piece(t)}</span>`).join('')}</div>`
+          );
+        }
         return keep(`<div class="my-2 overflow-x-auto overflow-y-hidden scrollbar-none print:overflow-visible flex justify-center">${render(math, true)}</div>`);
       } catch {
         return whole;
@@ -148,6 +157,15 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
     // 2. Replace \[...\] block math
     processed = processed.replace(/\\\[([\s\S]+?)\\\]/g, (whole, math) => {
       try {
+        // A chain of equalities may break onto the next line at its = signs when it is too wide
+        const parts = chainParts(math);
+        if (parts) {
+          const piece = (t: string) =>
+            katex.renderToString('\\displaystyle ' + t, { throwOnError: false, macros: { ...DRAW_MACROS }, trust: drawTrust, strict: 'ignore' as const });
+          return keep(
+            `<div class="my-2 flex flex-wrap justify-center items-baseline gap-y-1 print:flex-nowrap">${parts.map((t) => `<span class="max-w-full">${piece(t)}</span>`).join('')}</div>`
+          );
+        }
         return keep(`<div class="my-2 overflow-x-auto overflow-y-hidden scrollbar-none print:overflow-visible flex justify-center">${render(math, true)}</div>`);
       } catch {
         return whole;
@@ -238,6 +256,36 @@ function replaceProportions(text: string, put: (html: string, display: boolean) 
 
 // Fractions inside a line of text are drawn full height (\dfrac) with slightly smaller digits
 // (see .inline-math in index.css), so 4/7 reads clearly instead of as tiny stacked digits
+/** «a = b = c» split before each = that stands outside braces, brackets and environments; null when there is no such = */
+function chainParts(math: string): string[] | null {
+  if (/\\begin\{(?:aligned|cases|align|gather)|&|\\\\(?![\[])/.test(math.replace(/\\begin\{array\}[\s\S]*?\\end\{array\}/g, ''))) return null;
+  const out: string[] = [];
+  let depth = 0, env = 0, lr = 0, start = 0;
+  for (let i = 0; i < math.length; i++) {
+    const c = math[i];
+    if (c === '\\') {
+      const m = /^\\([a-zA-Z]+)/.exec(math.slice(i));
+      if (m) {
+        if (m[1] === 'begin') env++;
+        else if (m[1] === 'end') env--;
+        else if (m[1] === 'left') lr++;
+        else if (m[1] === 'right') lr--;
+        i += m[0].length - 1;
+      } else i++;
+      continue;
+    }
+    if (c === '{') depth++;
+    else if (c === '}') depth--;
+    else if (c === '=' && depth === 0 && env === 0 && lr === 0 && i > start) {
+      out.push(math.slice(start, i).trim());
+      start = i;
+    }
+  }
+  out.push(math.slice(start).trim());
+  // the pieces after the first start with = ; a {} keeps the space before it
+  return out.length > 1 && out.every(Boolean) ? out.map((t, k) => (k ? '{}' + t : t)) : null;
+}
+
 const INLINE_MACROS = { '\\frac': '\\dfrac' };
 // Thin lines drawn with CSS (see .fk and .xm in index.css), so they are all equally thick and meet in one point:
 // \fk is the half triangle under a denominator split into factors, \xm{3} the multiplier written over a fraction
