@@ -914,7 +914,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                       ? ''
                                       : kids.length > 0
                                       ? allChecked(topic.id)
-                                        ? 'text-pink-300'
+                                        ? 'text-[#111D61]'
                                         : ''
                                       : checkedIds.has(topic.id)
                                       ? 'text-emerald-400'
