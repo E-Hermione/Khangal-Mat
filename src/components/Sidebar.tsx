@@ -932,7 +932,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                       ? ''
                                       : kids.length > 0
                                       ? allChecked(topic.id)
-                                        ? 'text-[#C25A1E]'
+                                        ? 'text-[#6B7FF0]'
                                         : ''
                                       : checkedIds.has(topic.id)
                                       ? 'text-emerald-400'
@@ -1005,15 +1005,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           return (
                             <>
                               {showChecked && doneCount > 0 && (
-                                <button
-                                  type="button"
-                                  onClick={toggleHideDone}
-                                  className="w-full text-left pl-4 pr-2.5 py-1 rounded-lg text-[10px] font-bold text-stone-500 hover:text-amber-400 hover:bg-stone-800/60 flex items-center gap-1.5 cursor-pointer"
-                                  title={hideDone ? 'Шалгагдсан сэдвүүдийг харуулах' : 'Шалгагдсан сэдвүүдийг нуух'}
-                                >
-                                  {hideDone ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                                  {hideDone ? `Бүгдийг харах (${doneCount} болсон нуугдсан)` : 'Болсон сэдвүүдийг нуух'}
-                                </button>
+                                <div className="flex justify-end pr-2">
+                                  <button
+                                    type="button"
+                                    onClick={toggleHideDone}
+                                    className="text-[9px] text-stone-600 hover:text-stone-300 flex items-center gap-1 cursor-pointer"
+                                    title={hideDone ? `Шалгагдсан ${doneCount} сэдвийг харуулах` : 'Шалгагдсан сэдвүүдийг нуух'}
+                                  >
+                                    {hideDone ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                                    {hideDone ? doneCount : null}
+                                  </button>
+                                </div>
                               )}
                               {topLevel.map((topic) => {
                                 const kids = group.topics
