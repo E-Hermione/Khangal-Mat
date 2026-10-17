@@ -474,9 +474,9 @@ html.dark .bg-stone-900 .bg-black {
 }
 
 /* \fk: the half triangle under a denominator split into factors, two thin legs from one apex */
-.katex .fk { position: relative; display: inline-block; width: 0.9em; }
+.katex .fk { position: relative; display: inline-block; width: 0.9em; height: 0.45em; line-height: 0; vertical-align: baseline; }
 .katex .fk::before,
-.katex .fk::after { content: ''; position: absolute; left: 50%; top: 0.12em; width: 0.5em; height: 1px; background: currentColor; transform-origin: 0 0; }
+.katex .fk::after { content: ''; position: absolute; left: 50%; top: 0.05em; width: 0.5em; height: 1px; background: currentColor; transform-origin: 0 0; }
 .katex .fk::before { transform: rotate(45deg); }
 .katex .fk::after { transform: rotate(135deg); }
 /* \xm{3}: the multiplier over a fraction, underlined, with a slanted line from the underline's start */
