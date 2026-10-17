@@ -932,6 +932,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                                       isSelected
                                         ? 'bg-amber-400'
+                                        : showChecked && kids.length > 0 && allChecked(topic.id)
+                                        ? 'bg-emerald-400'
                                         : topic.hasFullPackage
                                         ? 'bg-stone-400'
                                         : 'bg-stone-600'
@@ -943,9 +945,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     !showChecked
                                       ? ''
                                       : kids.length > 0
-                                      ? allChecked(topic.id)
-                                        ? 'text-[#6B7FF0]'
-                                        : ''
+                                      ? ''
                                       : checkedIds.has(topic.id)
                                       ? 'text-emerald-400'
                                       : ''
