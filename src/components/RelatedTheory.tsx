@@ -49,7 +49,7 @@ export function useRelatedTheory(rules: string[]): [React.ReactNode, React.React
       aria-expanded={open}
       title="Холбогдох онол үзэх"
       data-no-zoom
-      className={`no-print absolute top-4 right-4 md:top-5 md:right-5 inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors ${
+      className={`no-print absolute top-2.5 right-3 md:top-3 md:right-4 inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-semibold whitespace-nowrap cursor-pointer transition-colors ${
         open ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-stone-200 text-stone-500 hover:text-stone-700 hover:border-stone-300'
       }`}
     >

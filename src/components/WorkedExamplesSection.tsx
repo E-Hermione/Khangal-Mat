@@ -69,16 +69,14 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
           {examples.map((ex, idx) => (
             <div
               key={ex.id || ex.number || idx}
-              className="avoid-break relative group rounded-2xl border border-stone-200 bg-white p-5 md:p-6 print:p-3"
+              className={`avoid-break relative group rounded-2xl border border-stone-200 bg-white p-5 md:p-6 print:p-3 ${
+                !isEditable && quotedRules(ex.solution).length ? 'pt-11 md:pt-12 print:pt-3' : ''
+              }`}
             >
               {/* Title & Example Number */}
               <div className="flex items-start justify-between gap-2 mb-3">
                 {/* The number, then the problem itself (no title) */}
-                <div
-                  className={`flex gap-2 text-stone-900 print:text-black text-[15px] leading-relaxed ${
-                    !isEditable && quotedRules(ex.solution).length ? 'pr-16 sm:pr-40 print:pr-0' : ''
-                  }`}
-                >
+                <div className="flex gap-2 text-stone-900 print:text-black text-[15px] leading-relaxed">
                   <span className="font-bold text-[17px] text-stone-950 shrink-0">{ex.number}.</span>
                   <MathRenderer content={ex.problem} />
                 </div>
@@ -114,7 +112,7 @@ export const WorkedExamplesSection: React.FC<WorkedExamplesSectionProps> = ({
                 )}
               </div>
 
-              {/* On screen the rules the solution quotes wait behind «Холбогдох онол үзэх» in the top right corner;
+              {/* On screen the rules the solution quotes wait behind «Холбогдох онол үзэх» in a strip above the problem;
                   the editor and print show it all */}
               {!isEditable && <RelatedTheory rules={quotedRules(ex.solution)} />}
 
