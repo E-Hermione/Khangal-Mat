@@ -736,7 +736,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* Grade's content: all topics / tests, or the user's plan topics as a flat list */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-2">
+          {/* The heading and the two views stay put while the list scrolls under them */}
+          <div className="sticky -top-3 z-10 -mx-3 -mt-3 px-3 pt-3 pb-1 bg-stone-900 space-y-2">
           {showChecked && !showExamNav ? (
             // Clicking the heading hides the checked topics or shows them all again
             <button
@@ -775,6 +777,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
         )}
+          </div>
         {/* Students: wrong answers on topic tests, to solve again (in their plan only) */}
         {showExamNav && planMode && !isAdmin && learningPlan.state.uid && (
           <button
