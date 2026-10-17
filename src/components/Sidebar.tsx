@@ -623,7 +623,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="px-1 mb-1 text-[11px] font-bold text-stone-400 hover:text-stone-200 uppercase tracking-wider cursor-pointer"
               title={hideDone ? 'Шалгагдсан сэдвүүдийг харуулах' : 'Шалгагдсан сэдвүүдийг нуух'}
             >
-              {selectedGrade}-р ангийн {hideDone ? 'үлдсэн агуулга' : 'бүх агуулга'}
+              {selectedGrade}-р ангийн {hideDone ? 'үлдсэн агуулга' : 'агуулга'}
             </button>
           ) : (
             <div className="px-1 mb-1 text-[11px] font-bold text-stone-400 uppercase tracking-wider">
